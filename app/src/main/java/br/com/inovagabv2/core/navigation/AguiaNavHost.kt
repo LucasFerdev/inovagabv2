@@ -38,19 +38,41 @@ import br.com.inovagabv2.presentation.manager.projects.ManagerProjectsViewModel
 import br.com.inovagabv2.presentation.manager.projects.details.ManagerProjectDetailsScreen
 import br.com.inovagabv2.presentation.manager.projects.details.ManagerProjectDetailsViewModel
 
+import br.com.inovagabv2.presentation.splash.SplashScreen
+import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.presentation.leadership.*
 
 @Composable
 fun AguiaNavHost(
     navController: NavHostController,
+    user: User? = null,
     modifier: Modifier = Modifier,
-    startDestination: String = Screen.Login.route
+    startDestination: String = Screen.Splash.route
 ) {
     NavHost(
         navController = navController,
         startDestination = startDestination,
         modifier = modifier
     ) {
+        composable(Screen.Splash.route) {
+            SplashScreen(
+                onSplashFinished = {
+                    val targetRoute = if (user != null) {
+                        when (user.role) {
+                            Role.OPERADOR -> Screen.OperatorHome.route
+                            Role.GESTOR -> Screen.ManagerHome.route
+                            Role.LIDERANCA -> Screen.LeadershipDashboard.route
+                        }
+                    } else {
+                        Screen.Login.route
+                    }
+                    navController.navigate(targetRoute) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         composable(Screen.Login.route) {
             val viewModel: LoginViewModel = hiltViewModel()
             LoginScreen(

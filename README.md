@@ -53,6 +53,12 @@ O projeto simula o fluxo real de uma empresa de grande porte:
 
 ## Funcionalidades
 
+### Autenticação e Abertura
+| Funcionalidade | Descrição |
+| :--- | :--- |
+| **Splash Screen** | Tela de abertura animada com o logo da Viação Águia Branca deslizando para a esquerda sobre fundo branco. |
+| **Login / Sessão** | Autenticação por perfis com persistência de sessão via DataStore. |
+
 ### Experiência do Operador
 | Funcionalidade | Descrição |
 | :--- | :--- |

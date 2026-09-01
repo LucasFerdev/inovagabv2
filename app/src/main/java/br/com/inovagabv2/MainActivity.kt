@@ -15,7 +15,6 @@ import br.com.inovagabv2.core.designsystem.AguiaTheme
 import br.com.inovagabv2.core.navigation.AguiaNavHost
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.core.session.SessionManager
-import br.com.inovagabv2.domain.model.Role
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -34,20 +33,10 @@ class MainActivity : ComponentActivity() {
 
             AguiaTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    // Determine start destination based on session
-                    val startDestination = if (user != null) {
-                        when (user!!.role) {
-                            Role.OPERADOR -> Screen.OperatorHome.route
-                            Role.GESTOR -> Screen.ManagerHome.route
-                            Role.LIDERANCA -> Screen.LeadershipDashboard.route
-                        }
-                    } else {
-                        Screen.Login.route
-                    }
-
                     AguiaNavHost(
                         navController = navController,
-                        startDestination = startDestination,
+                        user = user,
+                        startDestination = Screen.Splash.route,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }
