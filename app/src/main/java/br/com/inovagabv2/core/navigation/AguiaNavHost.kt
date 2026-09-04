@@ -80,7 +80,28 @@ fun AguiaNavHost(
             val viewModel: LoginViewModel = hiltViewModel()
             LoginScreen(
                 viewModel = viewModel,
+                onBackClick = { navController.popBackStack() },
+                onNavigateToRegister = { navController.navigate(Screen.Register.route) },
                 onLoginSuccess = { role ->
+                    val route = when (role) {
+                        Role.OPERADOR -> Screen.OperatorHome.route
+                        Role.GESTOR -> Screen.ManagerHome.route
+                        Role.LIDERANCA -> Screen.LeadershipDashboard.route
+                    }
+                    navController.navigate(route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Register.route) {
+            val viewModel: br.com.inovagabv2.presentation.auth.RegisterViewModel = hiltViewModel()
+            br.com.inovagabv2.presentation.auth.RegisterScreen(
+                viewModel = viewModel,
+                onBackClick = { navController.popBackStack() },
+                onNavigateToLogin = { navController.popBackStack() },
+                onRegisterSuccess = { role ->
                     val route = when (role) {
                         Role.OPERADOR -> Screen.OperatorHome.route
                         Role.GESTOR -> Screen.ManagerHome.route

@@ -1,6 +1,5 @@
 package br.com.inovagabv2.presentation.auth
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,8 +11,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.outlined.Business
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Mail
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,20 +36,26 @@ import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.domain.model.Role
 
 @Composable
-fun LoginScreen(
-    viewModel: LoginViewModel,
-    onLoginSuccess: (Role) -> Unit,
-    onBackClick: (() -> Unit)? = null,
-    onNavigateToRegister: () -> Unit = {}
+fun RegisterScreen(
+    viewModel: RegisterViewModel,
+    onRegisterSuccess: (Role) -> Unit,
+    onBackClick: () -> Unit,
+    onNavigateToLogin: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
 
-    LaunchedEffect(uiState.successUser) {
-        uiState.successUser?.let {
-            onLoginSuccess(it.role)
+    var fullName by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var companyUnit by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
+    var acceptedTerms by remember { mutableStateOf(false) }
+
+    LaunchedEffect(uiState.isSuccess) {
+        if (uiState.isSuccess) {
+            onRegisterSuccess(uiState.createdUser?.role ?: Role.OPERADOR)
         }
     }
 
@@ -67,19 +74,17 @@ fun LoginScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = 24.dp)
+                    .padding(top = 8.dp, bottom = 20.dp)
             ) {
-                if (onBackClick != null) {
-                    IconButton(
-                        onClick = onBackClick,
-                        modifier = Modifier.align(Alignment.CenterStart)
-                    ) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Voltar",
-                            tint = AguiaColors.NavyDark
-                        )
-                    }
+                IconButton(
+                    onClick = onBackClick,
+                    modifier = Modifier.align(Alignment.CenterStart)
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Voltar",
+                        tint = AguiaColors.NavyDark
+                    )
                 }
 
                 Column(
@@ -103,11 +108,11 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             // Title Section
             Text(
-                text = "Acesse sua conta",
+                text = "Crie sua conta",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = AguiaColors.NavyDark,
@@ -117,19 +122,44 @@ fun LoginScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Entre para acompanhar suas ideias e projetos.",
+                text = "Cadastre-se para compartilhar ideias e transformar o futuro.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = AguiaColors.TextSecondary,
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
-            // E-mail corporativo field
+            // 1. Nome completo
+            OutlinedTextField(
+                value = fullName,
+                onValueChange = { fullName = it },
+                placeholder = { Text("Nome completo", color = AguiaColors.TextSecondary, fontSize = 15.sp) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Person,
+                        contentDescription = null,
+                        tint = AguiaColors.NavyDark
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedBorderColor = AguiaColors.PrimaryBlue,
+                    unfocusedBorderColor = AguiaColors.TextSecondary.copy(alpha = 0.25f)
+                ),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // 2. E-mail (CRITICAL INSTRUCTION: "adicione apenas email não email corporativo")
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                placeholder = { Text("E-mail corporativo", color = AguiaColors.TextSecondary, fontSize = 15.sp) },
+                placeholder = { Text("E-mail", color = AguiaColors.TextSecondary, fontSize = 15.sp) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Outlined.Mail,
@@ -149,9 +179,34 @@ fun LoginScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
-            // Senha field
+            // 3. Empresa ou unidade
+            OutlinedTextField(
+                value = companyUnit,
+                onValueChange = { companyUnit = it },
+                placeholder = { Text("Empresa ou unidade", color = AguiaColors.TextSecondary, fontSize = 15.sp) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Business,
+                        contentDescription = null,
+                        tint = AguiaColors.NavyDark
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedBorderColor = AguiaColors.PrimaryBlue,
+                    unfocusedBorderColor = AguiaColors.TextSecondary.copy(alpha = 0.25f)
+                ),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // 4. Senha
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
@@ -185,6 +240,42 @@ fun LoginScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
 
+            Spacer(modifier = Modifier.height(14.dp))
+
+            // 5. Confirmar senha
+            OutlinedTextField(
+                value = confirmPassword,
+                onValueChange = { confirmPassword = it },
+                placeholder = { Text("Confirmar senha", color = AguiaColors.TextSecondary, fontSize = 15.sp) },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Outlined.Lock,
+                        contentDescription = null,
+                        tint = AguiaColors.NavyDark
+                    )
+                },
+                trailingIcon = {
+                    IconButton(onClick = { confirmPasswordVisible = !confirmPasswordVisible }) {
+                        Icon(
+                            imageVector = if (confirmPasswordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                            contentDescription = "Mostrar/Ocultar senha",
+                            tint = AguiaColors.NavyDark
+                        )
+                    }
+                },
+                visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White,
+                    focusedBorderColor = AguiaColors.PrimaryBlue,
+                    unfocusedBorderColor = AguiaColors.TextSecondary.copy(alpha = 0.25f)
+                ),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+            )
+
             if (uiState.error != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -195,28 +286,62 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Esqueci minha senha
-            Box(modifier = Modifier.fillMaxWidth()) {
-                TextButton(
-                    onClick = { /* Forgot password action */ },
-                    modifier = Modifier.align(Alignment.CenterEnd)
-                ) {
-                    Text(
-                        text = "Esqueci minha senha",
-                        color = AguiaColors.PrimaryBlue,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 14.sp
-                    )
-                }
-            }
-
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Primary Button: Acessar
+            // Terms Checkbox Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { acceptedTerms = !acceptedTerms },
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = acceptedTerms,
+                    onCheckedChange = { acceptedTerms = it },
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = AguiaColors.PrimaryBlue,
+                        uncheckedColor = AguiaColors.TextSecondary
+                    )
+                )
+                
+                Text(
+                    text = "Li e aceito os ",
+                    fontSize = 13.sp,
+                    color = AguiaColors.NavyDark
+                )
+                Text(
+                    text = "Termos de Uso",
+                    fontSize = 13.sp,
+                    color = AguiaColors.PrimaryBlue,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = " e a ",
+                    fontSize = 13.sp,
+                    color = AguiaColors.NavyDark
+                )
+                Text(
+                    text = "Política de Privacidade",
+                    fontSize = 13.sp,
+                    color = AguiaColors.PrimaryBlue,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Primary Button: Criar conta
             Button(
-                onClick = { viewModel.login(email, password) },
+                onClick = {
+                    viewModel.register(
+                        fullName = fullName,
+                        email = email,
+                        companyUnit = companyUnit,
+                        password = password,
+                        confirmPassword = confirmPassword,
+                        acceptedTerms = acceptedTerms
+                    )
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
@@ -230,7 +355,7 @@ fun LoginScreen(
                     CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
                 } else {
                     Text(
-                        text = "Acessar",
+                        text = "Criar conta",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
                     )
@@ -239,70 +364,23 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Divider: ou
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f),
-                    color = AguiaColors.TextSecondary.copy(alpha = 0.2f)
-                )
-                Text(
-                    text = "ou",
-                    color = AguiaColors.TextSecondary,
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f),
-                    color = AguiaColors.TextSecondary.copy(alpha = 0.2f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Continuar com Google
-            OutlinedButton(
-                onClick = { /* Google sign in */ },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, AguiaColors.TextSecondary.copy(alpha = 0.3f)),
-                colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    GoogleLogo()
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Continuar com Google",
-                        color = AguiaColors.NavyDark,
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 15.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // Sign Up link: Ainda não possui uma conta? Criar conta
+            // Sign In link: Já possui uma conta? Acessar
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Ainda não possui uma conta? ",
+                    text = "Já possui uma conta? ",
                     color = AguiaColors.NavyDark,
                     fontSize = 14.sp
                 )
                 Text(
-                    text = "Criar conta",
+                    text = "Acessar",
                     color = AguiaColors.PrimaryBlue,
                     fontWeight = FontWeight.SemiBold,
                     fontSize = 14.sp,
                     textDecoration = TextDecoration.Underline,
-                    modifier = Modifier.clickable { onNavigateToRegister() }
+                    modifier = Modifier.clickable { onNavigateToLogin() }
                 )
             }
 
@@ -326,107 +404,6 @@ fun LoginScreen(
                     color = AguiaColors.TextSecondary
                 )
             }
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // Test Users Card (Interactive Quick Login)
-            Card(
-                colors = CardDefaults.cardColors(containerColor = AguiaColors.NavyDark.copy(alpha = 0.05f)),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Usuários de teste (Clique para entrar):",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        color = AguiaColors.NavyDark
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Surface(
-                            onClick = {
-                                email = "operador@aguia.com"
-                                password = "123"
-                                viewModel.login("operador@aguia.com", "123")
-                            },
-                            shape = RoundedCornerShape(8.dp),
-                            color = AguiaColors.PrimaryBlue.copy(alpha = 0.12f),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = "Operador",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AguiaColors.PrimaryBlue,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        }
-
-                        Surface(
-                            onClick = {
-                                email = "gestor@aguia.com"
-                                password = "123"
-                                viewModel.login("gestor@aguia.com", "123")
-                            },
-                            shape = RoundedCornerShape(8.dp),
-                            color = AguiaColors.ManagerPurple.copy(alpha = 0.12f),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = "Gestor",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AguiaColors.ManagerPurple,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        }
-
-                        Surface(
-                            onClick = {
-                                email = "lideranca@aguia.com"
-                                password = "123"
-                                viewModel.login("lideranca@aguia.com", "123")
-                            },
-                            shape = RoundedCornerShape(8.dp),
-                            color = AguiaColors.SuccessGreen.copy(alpha = 0.12f),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = "Liderança",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AguiaColors.SuccessGreen,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        }
-                    }
-                }
-            }
         }
-    }
-}
-
-@Composable
-private fun GoogleLogo() {
-    Box(
-        modifier = Modifier.size(20.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "G",
-            fontWeight = FontWeight.Black,
-            fontSize = 18.sp,
-            color = Color(0xFF4285F4)
-        )
     }
 }
