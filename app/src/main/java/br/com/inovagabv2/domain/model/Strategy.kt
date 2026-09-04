@@ -9,6 +9,7 @@ data class Strategy(
     val description: String,
     val objectives: List<String>,
     val isPublished: Boolean = true,
+    val publishedDate: String? = null,
     val createdAt: String,
     val updatedAt: String
 )

@@ -39,8 +39,8 @@ fun AguiaBottomBar(
         )
         Role.LIDERANCA -> listOf(
             NavigationItem(Screen.LeadershipDashboard, Icons.Default.Home, "Início"),
-            NavigationItem(Screen.LeadershipStrategy, Icons.AutoMirrored.Filled.Assignment, "Estratégia"),
-            NavigationItem(Screen.LeadershipProjects, Icons.Default.Work, "Projetos"),
+            NavigationItem(Screen.LeadershipStrategy, Icons.Default.TrackChanges, "Estratégia"),
+            NavigationItem(Screen.LeadershipProjects, Icons.Default.Folder, "Projetos"),
             NavigationItem(Screen.LeadershipResults, Icons.Default.BarChart, "Resultados"),
             NavigationItem(Screen.Profile, Icons.Default.Person, "Perfil")
         )

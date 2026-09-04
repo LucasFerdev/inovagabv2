@@ -14,27 +14,33 @@ class StrategyRepositoryImpl @Inject constructor() : StrategyRepository {
     private val _strategies = MutableStateFlow<List<Strategy>>(listOf(
         Strategy(
             id = "1",
-            title = "Excelência na Viagem",
-            description = "Garantir a melhor experiência de transporte rodoviário do Brasil, focando em pontualidade e conforto.",
+            title = "Excelência na viagem",
+            description = "Diretrizes para elevar a qualidade da experiência do cliente em todas as etapas da jornada.",
             objectives = listOf("Reduzir atrasos em 15%", "Aumentar NPS de bordo para 90", "Zero acidentes em rotas"),
-            createdAt = "01/01/2026",
-            updatedAt = "01/01/2026"
+            isPublished = true,
+            publishedDate = "Publicada em 15/04/2025",
+            createdAt = "15/04/2025",
+            updatedAt = "15/04/2025"
         ),
         Strategy(
             id = "2",
-            title = "Eficiência Energética e Sustentabilidade",
-            description = "Reduzir o impacto ambiental da nossa frota através de tecnologia e direção defensiva.",
+            title = "Eficiência energética",
+            description = "Orientações para reduzir o consumo de combustível e promover o uso responsável dos recursos.",
             objectives = listOf("Reduzir consumo de diesel em 10%", "Implementar reciclagem em 100% das unidades"),
-            createdAt = "15/01/2026",
-            updatedAt = "15/01/2026"
+            isPublished = true,
+            publishedDate = "Publicada em 10/03/2025",
+            createdAt = "10/03/2025",
+            updatedAt = "10/03/2025"
         ),
         Strategy(
             id = "3",
-            title = "Inovação no Atendimento",
-            description = "Facilitar a vida do passageiro desde a compra da passagem até o desembarque final.",
+            title = "Inovação no atendimento",
+            description = "Diretrizes para inovar no atendimento ao cliente com foco em agilidade e empatia.",
             objectives = listOf("Digitalizar 100% dos cartões de embarque", "Reduzir tempo de guichê em 30%"),
-            createdAt = "20/01/2026",
-            updatedAt = "20/01/2026"
+            isPublished = true,
+            publishedDate = "Publicada em 20/02/2025",
+            createdAt = "20/02/2025",
+            updatedAt = "20/02/2025"
         )
     ))
 

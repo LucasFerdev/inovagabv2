@@ -1,7 +1,6 @@
 package br.com.inovagabv2.data.repository
 
 import br.com.inovagabv2.domain.model.Project
-import br.com.inovagabv2.domain.model.ProjectMetric
 import br.com.inovagabv2.domain.model.ProjectStatus
 import br.com.inovagabv2.domain.repository.ProjectRepository
 import kotlinx.coroutines.flow.Flow
@@ -16,39 +15,33 @@ class ProjectRepositoryImpl @Inject constructor() : ProjectRepository {
     private val _projects = MutableStateFlow<List<Project>>(listOf(
         Project(
             id = "1",
-            name = "Digitalização do Cartão de Embarque",
+            name = "Cartão de embarque digital",
             description = "Eliminar o uso de papel no embarque rodoviário através de leitura facial e QR Code.",
             status = ProjectStatus.EM_ANDAMENTO,
-            progress = 0.62f,
-            startDate = "10/05/2026",
-            deadline = "10/12/2026",
-            investment = "R$ 120.000",
-            results = listOf(
-                ProjectMetric("Redução de papel", "85%", "meta atingida"),
-                ProjectMetric("Agilidade no embarque", "-30%", "vs. mês anterior"),
-                ProjectMetric("Satisfação do passageiro", "+42%", "YTD")
-            ),
-            nextSteps = listOf("Treinamento de motoristas", "Instalação de tablets nas unidades", "Campanha com passageiros")
-        ),
-        Project(
-            id = "2",
-            name = "Manutenção Inteligente (Frota G8)",
-            description = "Uso de sensores IOT para manutenção preditiva dos novos ônibus da frota.",
-            status = ProjectStatus.EM_ANDAMENTO,
-            progress = 0.48f,
-            startDate = "15/04/2026",
-            deadline = "15/09/2026",
+            progress = 0.65f,
+            startDate = "10/05/2025",
+            deadline = "30/09/2025",
             investment = "R$ 250.000"
         ),
         Project(
+            id = "2",
+            name = "Manutenção inteligente",
+            description = "Uso de sensores IOT para manutenção preditiva dos ônibus da frota.",
+            status = ProjectStatus.EM_ANDAMENTO,
+            progress = 0.40f,
+            startDate = "15/04/2025",
+            deadline = "15/08/2025",
+            investment = "R$ 180.000"
+        ),
+        Project(
             id = "3",
-            name = "Redução de Consumo (Telemetria)",
-            description = "Novo sistema de monitoramento de condução para economia de combustível.",
+            name = "Telemetria e consumo",
+            description = "Sistema de monitoramento de condução para economia de combustível.",
             status = ProjectStatus.PLANEJADO,
-            progress = 0.12f,
-            startDate = "20/08/2026",
-            deadline = "20/02/2027",
-            investment = "R$ 85.000"
+            progress = 0.15f,
+            startDate = "20/08/2025",
+            deadline = "20/11/2025",
+            investment = "R$ 25.000"
         )
     ))
 

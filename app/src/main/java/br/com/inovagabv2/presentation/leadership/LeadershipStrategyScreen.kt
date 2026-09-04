@@ -3,14 +3,20 @@ package br.com.inovagabv2.presentation.leadership
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
@@ -28,20 +34,22 @@ fun LeadershipStrategyScreen(
 ) {
     val state by viewModel.state.collectAsState()
     var selectedTab by remember { mutableIntStateOf(0) }
+    var searchQuery by remember { mutableStateOf("") }
     val tabs = listOf("Publicadas", "Rascunhos")
 
     Scaffold(
         topBar = {
-            AguiaTopBar(title = "Diretrizes Estratégicas")
+            AguiaTopBar(showLeadershipTag = true)
         },
         floatingActionButton = {
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
                 onClick = onNavigateToCreate,
                 containerColor = AguiaColors.PrimaryBlue,
-                contentColor = Color.White
-            ) {
-                Icon(Icons.Default.Add, contentDescription = "Nova Diretriz")
-            }
+                contentColor = Color.White,
+                shape = RoundedCornerShape(24.dp),
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text("Nova diretriz", fontWeight = FontWeight.SemiBold) }
+            )
         },
         bottomBar = {
             AguiaBottomBar(
@@ -61,16 +69,68 @@ fun LeadershipStrategyScreen(
         containerColor = AguiaColors.Background
     ) { padding ->
         Column(modifier = Modifier.padding(padding)) {
+            // Search Bar & Filter Row
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    placeholder = { Text("Pesquisar estratégias...", color = AguiaColors.TextSecondary, fontSize = 14.sp) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, tint = AguiaColors.TextSecondary) },
+                    modifier = Modifier.weight(1f),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = AguiaColors.CardWhite,
+                        unfocusedContainerColor = AguiaColors.CardWhite,
+                        focusedBorderColor = AguiaColors.PrimaryBlue.copy(alpha = 0.3f),
+                        unfocusedBorderColor = Color.Transparent
+                    ),
+                    singleLine = true
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                IconButton(
+                    onClick = { /* Filter action */ },
+                    modifier = Modifier.size(48.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.FilterList,
+                        contentDescription = "Filtrar",
+                        tint = AguiaColors.NavyDark
+                    )
+                }
+            }
+
+            // Tabs
             TabRow(
                 selectedTabIndex = selectedTab,
-                containerColor = Color.White,
-                contentColor = AguiaColors.PrimaryBlue
+                containerColor = AguiaColors.Background,
+                contentColor = AguiaColors.PrimaryBlue,
+                indicator = { tabPositions ->
+                    if (selectedTab < tabPositions.size) {
+                        TabRowDefaults.SecondaryIndicator(
+                            modifier = Modifier.tabIndicatorOffset(tabPositions[selectedTab]),
+                            color = AguiaColors.PrimaryBlue
+                        )
+                    }
+                }
             ) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
                         selected = selectedTab == index,
                         onClick = { selectedTab = index },
-                        text = { Text(title) }
+                        text = {
+                            Text(
+                                text = title,
+                                fontWeight = if (selectedTab == index) FontWeight.Bold else FontWeight.Medium,
+                                color = if (selectedTab == index) AguiaColors.PrimaryBlue else AguiaColors.TextSecondary
+                            )
+                        }
                     )
                 }
             }
@@ -80,21 +140,25 @@ fun LeadershipStrategyScreen(
                     CircularProgressIndicator(color = AguiaColors.PrimaryBlue)
                 }
             } else {
-                val filteredStrategies = state.strategies.filter { 
-                    if (selectedTab == 0) it.isPublished else !it.isPublished 
+                val filteredStrategies = state.strategies.filter { strategy ->
+                    val matchesTab = if (selectedTab == 0) strategy.isPublished else !strategy.isPublished
+                    val matchesQuery = searchQuery.isBlank() || 
+                        strategy.title.contains(searchQuery, ignoreCase = true) ||
+                        strategy.description.contains(searchQuery, ignoreCase = true)
+                    matchesTab && matchesQuery
                 }
 
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 80.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(filteredStrategies) { strategy ->
                         AguiaStrategyCard(
                             strategy = strategy,
                             onClick = { onNavigateToEdit(strategy.id) },
-                            onDelete = { viewModel.deleteStrategy(strategy.id) },
-                            onTogglePublish = { viewModel.togglePublish(strategy) }
+                            onEdit = { onNavigateToEdit(strategy.id) },
+                            onDelete = { viewModel.deleteStrategy(strategy.id) }
                         )
                     }
                 }

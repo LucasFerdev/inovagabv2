@@ -3,9 +3,6 @@ package br.com.inovagabv2.presentation.leadership
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AttachMoney
-import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -30,7 +27,7 @@ fun LeadershipResultsScreen(
 
     Scaffold(
         topBar = {
-            AguiaTopBar(title = "Mensuração de Resultados")
+            AguiaTopBar(showLeadershipTag = true)
         },
         bottomBar = {
             AguiaBottomBar(
@@ -55,23 +52,32 @@ fun LeadershipResultsScreen(
                 .fillMaxSize()
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(vertical = 16.dp)
+            contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp)
         ) {
+            item {
+                Text(
+                    text = "Mensuração de resultados",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = AguiaColors.NavyDark
+                )
+            }
+
             state.data?.let { data ->
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         AguiaDashboardCard(
                             title = "ROI Global",
                             value = data.roi,
-                            icon = Icons.Default.TrendingUp,
-                            color = AguiaColors.SuccessGreen,
+                            showSparkline = true,
+                            isPositiveSparkline = true,
                             modifier = Modifier.weight(1f)
                         )
                         AguiaDashboardCard(
                             title = "Lucro Total",
                             value = data.profit,
-                            icon = Icons.Default.AttachMoney,
-                            color = AguiaColors.PrimaryBlue,
+                            showSparkline = true,
+                            isPositiveSparkline = true,
                             modifier = Modifier.weight(1f)
                         )
                     }
@@ -79,10 +85,11 @@ fun LeadershipResultsScreen(
 
                 item {
                     Text(
-                        text = "Resultados por Projeto",
+                        text = "Resultados por projeto",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = AguiaColors.NavyDark
+                        color = AguiaColors.NavyDark,
+                        modifier = Modifier.padding(top = 8.dp)
                     )
                 }
 

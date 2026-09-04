@@ -19,9 +19,9 @@ class DashboardRepositoryImpl @Inject constructor() : DashboardRepository {
         activeProjectsCount = 18,
         approvedIdeasCount = 24,
         resultsByProject = listOf(
-            ProjectResult("1", "Digitalização do Cartão de Embarque", "38%", "R$ 1,2 mi", "R$ 120 mil", "Alto"),
-            ProjectResult("2", "Manutenção Inteligente (G8)", "25%", "R$ 950 mil", "R$ 250 mil", "Médio"),
-            ProjectResult("3", "Telemetria e Redução de Consumo", "18%", "R$ 780 mil", "R$ 85 mil", "Médio")
+            ProjectResult("1", "Cartão de embarque digital", "32,5%", "R$ 81.250", "R$ 250.000", "Alto"),
+            ProjectResult("2", "Manutenção inteligente", "28,9%", "R$ 52.020", "R$ 180.000", "Médio"),
+            ProjectResult("3", "Telemetria e consumo", "18,7%", "R$ 4.675", "R$ 25.000", "Médio")
         )
     ))
 

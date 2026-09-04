@@ -1,18 +1,23 @@
 package br.com.inovagabv2.presentation.leadership
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Assignment
-import androidx.compose.material.icons.automirrored.filled.TrendingUp
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Lightbulb
+import androidx.compose.material.icons.filled.Work
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import br.com.inovagabv2.core.designsystem.AguiaColors
@@ -32,7 +37,7 @@ fun LeadershipDashboardScreen(
 
     Scaffold(
         topBar = {
-            AguiaTopBar()
+            AguiaTopBar(showLeadershipTag = true)
         },
         bottomBar = {
             AguiaBottomBar(
@@ -84,33 +89,42 @@ private fun DashboardContent(
             .fillMaxSize()
             .padding(horizontal = 16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(vertical = 16.dp)
+        contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp)
     ) {
+        // Greeting Title
         item {
-            Text(
-                text = "Visão Geral de Impacto",
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = AguiaColors.NavyDark
-            )
+            Column {
+                Text(
+                    text = "Olá, Carlos!",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = AguiaColors.NavyDark
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Visão estratégica da inovação",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = AguiaColors.TextSecondary
+                )
+            }
         }
 
+        // 2x2 Grid Cards with Sparklines
         item {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     AguiaDashboardCard(
                         title = "ROI Global",
                         value = data.roi,
-                        icon = Icons.AutoMirrored.Filled.TrendingUp,
-                        color = AguiaColors.SuccessGreen,
-                        trend = "+12% vs meta",
+                        showSparkline = true,
+                        isPositiveSparkline = true,
                         modifier = Modifier.weight(1f)
                     )
                     AguiaDashboardCard(
                         title = "Lucro Gerado",
                         value = data.profit,
-                        icon = Icons.Default.AttachMoney,
-                        color = AguiaColors.PrimaryBlue,
+                        showSparkline = true,
+                        isPositiveSparkline = true,
                         modifier = Modifier.weight(1f)
                     )
                 }
@@ -118,25 +132,25 @@ private fun DashboardContent(
                     AguiaDashboardCard(
                         title = "Redução de Custos",
                         value = data.costReduction,
-                        icon = Icons.Default.Analytics,
-                        color = AguiaColors.ManagerPurple,
+                        showSparkline = true,
+                        isPositiveSparkline = false,
                         modifier = Modifier.weight(1f)
                     )
                     AguiaDashboardCard(
                         title = "Produtividade",
                         value = data.productivity,
-                        icon = Icons.Default.Speed,
-                        color = AguiaColors.WarningYellow,
-                        trend = "+5% este mês",
+                        showSparkline = true,
+                        isPositiveSparkline = true,
                         modifier = Modifier.weight(1f)
                     )
                 }
             }
         }
 
+        // Section Title: Resumo operacional
         item {
             Text(
-                text = "Resumo Operacional",
+                text = "Resumo operacional",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = AguiaColors.NavyDark,
@@ -144,20 +158,26 @@ private fun DashboardContent(
             )
         }
 
+        // Operational Summary Cards
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                AguiaMetricCard(
-                    label = "Projetos em Andamento",
-                    value = data.activeProjectsCount.toString(),
-                    color = AguiaColors.PrimaryBlue,
-                    modifier = Modifier.weight(1f),
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OperationalSummaryCard(
+                    title = "Projetos em andamento",
+                    count = data.activeProjectsCount.toString(),
+                    subtitle = "+2 vs. mês anterior",
+                    icon = Icons.Default.Work,
+                    iconBgColor = AguiaColors.PrimaryBlue.copy(alpha = 0.15f),
+                    iconTintColor = AguiaColors.PrimaryBlue,
                     onClick = onNavigateToProjects
                 )
-                AguiaMetricCard(
-                    label = "Ideias Aprovadas (Mês)",
-                    value = data.approvedIdeasCount.toString(),
-                    color = AguiaColors.SuccessGreen,
-                    modifier = Modifier.weight(1f),
+
+                OperationalSummaryCard(
+                    title = "Ideias aprovadas",
+                    count = data.approvedIdeasCount.toString(),
+                    subtitle = "+6 vs. mês anterior",
+                    icon = Icons.Default.Lightbulb,
+                    iconBgColor = Color(0xFFE0F2FE),
+                    iconTintColor = Color(0xFF0284C7),
                     onClick = onNavigateToStrategy
                 )
             }
@@ -165,3 +185,70 @@ private fun DashboardContent(
     }
 }
 
+@Composable
+private fun OperationalSummaryCard(
+    title: String,
+    count: String,
+    subtitle: String,
+    icon: ImageVector,
+    iconBgColor: Color,
+    iconTintColor: Color,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = AguiaColors.CardWhite),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(CircleShape)
+                    .background(iconBgColor),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = iconTintColor,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+            
+            Spacer(modifier = Modifier.width(16.dp))
+            
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = AguiaColors.TextSecondary,
+                    fontWeight = FontWeight.Medium
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = count,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = AguiaColors.NavyDark
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = AguiaColors.SuccessGreen,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+    }
+}
