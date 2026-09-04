@@ -18,6 +18,7 @@ import br.com.inovagabv2.core.designsystem.AguiaColors
 fun AguiaTopBar(
     title: String? = null,
     onBackClick: (() -> Unit)? = null,
+    roleTag: String? = null, // e.g. "GESTOR", "LIDERANÇA"
     showLeadershipTag: Boolean = false,
     backgroundColor: Color = Color.Transparent,
     contentColor: Color = AguiaColors.TextPrimary,
@@ -48,9 +49,10 @@ fun AguiaTopBar(
             }
         },
         actions = {
-            if (showLeadershipTag) {
+            val tagText = roleTag ?: if (showLeadershipTag) "LIDERANÇA" else null
+            if (tagText != null) {
                 Text(
-                    text = "LIDERANÇA",
+                    text = tagText,
                     color = AguiaColors.PrimaryBlue,
                     fontWeight = FontWeight.Bold,
                     fontSize = 13.sp,

@@ -1,7 +1,9 @@
 package br.com.inovagabv2.core.designsystem.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
@@ -11,6 +13,8 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -70,7 +74,7 @@ fun AguiaProjectCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Progress Bar Row: [ ===== Progress Bar ===== ] 65% >
+            // Progress Bar Row: [ ===== Progress Bar ===== ] 65%
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
@@ -94,14 +98,15 @@ fun AguiaProjectCard(
                     color = AguiaColors.TextSecondary
                 )
 
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Icon(
-                    imageVector = Icons.Default.ChevronRight,
-                    contentDescription = null,
-                    tint = AguiaColors.TextSecondary,
-                    modifier = Modifier.size(20.dp)
-                )
+                if (project.authorName == null) {
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = AguiaColors.TextSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -156,6 +161,55 @@ fun AguiaProjectCard(
                             color = AguiaColors.NavyDark
                         )
                     }
+                }
+            }
+
+            if (project.authorName != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                HorizontalDivider(color = AguiaColors.Background)
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    val initials = project.authorName.split(" ")
+                        .mapNotNull { it.firstOrNull()?.toString() }
+                        .take(2)
+                        .joinToString("")
+                        .uppercase()
+
+                    Box(
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(CircleShape)
+                            .background(AguiaColors.PrimaryBlue),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = initials,
+                            color = Color.White,
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(10.dp))
+
+                    Text(
+                        text = project.authorName,
+                        style = MaterialTheme.typography.bodySmall,
+                        fontWeight = FontWeight.Medium,
+                        color = AguiaColors.NavyDark,
+                        modifier = Modifier.weight(1f)
+                    )
+
+                    Icon(
+                        imageVector = Icons.Default.ChevronRight,
+                        contentDescription = null,
+                        tint = AguiaColors.TextSecondary,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }

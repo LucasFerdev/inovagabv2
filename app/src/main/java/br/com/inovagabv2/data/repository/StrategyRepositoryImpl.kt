@@ -34,13 +34,33 @@ class StrategyRepositoryImpl @Inject constructor() : StrategyRepository {
         ),
         Strategy(
             id = "3",
-            title = "Inovação no atendimento",
-            description = "Diretrizes para inovar no atendimento ao cliente com foco em agilidade e empatia.",
-            objectives = listOf("Digitalizar 100% dos cartões de embarque", "Reduzir tempo de guichê em 30%"),
+            title = "Inovação com propósito",
+            description = "Princípios para desenvolver soluções inovadoras alinhadas à estratégia e aos valores da Águia Branca.",
+            objectives = listOf("Inovação alinhada aos valores"),
+            isPublished = true,
+            publishedDate = "Publicada em 01/03/2025",
+            createdAt = "01/03/2025",
+            updatedAt = "01/03/2025"
+        ),
+        Strategy(
+            id = "4",
+            title = "Segurança em primeiro lugar",
+            description = "Diretrizes para garantir a segurança de passageiros, colaboradores e operações.",
+            objectives = listOf("Segurança em 100% das operações"),
             isPublished = true,
             publishedDate = "Publicada em 20/02/2025",
             createdAt = "20/02/2025",
             updatedAt = "20/02/2025"
+        ),
+        Strategy(
+            id = "5",
+            title = "Sustentabilidade",
+            description = "Compromissos e práticas para gerar impacto positivo no meio ambiente e na sociedade.",
+            objectives = listOf("Impacto positivo no meio ambiente"),
+            isPublished = true,
+            publishedDate = "Publicada em 10/02/2025",
+            createdAt = "10/02/2025",
+            updatedAt = "10/02/2025"
         )
     ))
 

@@ -1,6 +1,5 @@
 package br.com.inovagabv2.presentation.operator.create
 
-import androidx.compose.animation.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -8,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.AguiaButton
 import br.com.inovagabv2.core.designsystem.components.AguiaTextField
@@ -42,7 +43,7 @@ fun CreateIdeaScreen(
     Scaffold(
         topBar = {
             AguiaTopBar(
-                title = "Nova sugestão",
+                roleTag = "OPERADOR",
                 onBackClick = {
                     if (state.currentStep > 1) viewModel.previousStep()
                     else onBackClick()
@@ -55,11 +56,11 @@ fun CreateIdeaScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(16.dp)
+                .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
             StepIndicator(currentStep = state.currentStep)
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Box(modifier = Modifier.weight(1f)) {
                 when (state.currentStep) {
@@ -82,8 +83,8 @@ fun CreateIdeaScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    .padding(vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 if (state.currentStep > 1) {
                     AguiaButton(
@@ -94,20 +95,40 @@ fun CreateIdeaScreen(
                     )
                 }
                 
-                AguiaButton(
-                    text = if (state.currentStep == 3) "Enviar" else "Próximo",
+                Button(
                     onClick = {
                         if (state.currentStep == 3) viewModel.submitIdea()
                         else viewModel.nextStep()
                     },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .height(50.dp),
+                    shape = RoundedCornerShape(12.dp),
                     enabled = when (state.currentStep) {
                         1 -> state.isStep1Valid
                         2 -> state.isStep2Valid
                         else -> !state.isLoading
                     },
-                    isLoading = state.isLoading
-                )
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = AguiaColors.PrimaryBlue,
+                        contentColor = Color.White
+                    )
+                ) {
+                    if (state.isLoading) {
+                        CircularProgressIndicator(
+                            color = Color.White,
+                            modifier = Modifier.size(20.dp),
+                            strokeWidth = 2.dp
+                        )
+                    } else {
+                        Text(
+                            text = if (state.currentStep == 3) "Enviar" else "Próximo",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 15.sp
+                        )
+                    }
+                }
             }
         }
     }
@@ -136,8 +157,8 @@ private fun StepItem(label: String, step: Int, currentStep: Int, modifier: Modif
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
         Box(
             modifier = Modifier
-                .size(24.dp)
-                .clip(RoundedCornerShape(4.dp))
+                .size(28.dp)
+                .clip(CircleShape)
                 .background(if (isActive) AguiaColors.PrimaryBlue else AguiaColors.TextSecondary.copy(alpha = 0.2f)),
             contentAlignment = Alignment.Center
         ) {
@@ -151,7 +172,7 @@ private fun StepItem(label: String, step: Int, currentStep: Int, modifier: Modif
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = label,
-            style = MaterialTheme.typography.labelSmall,
+            fontSize = 11.sp,
             color = if (isCurrent) AguiaColors.PrimaryBlue else AguiaColors.TextSecondary,
             fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal
         )
@@ -164,7 +185,7 @@ private fun CategoryStep(
     onCategorySelected: (String) -> Unit
 ) {
     val categories = listOf(
-        CategoryItem("Atendimento", Icons.Default.Headset),
+        CategoryItem("Atendimento", Icons.Default.Person),
         CategoryItem("Segurança", Icons.Default.Security),
         CategoryItem("Operação", Icons.Default.DirectionsBus),
         CategoryItem("Manutenção", Icons.Default.Build),
@@ -176,9 +197,10 @@ private fun CategoryStep(
 
     Column {
         Text(
-            text = "Em qual categoria sua ideia se encaixa?",
+            text = "Selecione a categoria da sua sugestão",
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = AguiaColors.NavyDark
         )
         Spacer(modifier = Modifier.height(16.dp))
         LazyVerticalGrid(
@@ -188,31 +210,49 @@ private fun CategoryStep(
         ) {
             items(categories) { category ->
                 val isSelected = selectedCategory == category.name
-                Box(
+                Card(
                     modifier = Modifier
-                        .height(100.dp)
+                        .height(64.dp)
                         .clip(RoundedCornerShape(12.dp))
-                        .background(if (isSelected) AguiaColors.PrimaryBlue.copy(alpha = 0.1f) else AguiaColors.CardWhite)
                         .border(
-                            width = 2.dp,
+                            width = if (isSelected) 2.dp else 0.dp,
                             color = if (isSelected) AguiaColors.PrimaryBlue else Color.Transparent,
                             shape = RoundedCornerShape(12.dp)
                         )
-                        .clickable { onCategorySelected(category.name) }
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center
+                        .clickable { onCategorySelected(category.name) },
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (isSelected) AguiaColors.PrimaryBlue.copy(alpha = 0.08f) else AguiaColors.CardWhite
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(
-                            imageVector = category.icon,
-                            contentDescription = null,
-                            tint = if (isSelected) AguiaColors.PrimaryBlue else AguiaColors.TextSecondary
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(if (isSelected) AguiaColors.PrimaryBlue else AguiaColors.PrimaryBlue.copy(alpha = 0.1f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = category.icon,
+                                contentDescription = null,
+                                tint = if (isSelected) Color.White else AguiaColors.PrimaryBlue,
+                                modifier = Modifier.size(18.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
                         Text(
                             text = category.name,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = if (isSelected) AguiaColors.PrimaryBlue else AguiaColors.TextPrimary
+                            fontSize = 13.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) AguiaColors.PrimaryBlue else AguiaColors.NavyDark
                         )
                     }
                 }
@@ -234,7 +274,8 @@ private fun DetailsStep(
         Text(
             text = "Conte-nos mais sobre sua ideia",
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = AguiaColors.NavyDark
         )
         AguiaTextField(
             value = title,
@@ -264,7 +305,8 @@ private fun ReviewStep(state: CreateIdeaState) {
         Text(
             text = "Revise sua sugestão antes de enviar",
             style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold
+            fontWeight = FontWeight.Bold,
+            color = AguiaColors.NavyDark
         )
         
         Card(

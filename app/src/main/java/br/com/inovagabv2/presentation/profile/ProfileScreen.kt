@@ -51,14 +51,14 @@ fun ProfileScreen(
         onResult = { uri -> viewModel.updateProfileImage(uri) }
     )
 
-    val isLeadership = userState?.role == Role.LIDERANCA
+    val isLeadershipOrGestor = userState?.role == Role.LIDERANCA || userState?.role == Role.GESTOR
 
     Scaffold(
         topBar = {
-            if (isLeadership) {
-                AguiaTopBar(showLeadershipTag = true)
-            } else {
-                AguiaTopBar(title = "Perfil")
+            when (userState?.role) {
+                Role.LIDERANCA -> AguiaTopBar(roleTag = "LIDERANÇA")
+                Role.GESTOR -> AguiaTopBar(roleTag = "GESTOR")
+                else -> AguiaTopBar(title = "Perfil")
             }
         },
         bottomBar = {
@@ -86,8 +86,8 @@ fun ProfileScreen(
                 .padding(padding)
                 .verticalScroll(scrollState)
         ) {
-            if (isLeadership) {
-                LeadershipProfileContent(
+            if (isLeadershipOrGestor) {
+                ExecutiveProfileContent(
                     userState = userState,
                     profileImageUri = profileImageUri,
                     onPickImage = {
@@ -114,12 +114,16 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun LeadershipProfileContent(
+private fun ExecutiveProfileContent(
     userState: User?,
     profileImageUri: Uri?,
     onPickImage: () -> Unit,
     onLogout: () -> Unit
 ) {
+    val defaultName = if (userState?.role == Role.GESTOR) "Mariana Costa" else "Carlos Mendes"
+    val defaultRoleTitle = if (userState?.role == Role.GESTOR) "Gestora de Inovação" else "Diretor de Inovação"
+    val defaultEmail = if (userState?.role == Role.GESTOR) "gestor@aguia.com" else "lideranca@aguia.com"
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -158,7 +162,7 @@ private fun LeadershipProfileContent(
 
         // Name
         Text(
-            text = userState?.name ?: "Carlos Mendes",
+            text = userState?.name ?: defaultName,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             color = AguiaColors.NavyDark
@@ -168,7 +172,7 @@ private fun LeadershipProfileContent(
 
         // Role title
         Text(
-            text = "Diretor de Inovação",
+            text = defaultRoleTitle,
             style = MaterialTheme.typography.bodyLarge,
             color = AguiaColors.PrimaryBlue,
             fontWeight = FontWeight.Medium
@@ -189,7 +193,7 @@ private fun LeadershipProfileContent(
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = userState?.email ?: "lideranca@aguia.com",
+                text = userState?.email ?: defaultEmail,
                 style = MaterialTheme.typography.bodyMedium,
                 color = AguiaColors.TextSecondary
             )

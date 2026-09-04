@@ -17,31 +17,65 @@ class IdeaRepositoryImpl @Inject constructor() : IdeaRepository {
     private val _ideas = MutableStateFlow<List<Idea>>(listOf(
         Idea(
             id = "1",
-            title = "Otimização do embarque na Rodoviária",
-            description = "Sugiro a criação de um sistema de QR Code para leitura rápida de passagens direto no embarque, reduzindo filas e tempo de parada dos ônibus.",
+            title = "Otimização do embarque",
+            description = "Proposta para reduzir o tempo de embarque nas rodoviárias por meio de organização de filas e sinalização.",
             authorId = "1",
             authorName = "João Silva",
             status = IdeaStatus.EM_ANALISE,
-            priority = Priority.MEDIA,
-            createdAt = "08/08/2026",
-            benefits = "Redução do tempo de embarque em 20%, maior conforto para o passageiro, agilidade operacional.",
+            priority = Priority.ALTA,
+            createdAt = "20/05/2025",
+            benefits = "Diminuição do tempo de espera, mais conforto para o cliente e melhor fluxo nas plataformas.",
             category = "Operação",
             timeline = listOf(
-                TimelineEvent("Enviada para análise", "08/08/2026 10:30", isCompleted = true),
-                TimelineEvent("Recebida pelo Gestor", "09/08/2026 14:20", isCompleted = true),
+                TimelineEvent("Enviada para análise", "20/05/2025 09:30", isCompleted = true),
+                TimelineEvent("Recebida pelo gestor", "20/05/2025 14:10", isCompleted = true),
                 TimelineEvent("Aguardando decisão", "--", isCompleted = false)
             )
         ),
         Idea(
             id = "2",
-            title = "Checklist Digital de Manutenção Preventiva",
-            description = "Substituir o formulário de papel por um app onde o mecânico registra as condições do ônibus antes de cada viagem.",
+            title = "Checklist digital de manutenção",
+            description = "Digitalizar o checklist para mais agilidade e rastreabilidade.",
             authorId = "1",
             authorName = "João Silva",
+            status = IdeaStatus.EM_ANALISE,
+            priority = Priority.MEDIA,
+            createdAt = "15/05/2025",
+            benefits = "Mais agilidade e rastreabilidade na manutenção.",
+            category = "Manutenção",
+            timeline = listOf(
+                TimelineEvent("Enviada para análise", "15/05/2025 10:00", isCompleted = true),
+                TimelineEvent("Recebida pelo gestor", "15/05/2025 11:30", isCompleted = true),
+                TimelineEvent("Aguardando decisão", "--", isCompleted = false)
+            )
+        ),
+        Idea(
+            id = "3",
+            title = "Coleta seletiva nas garagens",
+            description = "Implantar coleta seletiva para reduzir resíduos e impactos.",
+            authorId = "1",
+            authorName = "João Silva",
+            status = IdeaStatus.APROVADA,
+            priority = Priority.MEDIA,
+            createdAt = "10/05/2025",
+            benefits = "Redução de resíduos e impactos ambientais.",
+            category = "Sustentabilidade",
+            timeline = listOf(
+                TimelineEvent("Enviada para análise", "10/05/2025 08:00", isCompleted = true),
+                TimelineEvent("Aprovada pelo gestor", "12/05/2025 16:00", isCompleted = true)
+            )
+        ),
+        Idea(
+            id = "4",
+            title = "Wi-Fi a bordo",
+            description = "Disponibilizar Wi-Fi gratuito em toda a frota.",
+            authorId = "104",
+            authorName = "Beatriz Lima",
             status = IdeaStatus.ENVIADA,
-            createdAt = "12/08/2026",
-            benefits = "Redução de erros de preenchimento, histórico digital imediato, segurança da frota.",
-            category = "Manutenção"
+            priority = Priority.BAIXA,
+            createdAt = "05/05/2025",
+            benefits = "Conectividade e satisfação do passageiro.",
+            category = "Tecnologia"
         )
     ))
 

@@ -21,7 +21,8 @@ class ProjectRepositoryImpl @Inject constructor() : ProjectRepository {
             progress = 0.65f,
             startDate = "10/05/2025",
             deadline = "30/09/2025",
-            investment = "R$ 250.000"
+            investment = "R$ 250.000",
+            authorName = "Lucas Almeida"
         ),
         Project(
             id = "2",
@@ -31,17 +32,19 @@ class ProjectRepositoryImpl @Inject constructor() : ProjectRepository {
             progress = 0.40f,
             startDate = "15/04/2025",
             deadline = "15/08/2025",
-            investment = "R$ 180.000"
+            investment = "R$ 180.000",
+            authorName = "Juliana Martins"
         ),
         Project(
             id = "3",
-            name = "Telemetria e consumo",
-            description = "Sistema de monitoramento de condução para economia de combustível.",
+            name = "Wi-Fi a bordo",
+            description = "Disponibilizar Wi-Fi gratuito em toda a frota.",
             status = ProjectStatus.PLANEJADO,
             progress = 0.15f,
             startDate = "20/08/2025",
             deadline = "20/11/2025",
-            investment = "R$ 25.000"
+            investment = "R$ 320.000",
+            authorName = "Beatriz Lima"
         )
     ))
 

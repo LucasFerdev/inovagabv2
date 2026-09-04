@@ -12,6 +12,7 @@ data class Project(
     val startDate: String,
     val deadline: String,
     val investment: String,
+    val authorName: String? = null,
     val results: List<ProjectMetric> = emptyList(),
     val nextSteps: List<String> = emptyList()
 )

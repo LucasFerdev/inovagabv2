@@ -12,6 +12,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
@@ -33,11 +35,7 @@ fun ManagerProjectsScreen(
 
     Scaffold(
         topBar = {
-            AguiaTopBar(
-                title = "Projetos",
-                backgroundColor = AguiaColors.ManagerPurple,
-                contentColor = AguiaColors.CardWhite
-            )
+            AguiaTopBar(roleTag = "GESTOR")
         },
         bottomBar = {
             AguiaBottomBar(
@@ -57,8 +55,8 @@ fun ManagerProjectsScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = onNavigateToCreateProject,
-                containerColor = AguiaColors.ManagerPurple,
-                contentColor = AguiaColors.CardWhite
+                containerColor = AguiaColors.PrimaryBlue,
+                contentColor = Color.White
             ) {
                 Icon(Icons.Default.Add, contentDescription = "Novo Projeto")
             }
@@ -72,30 +70,44 @@ fun ManagerProjectsScreen(
         ) {
             TabRow(
                 selectedTabIndex = state.selectedTab,
-                containerColor = AguiaColors.CardWhite,
-                contentColor = AguiaColors.ManagerPurple,
+                containerColor = AguiaColors.Background,
+                contentColor = AguiaColors.PrimaryBlue,
                 indicator = { tabPositions ->
-                    TabRowDefaults.SecondaryIndicator(
-                        Modifier.tabIndicatorOffset(tabPositions[state.selectedTab]),
-                        color = AguiaColors.ManagerPurple
-                    )
+                    if (state.selectedTab < tabPositions.size) {
+                        TabRowDefaults.SecondaryIndicator(
+                            Modifier.tabIndicatorOffset(tabPositions[state.selectedTab]),
+                            color = AguiaColors.PrimaryBlue
+                        )
+                    }
                 }
             ) {
                 Tab(
                     selected = state.selectedTab == 0,
                     onClick = { viewModel.onTabSelected(0) },
-                    text = { Text("Meus projetos") }
+                    text = {
+                        Text(
+                            text = "Meus projetos",
+                            fontWeight = if (state.selectedTab == 0) FontWeight.Bold else FontWeight.Medium,
+                            color = if (state.selectedTab == 0) AguiaColors.PrimaryBlue else AguiaColors.TextSecondary
+                        )
+                    }
                 )
                 Tab(
                     selected = state.selectedTab == 1,
                     onClick = { viewModel.onTabSelected(1) },
-                    text = { Text("Todos") }
+                    text = {
+                        Text(
+                            text = "Todos",
+                            fontWeight = if (state.selectedTab == 1) FontWeight.Bold else FontWeight.Medium,
+                            color = if (state.selectedTab == 1) AguiaColors.PrimaryBlue else AguiaColors.TextSecondary
+                        )
+                    }
                 )
             }
 
             if (state.isLoading) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = AguiaColors.ManagerPurple)
+                    CircularProgressIndicator(color = AguiaColors.PrimaryBlue)
                 }
             } else if (state.projects.isEmpty()) {
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -109,7 +121,7 @@ fun ManagerProjectsScreen(
                 LazyColumn(
                     modifier = Modifier.fillMaxSize(),
                     contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     items(state.projects) { project ->
                         AguiaProjectCard(

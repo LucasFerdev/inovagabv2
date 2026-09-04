@@ -9,9 +9,17 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import br.com.inovagabv2.domain.model.Role
+import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.presentation.auth.LoginScreen
 import br.com.inovagabv2.presentation.auth.LoginViewModel
-
+import br.com.inovagabv2.presentation.leadership.*
+import br.com.inovagabv2.presentation.manager.home.ManagerHomeScreen
+import br.com.inovagabv2.presentation.manager.ideas.ManagerIdeasScreen
+import br.com.inovagabv2.presentation.manager.ideas.details.ManagerIdeaDetailsScreen
+import br.com.inovagabv2.presentation.manager.projects.ManagerProjectsScreen
+import br.com.inovagabv2.presentation.manager.projects.details.ManagerProjectDetailsScreen
+import br.com.inovagabv2.presentation.onboarding.OnboardingScreen
+import br.com.inovagabv2.presentation.operator.communications.CommunicationsScreen
 import br.com.inovagabv2.presentation.operator.create.CreateIdeaScreen
 import br.com.inovagabv2.presentation.operator.create.CreateIdeaViewModel
 import br.com.inovagabv2.presentation.operator.details.IdeaDetailsScreen
@@ -23,24 +31,9 @@ import br.com.inovagabv2.presentation.operator.myideas.MyIdeasViewModel
 import br.com.inovagabv2.presentation.operator.strategy.OperatorStrategyScreen
 import br.com.inovagabv2.presentation.operator.strategy.OperatorStrategyViewModel
 import br.com.inovagabv2.presentation.operator.strategy.StrategyDetailsScreen
-import br.com.inovagabv2.presentation.operator.communications.CommunicationsScreen
 import br.com.inovagabv2.presentation.profile.ProfileScreen
 import br.com.inovagabv2.presentation.profile.ProfileViewModel
-
-import br.com.inovagabv2.presentation.manager.home.ManagerHomeScreen
-import br.com.inovagabv2.presentation.manager.home.ManagerHomeViewModel
-import br.com.inovagabv2.presentation.manager.ideas.ManagerIdeasScreen
-import br.com.inovagabv2.presentation.manager.ideas.ManagerIdeasViewModel
-import br.com.inovagabv2.presentation.manager.ideas.details.ManagerIdeaDetailsScreen
-import br.com.inovagabv2.presentation.manager.ideas.details.ManagerIdeaDetailsViewModel
-import br.com.inovagabv2.presentation.manager.projects.ManagerProjectsScreen
-import br.com.inovagabv2.presentation.manager.projects.ManagerProjectsViewModel
-import br.com.inovagabv2.presentation.manager.projects.details.ManagerProjectDetailsScreen
-import br.com.inovagabv2.presentation.manager.projects.details.ManagerProjectDetailsViewModel
-
 import br.com.inovagabv2.presentation.splash.SplashScreen
-import br.com.inovagabv2.domain.model.User
-import br.com.inovagabv2.presentation.leadership.*
 
 @Composable
 fun AguiaNavHost(
@@ -64,10 +57,20 @@ fun AguiaNavHost(
                             Role.LIDERANCA -> Screen.LeadershipDashboard.route
                         }
                     } else {
-                        Screen.Login.route
+                        Screen.Onboarding.route
                     }
                     navController.navigate(targetRoute) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Onboarding.route) {
+            OnboardingScreen(
+                onFinish = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
                     }
                 }
             )
