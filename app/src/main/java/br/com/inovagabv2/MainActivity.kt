@@ -14,6 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import br.com.inovagabv2.core.designsystem.AguiaTheme
 import br.com.inovagabv2.core.navigation.AguiaNavHost
 import br.com.inovagabv2.core.navigation.Screen
+import br.com.inovagabv2.core.session.AppInitState
 import br.com.inovagabv2.core.session.SessionManager
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -28,14 +29,14 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            val user by sessionManager.userSession.collectAsState(initial = null)
+            val appInitState by sessionManager.appInitState.collectAsState(initial = AppInitState.Loading)
             val navController = rememberNavController()
 
             AguiaTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     AguiaNavHost(
                         navController = navController,
-                        user = user,
+                        appInitState = appInitState,
                         startDestination = Screen.Splash.route,
                         modifier = Modifier.padding(innerPadding)
                     )

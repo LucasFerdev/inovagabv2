@@ -2,8 +2,6 @@ package br.com.inovagabv2.presentation.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import br.com.inovagabv2.domain.model.Role
-import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -38,8 +36,8 @@ class RegisterViewModel @Inject constructor(
                 _uiState.update { it.copy(error = "Informe seu e-mail.") }
                 return@launch
             }
-            if (password.length < 3) {
-                _uiState.update { it.copy(error = "A senha deve ter pelo menos 3 caracteres.") }
+            if (password.length < 8) {
+                _uiState.update { it.copy(error = "A senha deve ter pelo menos 8 caracteres.") }
                 return@launch
             }
             if (password != confirmPassword) {
@@ -53,14 +51,17 @@ class RegisterViewModel @Inject constructor(
 
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            val newUser = User(
-                id = System.currentTimeMillis().toString(),
-                name = fullName,
+            val empresa = companyUnit.ifBlank { "Águia Branca" }
+            authRepository.register(
+                nome = fullName,
                 email = email,
-                role = Role.OPERADOR
-            )
-            authRepository.login(email, password)
-            _uiState.update { it.copy(isLoading = false, isSuccess = true, createdUser = newUser) }
+                senha = password,
+                empresa = empresa
+            ).onSuccess { user ->
+                _uiState.update { it.copy(isLoading = false, isSuccess = true, createdUser = user) }
+            }.onFailure { error ->
+                _uiState.update { it.copy(isLoading = false, error = error.message) }
+            }
         }
     }
 }

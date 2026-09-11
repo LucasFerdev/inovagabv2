@@ -12,9 +12,13 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -24,14 +28,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import br.com.inovagabv2.R
+import br.com.inovagabv2.core.session.AppInitState
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
-import androidx.compose.foundation.layout.height
-import androidx.compose.ui.draw.scale
 
 @Composable
 fun SplashScreen(
-    onSplashFinished: () -> Unit
+    appInitState: AppInitState = AppInitState.Loading,
+    onNavigate: (String) -> Unit
 ) {
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
@@ -44,6 +48,8 @@ fun SplashScreen(
         Animatable(0f)
     }
 
+    var minSplashFinished by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         // Tempo em que o logo permanece parado no centro
         delay(1_200)
@@ -51,13 +57,21 @@ fun SplashScreen(
         offsetX.animateTo(
             targetValue = -screenWidthPx,
             animationSpec = tween(
-                // Quanto maior, mais lenta será a saída
                 durationMillis = 1_800,
                 easing = FastOutSlowInEasing
             )
         )
 
-        onSplashFinished()
+        minSplashFinished = true
+    }
+
+    LaunchedEffect(minSplashFinished, appInitState) {
+        if (minSplashFinished) {
+            val destination = SplashNavigationResolver.resolveDestination(appInitState)
+            if (destination != null) {
+                onNavigate(destination)
+            }
+        }
     }
 
     SplashContent(
@@ -81,14 +95,9 @@ private fun SplashContent(
             ),
             contentDescription = "Viação Águia Branca",
             modifier = Modifier
-                // Era 65%; agora ocupa até 82% da largura
                 .fillMaxWidth(0.99f)
-
-                // Era 80.dp; agora permite um logo maior
                 .heightIn(max = 250.dp)
-
                 .scale(1.17f)
-
                 .offset {
                     IntOffset(
                         x = offsetX.roundToInt(),

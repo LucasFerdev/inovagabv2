@@ -1,3 +1,16 @@
+import java.util.Properties
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+}
+
+var apiBaseUrl: String = localProperties.getProperty("API_BASE_URL")?.trim()?.ifBlank { null } ?: "http://10.0.2.2:8080/"
+if (!apiBaseUrl.endsWith("/")) {
+    apiBaseUrl = "$apiBaseUrl/"
+}
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlinAndroid)
@@ -20,6 +33,8 @@ android {
         versionCode = 1
         versionName = "1.0"
 
+        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
+
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -39,6 +54,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -82,6 +98,9 @@ dependencies {
     implementation(libs.coil.network)
 
     testImplementation(libs.junit)
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.1")
+
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -197,15 +197,16 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Esqueci minha senha
+            // Esqueci minha senha (Indisponível no backend atual)
             Box(modifier = Modifier.fillMaxWidth()) {
                 TextButton(
-                    onClick = { /* Forgot password action */ },
+                    onClick = { /* Indisponível */ },
+                    enabled = false,
                     modifier = Modifier.align(Alignment.CenterEnd)
                 ) {
                     Text(
                         text = "Esqueci minha senha",
-                        color = AguiaColors.PrimaryBlue,
+                        color = AguiaColors.TextSecondary.copy(alpha = 0.5f),
                         fontWeight = FontWeight.Medium,
                         fontSize = 14.sp
                     )
@@ -262,22 +263,26 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Continuar com Google
+            // Continuar com Google (Indisponível no backend atual)
             OutlinedButton(
-                onClick = { /* Google sign in */ },
+                onClick = { /* Indisponível */ },
+                enabled = false,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
                 shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, AguiaColors.TextSecondary.copy(alpha = 0.3f)),
-                colors = ButtonDefaults.outlinedButtonColors(containerColor = Color.White)
+                border = BorderStroke(1.dp, AguiaColors.TextSecondary.copy(alpha = 0.2f)),
+                colors = ButtonDefaults.outlinedButtonColors(
+                    containerColor = Color.White,
+                    disabledContainerColor = Color.White
+                )
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     GoogleLogo()
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
                         text = "Continuar com Google",
-                        color = AguiaColors.NavyDark,
+                        color = AguiaColors.TextSecondary.copy(alpha = 0.5f),
                         fontWeight = FontWeight.Medium,
                         fontSize = 15.sp
                     )
@@ -326,92 +331,6 @@ fun LoginScreen(
                     color = AguiaColors.TextSecondary
                 )
             }
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            // Test Users Card (Interactive Quick Login)
-            Card(
-                colors = CardDefaults.cardColors(containerColor = AguiaColors.NavyDark.copy(alpha = 0.05f)),
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text(
-                        text = "Usuários de teste (Clique para entrar):",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        color = AguiaColors.NavyDark
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Surface(
-                            onClick = {
-                                email = "operador@aguia.com"
-                                password = "123"
-                                viewModel.login("operador@aguia.com", "123")
-                            },
-                            shape = RoundedCornerShape(8.dp),
-                            color = AguiaColors.PrimaryBlue.copy(alpha = 0.12f),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = "Operador",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AguiaColors.PrimaryBlue,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        }
-
-                        Surface(
-                            onClick = {
-                                email = "gestor@aguia.com"
-                                password = "123"
-                                viewModel.login("gestor@aguia.com", "123")
-                            },
-                            shape = RoundedCornerShape(8.dp),
-                            color = AguiaColors.ManagerPurple.copy(alpha = 0.12f),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = "Gestor",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AguiaColors.ManagerPurple,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        }
-
-                        Surface(
-                            onClick = {
-                                email = "lideranca@aguia.com"
-                                password = "123"
-                                viewModel.login("lideranca@aguia.com", "123")
-                            },
-                            shape = RoundedCornerShape(8.dp),
-                            color = AguiaColors.SuccessGreen.copy(alpha = 0.12f),
-                            modifier = Modifier.weight(1f)
-                        ) {
-                            Text(
-                                text = "Liderança",
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold,
-                                color = AguiaColors.SuccessGreen,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier.padding(vertical = 8.dp)
-                            )
-                        }
-                    }
-                }
-            }
         }
     }
 }
@@ -426,7 +345,7 @@ private fun GoogleLogo() {
             text = "G",
             fontWeight = FontWeight.Black,
             fontSize = 18.sp,
-            color = Color(0xFF4285F4)
+            color = Color(0xFF4285F4).copy(alpha = 0.5f)
         )
     }
 }

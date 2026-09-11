@@ -9,7 +9,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import br.com.inovagabv2.domain.model.Role
-import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.presentation.auth.LoginScreen
 import br.com.inovagabv2.presentation.auth.LoginViewModel
 import br.com.inovagabv2.presentation.leadership.*
@@ -27,6 +26,8 @@ import br.com.inovagabv2.presentation.operator.details.IdeaDetailsViewModel
 import br.com.inovagabv2.presentation.operator.home.OperatorHomeScreen
 import br.com.inovagabv2.presentation.operator.home.OperatorHomeViewModel
 import br.com.inovagabv2.presentation.operator.myideas.MyIdeasScreen
+import br.com.inovagabv2.core.session.AppInitState
+import br.com.inovagabv2.presentation.onboarding.OnboardingViewModel
 import br.com.inovagabv2.presentation.operator.myideas.MyIdeasViewModel
 import br.com.inovagabv2.presentation.operator.strategy.OperatorStrategyScreen
 import br.com.inovagabv2.presentation.operator.strategy.OperatorStrategyViewModel
@@ -38,7 +39,7 @@ import br.com.inovagabv2.presentation.splash.SplashScreen
 @Composable
 fun AguiaNavHost(
     navController: NavHostController,
-    user: User? = null,
+    appInitState: AppInitState = AppInitState.Loading,
     modifier: Modifier = Modifier,
     startDestination: String = Screen.Splash.route
 ) {
@@ -49,16 +50,8 @@ fun AguiaNavHost(
     ) {
         composable(Screen.Splash.route) {
             SplashScreen(
-                onSplashFinished = {
-                    val targetRoute = if (user != null) {
-                        when (user.role) {
-                            Role.OPERADOR -> Screen.OperatorHome.route
-                            Role.GESTOR -> Screen.ManagerHome.route
-                            Role.LIDERANCA -> Screen.LeadershipDashboard.route
-                        }
-                    } else {
-                        Screen.Onboarding.route
-                    }
+                appInitState = appInitState,
+                onNavigate = { targetRoute ->
                     navController.navigate(targetRoute) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
@@ -67,7 +60,9 @@ fun AguiaNavHost(
         }
 
         composable(Screen.Onboarding.route) {
+            val viewModel: OnboardingViewModel = hiltViewModel()
             OnboardingScreen(
+                viewModel = viewModel,
                 onFinish = {
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Onboarding.route) { inclusive = true }

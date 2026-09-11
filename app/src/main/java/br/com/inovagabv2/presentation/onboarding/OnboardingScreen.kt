@@ -37,8 +37,16 @@ private data class OnboardingPage(
 
 @Composable
 fun OnboardingScreen(
-    onFinish: () -> Unit
+    onFinish: () -> Unit,
+    viewModel: OnboardingViewModel? = null
 ) {
+    val handleFinish = {
+        if (viewModel != null) {
+            viewModel.completeOnboarding(onFinish)
+        } else {
+            onFinish()
+        }
+    }
     val pages = listOf(
         OnboardingPage(
             titleLine1 = "Sua ideia",
@@ -151,7 +159,7 @@ fun OnboardingScreen(
                                 pagerState.animateScrollToPage(pagerState.currentPage + 1)
                             }
                         } else {
-                            onFinish()
+                            handleFinish()
                         }
                     },
                     modifier = Modifier
@@ -185,7 +193,7 @@ fun OnboardingScreen(
 
                 // Secondary Link: Acessar
                 TextButton(
-                    onClick = onFinish,
+                    onClick = handleFinish,
                     modifier = Modifier.height(36.dp)
                 ) {
                     Text(
