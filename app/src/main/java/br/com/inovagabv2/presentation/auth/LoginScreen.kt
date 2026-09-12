@@ -1,6 +1,5 @@
 package br.com.inovagabv2.presentation.auth
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -221,6 +220,7 @@ fun LoginScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
+                enabled = !uiState.isLoading,
                 shape = RoundedCornerShape(12.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = AguiaColors.PrimaryBlue,
@@ -234,57 +234,6 @@ fun LoginScreen(
                         text = "Acessar",
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Divider: ou
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f),
-                    color = AguiaColors.TextSecondary.copy(alpha = 0.2f)
-                )
-                Text(
-                    text = "ou",
-                    color = AguiaColors.TextSecondary,
-                    fontSize = 13.sp,
-                    modifier = Modifier.padding(horizontal = 16.dp)
-                )
-                HorizontalDivider(
-                    modifier = Modifier.weight(1f),
-                    color = AguiaColors.TextSecondary.copy(alpha = 0.2f)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-            // Continuar com Google (Indisponível no backend atual)
-            OutlinedButton(
-                onClick = { /* Indisponível */ },
-                enabled = false,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp),
-                shape = RoundedCornerShape(12.dp),
-                border = BorderStroke(1.dp, AguiaColors.TextSecondary.copy(alpha = 0.2f)),
-                colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.White,
-                    disabledContainerColor = Color.White
-                )
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    GoogleLogo()
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(
-                        text = "Continuar com Google",
-                        color = AguiaColors.TextSecondary.copy(alpha = 0.5f),
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 15.sp
                     )
                 }
             }
@@ -332,20 +281,5 @@ fun LoginScreen(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun GoogleLogo() {
-    Box(
-        modifier = Modifier.size(20.dp),
-        contentAlignment = Alignment.Center
-    ) {
-        Text(
-            text = "G",
-            fontWeight = FontWeight.Black,
-            fontSize = 18.sp,
-            color = Color(0xFF4285F4).copy(alpha = 0.5f)
-        )
     }
 }

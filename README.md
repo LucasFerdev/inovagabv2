@@ -63,13 +63,13 @@ O projeto simula o fluxo completo de inovação corporativa:
 * **Tela de Login (`Acesse sua conta`):**
   * Cabeçalho corporativo com logo e tag `INOVAGAB`.
   * Form e-mail e senha com alternância de visibilidade (olho).
-  * Atalho "Esqueci minha senha" e botão de login social "Continuar com Google".
+  * Atalho "Esqueci minha senha".
   * Link para "Criar conta" e selo "Seus dados estão protegidos".
   * Autenticação integrada diretamente com o backend Spring Boot via token JWT.
 * **Tela de Cadastro (`Crie sua conta`):**
-  * Campos para *Nome completo*, *E-mail*, *Empresa ou unidade*, *Senha* e *Confirmar senha*.
+  * Campos para *Nome completo*, *E-mail*, *Empresa ou unidade*, *Senha*, *Confirmar senha* e opção expansível de *Código de acesso* (opcional).
   * Checkbox dos Termos de Uso e Política de Privacidade.
-  * Integração com repositório para criação e autenticação do novo usuário.
+  * Integração com repositório para criação, atribuição de perfil via backend e autenticação automática do novo usuário.
 
 ---
 

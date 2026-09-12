@@ -25,7 +25,8 @@ class RegisterViewModel @Inject constructor(
         companyUnit: String,
         password: String,
         confirmPassword: String,
-        acceptedTerms: Boolean
+        acceptedTerms: Boolean,
+        accessCode: String? = null
     ) {
         viewModelScope.launch {
             if (fullName.isBlank()) {
@@ -52,11 +53,14 @@ class RegisterViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, error = null) }
 
             val empresa = companyUnit.ifBlank { "Águia Branca" }
+            val normalizedCode = accessCode?.trim()?.ifBlank { null }
+
             authRepository.register(
                 nome = fullName,
                 email = email,
                 senha = password,
-                empresa = empresa
+                empresa = empresa,
+                codigoAcesso = normalizedCode
             ).onSuccess { user ->
                 _uiState.update { it.copy(isLoading = false, isSuccess = true, createdUser = user) }
             }.onFailure { error ->

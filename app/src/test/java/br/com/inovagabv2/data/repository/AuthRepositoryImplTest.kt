@@ -13,6 +13,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -154,11 +155,94 @@ class AuthRepositoryImplTest {
 
         val request1 = mockWebServer.takeRequest()
         assertEquals("/api/auth/cadastro", request1.path)
+        val requestBody1 = request1.body.readUtf8()
+        assertFalse("Request body must not contain role", requestBody1.contains("\"role\""))
 
         val request2 = mockWebServer.takeRequest()
         assertEquals("/api/auth/login", request2.path)
 
         assertEquals("jwt_token_new_user", sessionManager.getToken())
+    }
+
+    @Test
+    fun `register with access code sends code normalized and stores user role GESTOR`() = runBlocking {
+        val cadastroJsonResponse = """
+            {
+              "id": "u888",
+              "nome": "Mariana Gestora",
+              "email": "mariana@aguia.com",
+              "empresa": "Águia Branca",
+              "role": "GESTOR",
+              "ativo": true
+            }
+        """.trimIndent()
+
+        val loginJsonResponse = """
+            {
+              "token": "jwt_gestor_token",
+              "tipo": "Bearer",
+              "expiresIn": 3600,
+              "usuario": {
+                "id": "u888",
+                "nome": "Mariana Gestora",
+                "email": "mariana@aguia.com",
+                "empresa": "Águia Branca",
+                "role": "GESTOR",
+                "ativo": true
+              }
+            }
+        """.trimIndent()
+
+        mockWebServer.enqueue(MockResponse().setResponseCode(201).setBody(cadastroJsonResponse))
+        mockWebServer.enqueue(MockResponse().setResponseCode(200).setBody(loginJsonResponse))
+
+        val result = repository.register(
+            nome = "Mariana Gestora",
+            email = "mariana@aguia.com",
+            senha = "senha_segura_123",
+            empresa = "Águia Branca",
+            codigoAcesso = "  GEST2026  "
+        )
+
+        assertTrue(result.isSuccess)
+        val user = result.getOrNull()
+        assertEquals(Role.GESTOR, user?.role)
+
+        val request1 = mockWebServer.takeRequest()
+        val requestBody = request1.body.readUtf8()
+        assertTrue("Request contains normalized codigoAcesso", requestBody.contains("\"codigoAcesso\":\"GEST2026\""))
+        assertFalse("Request does not contain role", requestBody.contains("\"role\""))
+
+        // Verify session user role is GESTOR
+        val savedUser = sessionManager.userSession.first()
+        assertEquals(Role.GESTOR, savedUser?.role)
+    }
+
+    @Test
+    fun `register with invalid access code returns 400 error message from backend`() = runBlocking {
+        val error400Body = """
+            {
+              "timestamp": "2026-01-01T00:00:00Z",
+              "status": 400,
+              "erro": "Bad Request",
+              "mensagem": "Código de acesso inválido.",
+              "path": "/api/auth/cadastro"
+            }
+        """.trimIndent()
+
+        mockWebServer.enqueue(MockResponse().setResponseCode(400).setBody(error400Body))
+
+        val result = repository.register(
+            nome = "Usuario Teste",
+            email = "teste@aguia.com",
+            senha = "senha_segura_123",
+            empresa = "Águia Branca",
+            codigoAcesso = "CODIGO_ERRADO"
+        )
+
+        assertTrue(result.isFailure)
+        assertEquals("Código de acesso inválido.", result.exceptionOrNull()?.message)
+        assertNull(sessionManager.getToken())
     }
 
     @Test

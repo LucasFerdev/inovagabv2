@@ -48,13 +48,21 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun register(nome: String, email: String, senha: String, empresa: String): Result<User> {
+    override suspend fun register(
+        nome: String,
+        email: String,
+        senha: String,
+        empresa: String,
+        codigoAcesso: String?
+    ): Result<User> {
         return try {
+            val normalizedCodigo = codigoAcesso?.trim()?.ifBlank { null }
             val request = RegisterRequestDto(
                 nome = nome,
                 email = email,
                 senha = senha,
-                empresa = empresa
+                empresa = empresa,
+                codigoAcesso = normalizedCodigo
             )
             val response = api.register(request)
             if (response.isSuccessful) {

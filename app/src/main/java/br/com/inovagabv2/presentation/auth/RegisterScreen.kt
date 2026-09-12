@@ -12,6 +12,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.Business
+import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Mail
 import androidx.compose.material.icons.outlined.Person
@@ -52,6 +53,10 @@ fun RegisterScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
     var acceptedTerms by remember { mutableStateOf(false) }
+
+    var showAccessCodeField by remember { mutableStateOf(false) }
+    var accessCode by remember { mutableStateOf("") }
+    var accessCodeVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
@@ -155,11 +160,11 @@ fun RegisterScreen(
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // 2. E-mail (CRITICAL INSTRUCTION: "adicione apenas email não email corporativo")
+            // 2. E-mail corporativo
             OutlinedTextField(
                 value = email,
                 onValueChange = { email = it },
-                placeholder = { Text("E-mail", color = AguiaColors.TextSecondary, fontSize = 15.sp) },
+                placeholder = { Text("E-mail corporativo", color = AguiaColors.TextSecondary, fontSize = 15.sp) },
                 leadingIcon = {
                     Icon(
                         imageVector = Icons.Outlined.Mail,
@@ -276,6 +281,84 @@ fun RegisterScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
             )
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Option: Possui um código de acesso? Adicionar / Remover
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Possui um código de acesso? ",
+                    fontSize = 14.sp,
+                    color = AguiaColors.NavyDark
+                )
+                Text(
+                    text = if (showAccessCodeField) "Remover" else "Adicionar",
+                    fontSize = 14.sp,
+                    color = AguiaColors.PrimaryBlue,
+                    fontWeight = FontWeight.SemiBold,
+                    textDecoration = TextDecoration.Underline,
+                    modifier = Modifier.clickable {
+                        showAccessCodeField = !showAccessCodeField
+                        if (!showAccessCodeField) {
+                            accessCode = ""
+                            accessCodeVisible = false
+                        }
+                    }
+                )
+            }
+
+            if (showAccessCodeField) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // OutlinedTextField for Código de acesso (opcional)
+                OutlinedTextField(
+                    value = accessCode,
+                    onValueChange = { accessCode = it },
+                    placeholder = { Text("Código de acesso (opcional)", color = AguiaColors.TextSecondary, fontSize = 15.sp) },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Outlined.Key,
+                            contentDescription = null,
+                            tint = AguiaColors.NavyDark
+                        )
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = { accessCodeVisible = !accessCodeVisible }) {
+                            Icon(
+                                imageVector = if (accessCodeVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                                contentDescription = "Mostrar/Ocultar código",
+                                tint = AguiaColors.NavyDark
+                            )
+                        }
+                    },
+                    visualTransformation = if (accessCodeVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = Color.White,
+                        unfocusedContainerColor = Color.White,
+                        focusedBorderColor = AguiaColors.PrimaryBlue,
+                        unfocusedBorderColor = AguiaColors.TextSecondary.copy(alpha = 0.25f)
+                    ),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                )
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                Text(
+                    text = "Fornecido pela administração para Gestão ou Liderança.",
+                    fontSize = 12.sp,
+                    color = AguiaColors.TextSecondary,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp)
+                )
+            }
+
             if (uiState.error != null) {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
@@ -303,7 +386,7 @@ fun RegisterScreen(
                         uncheckedColor = AguiaColors.TextSecondary
                     )
                 )
-                
+
                 Text(
                     text = "Li e aceito os ",
                     fontSize = 13.sp,
@@ -333,15 +416,18 @@ fun RegisterScreen(
             // Primary Button: Criar conta
             Button(
                 onClick = {
+                    val finalAccessCode = if (showAccessCodeField && accessCode.isNotBlank()) accessCode else null
                     viewModel.register(
                         fullName = fullName,
                         email = email,
                         companyUnit = companyUnit,
                         password = password,
                         confirmPassword = confirmPassword,
-                        acceptedTerms = acceptedTerms
+                        acceptedTerms = acceptedTerms,
+                        accessCode = finalAccessCode
                     )
                 },
+                enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
