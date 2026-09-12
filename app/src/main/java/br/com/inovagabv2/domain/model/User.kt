@@ -7,5 +7,8 @@ data class User(
     val id: String,
     val name: String,
     val email: String,
-    val role: Role
+    val role: Role,
+    val company: String? = null,
+    val active: Boolean? = true,
+    val createdAt: String? = null
 )

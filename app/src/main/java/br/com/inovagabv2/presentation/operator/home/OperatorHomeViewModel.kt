@@ -2,8 +2,9 @@ package br.com.inovagabv2.presentation.operator.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import br.com.inovagabv2.core.session.SessionManager
 import br.com.inovagabv2.domain.model.IdeaStatus
+import br.com.inovagabv2.domain.model.User
+import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.IdeaRepository
 import br.com.inovagabv2.domain.repository.StrategyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -15,8 +16,11 @@ import javax.inject.Inject
 class OperatorHomeViewModel @Inject constructor(
     private val ideaRepository: IdeaRepository,
     private val strategyRepository: StrategyRepository,
-    private val sessionManager: SessionManager
+    private val authRepository: AuthRepository
 ) : ViewModel() {
+
+    val user: StateFlow<User?> = authRepository.getCurrentUser()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     private val _state = MutableStateFlow(OperatorHomeState())
     val state: StateFlow<OperatorHomeState> = _state.asStateFlow()
@@ -28,20 +32,25 @@ class OperatorHomeViewModel @Inject constructor(
     private fun loadHomeData() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
-            
+
             combine(
-                sessionManager.userSession,
+                user,
                 ideaRepository.getIdeas(),
                 strategyRepository.getStrategies()
-            ) { user, ideas, strategies ->
-                val userIdeas = ideas.filter { it.authorId == user?.id }
+            ) { currentUser, ideas, strategies ->
+                val userIdeas = if (currentUser != null) {
+                    ideas.filter { it.authorId == currentUser.id }
+                } else {
+                    ideas
+                }
+                val sortedIdeas = userIdeas.sortedByDescending { it.updatedAt ?: it.createdAt }
                 OperatorHomeState(
                     isLoading = false,
-                    userName = user?.name ?: "Operador",
+                    userName = currentUser?.name ?: "Operador",
                     sentCount = userIdeas.count { it.status == IdeaStatus.ENVIADA },
                     inAnalysisCount = userIdeas.count { it.status == IdeaStatus.EM_ANALISE },
                     approvedCount = userIdeas.count { it.status == IdeaStatus.APROVADA },
-                    recentIdeas = userIdeas.take(3),
+                    recentIdeas = sortedIdeas.take(3),
                     strategies = strategies.take(2)
                 )
             }.catch { e ->

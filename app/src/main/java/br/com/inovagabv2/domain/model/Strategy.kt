@@ -7,9 +7,11 @@ data class Strategy(
     val id: String,
     val title: String,
     val description: String,
-    val objectives: List<String>,
+    val objectives: List<String> = emptyList(),
     val isPublished: Boolean = true,
     val publishedDate: String? = null,
-    val createdAt: String,
-    val updatedAt: String
+    val category: String? = null,
+    val campaign: String? = null,
+    val createdAt: String = "",
+    val updatedAt: String = ""
 )

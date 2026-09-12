@@ -176,6 +176,7 @@ fun AguiaNavHost(
                 onIdeaClick = { ideaId ->
                     navController.navigate(Screen.IdeaDetails.createRoute(ideaId))
                 },
+                onNavigateToCreateIdea = { navController.navigate(Screen.CreateIdea.route) },
                 onNavigateToHome = { navController.navigate(Screen.OperatorHome.route) },
                 onNavigateToCommunications = { navController.navigate(Screen.OperatorCommunications.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) }

@@ -4,8 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.inovagabv2.core.session.SessionManager
 import br.com.inovagabv2.domain.model.Idea
-import br.com.inovagabv2.domain.model.IdeaStatus
+import br.com.inovagabv2.domain.model.User
+import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.IdeaRepository
+import br.com.inovagabv2.domain.repository.StrategyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -14,34 +16,51 @@ import javax.inject.Inject
 @HiltViewModel
 class MyIdeasViewModel @Inject constructor(
     private val ideaRepository: IdeaRepository,
-    private val sessionManager: SessionManager
+    private val strategyRepository: StrategyRepository,
+    private val sessionManager: SessionManager,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
-    private val _selectedFilter = MutableStateFlow<IdeaStatus?>(null)
-    val selectedFilter: StateFlow<IdeaStatus?> = _selectedFilter.asStateFlow()
+    val user: StateFlow<User?> = authRepository.getCurrentUser()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), null)
 
     private val _ideas = MutableStateFlow<List<Idea>>(emptyList())
-    
-    val filteredIdeas: StateFlow<List<Idea>> = combine(_ideas, _selectedFilter) { ideas, filter ->
-        if (filter == null) ideas else ideas.filter { it.status == filter }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+    val ideas: StateFlow<List<Idea>> = _ideas.asStateFlow()
+
+    private val _strategiesMap = MutableStateFlow<Map<String, String>>(emptyMap())
+    val strategiesMap: StateFlow<Map<String, String>> = _strategiesMap.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     init {
-        loadIdeas()
+        loadData()
     }
 
-    private fun loadIdeas() {
+    fun loadData() {
         viewModelScope.launch {
-            val user = sessionManager.userSession.first()
-            if (user != null) {
-                ideaRepository.getIdeasByAuthor(user.id).collect {
-                    _ideas.value = it
+            _isLoading.value = true
+            val currentUser = sessionManager.userSession.first()
+
+            // Fetch strategies to map strategyId -> strategyTitle
+            launch {
+                strategyRepository.getStrategies().collect { strategies ->
+                    _strategiesMap.value = strategies.associate { it.id to it.title }
+                }
+            }
+
+            // Fetch user's ideas
+            if (currentUser != null) {
+                ideaRepository.getIdeasByAuthor(currentUser.id).collect { userIdeas ->
+                    _ideas.value = userIdeas
+                    _isLoading.value = false
+                }
+            } else {
+                ideaRepository.getIdeas().collect { allIdeas ->
+                    _ideas.value = allIdeas
+                    _isLoading.value = false
                 }
             }
         }
-    }
-
-    fun onFilterSelected(status: IdeaStatus?) {
-        _selectedFilter.value = status
     }
 }

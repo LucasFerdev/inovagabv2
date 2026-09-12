@@ -26,6 +26,9 @@ fun UsuarioResponseDto.toDomain(): User {
         id = id,
         name = nome,
         email = email,
-        role = domainRole
+        role = domainRole,
+        company = empresa ?: "Viação Águia Branca",
+        active = ativo ?: true,
+        createdAt = criadoEm
     )
 }
