@@ -28,6 +28,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
+import br.com.inovagabv2.core.util.UserUtils
 import br.com.inovagabv2.domain.model.Role
 
 @Composable
@@ -40,10 +41,15 @@ fun ManagerHomeScreen(
     viewModel: ManagerHomeViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val firstName = UserUtils.getFirstName(state.user?.name)
 
     Scaffold(
         topBar = {
-            AguiaTopBar(roleTag = "GESTOR")
+            AguiaTopBar(
+                userName = state.user?.name,
+                role = Role.GESTOR,
+                showRoleBadge = true
+            )
         },
         bottomBar = {
             AguiaBottomBar(
@@ -60,34 +66,38 @@ fun ManagerHomeScreen(
                 }
             )
         },
-        containerColor = AguiaColors.Background
+        containerColor = Color.White
     ) { padding ->
         if (state.isLoading) {
-            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = AguiaColors.PrimaryBlue)
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                AguiaLoadingState(message = "Carregando resumo...")
             }
         } else {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(padding)
-                    .padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                contentPadding = PaddingValues(top = 8.dp, bottom = 24.dp)
+                    .padding(padding),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Greeting
                 item {
                     Column {
                         Text(
-                            text = "Olá, ${state.user?.name ?: "Mariana"}!",
-                            style = MaterialTheme.typography.headlineMedium,
+                            text = "Olá, $firstName!",
+                            fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
                             color = AguiaColors.NavyDark
                         )
-                        Spacer(modifier = Modifier.height(2.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = "Confira o resumo da inovação hoje.",
-                            style = MaterialTheme.typography.bodyMedium,
+                            fontSize = 15.sp,
                             color = AguiaColors.TextSecondary
                         )
                     }
@@ -99,7 +109,7 @@ fun ManagerHomeScreen(
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             GestorMetricCard(
                                 label = "Recebidas",
-                                value = if (state.metrics.receivedIdeas > 0) state.metrics.receivedIdeas.toString() else "24",
+                                value = state.metrics.receivedIdeas.toString(),
                                 icon = Icons.Default.Lightbulb,
                                 iconBgColor = Color(0xFFE0F2FE),
                                 iconTintColor = Color(0xFF0284C7),
@@ -108,7 +118,7 @@ fun ManagerHomeScreen(
                             )
                             GestorMetricCard(
                                 label = "Em análise",
-                                value = if (state.metrics.inAnalysisIdeas > 0) state.metrics.inAnalysisIdeas.toString() else "8",
+                                value = state.metrics.inAnalysisIdeas.toString(),
                                 icon = Icons.Default.Schedule,
                                 iconBgColor = Color(0xFFFEF3C7),
                                 iconTintColor = Color(0xFFD97706),
@@ -120,7 +130,7 @@ fun ManagerHomeScreen(
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             GestorMetricCard(
                                 label = "Aprovadas",
-                                value = if (state.metrics.approvedIdeas > 0) state.metrics.approvedIdeas.toString() else "10",
+                                value = state.metrics.approvedIdeas.toString(),
                                 icon = Icons.Default.Check,
                                 iconBgColor = Color(0xFFDCFCE7),
                                 iconTintColor = Color(0xFF16A34A),
@@ -129,7 +139,7 @@ fun ManagerHomeScreen(
                             )
                             GestorMetricCard(
                                 label = "Projetos",
-                                value = if (state.metrics.activeProjects > 0) state.metrics.activeProjects.toString() else "6",
+                                value = state.metrics.activeProjects.toString(),
                                 icon = Icons.Default.Work,
                                 iconBgColor = Color(0xFFE0F2FE),
                                 iconTintColor = Color(0xFF0284C7),
@@ -149,36 +159,44 @@ fun ManagerHomeScreen(
                     ) {
                         Text(
                             text = "Ideias para análise",
-                            style = MaterialTheme.typography.titleMedium,
+                            fontSize = 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = AguiaColors.NavyDark
                         )
-                        TextButton(onClick = onNavigateToIdeas) {
-                            Text(
-                                text = "Ver todas",
-                                color = AguiaColors.PrimaryBlue,
-                                fontWeight = FontWeight.SemiBold
-                            )
-                        }
+                        Text(
+                            text = "Ver todas",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AguiaColors.PrimaryBlue,
+                            modifier = Modifier.clickable { onNavigateToIdeas() }
+                        )
                     }
                 }
 
-                // Ideas List
-                items(state.ideas.take(3)) { idea ->
-                    AguiaIdeaCard(
-                        idea = idea,
-                        onClick = { onNavigateToIdeaDetails(idea.id) }
-                    )
+                // Ideas List or Empty State
+                if (state.ideas.isEmpty()) {
+                    item {
+                        AguiaEmptyState(
+                            message = "Nenhuma ideia aguardando sua avaliação."
+                        )
+                    }
+                } else {
+                    items(state.ideas, key = { it.id }) { idea ->
+                        AguiaIdeaCard(
+                            idea = idea,
+                            onClick = { onNavigateToIdeaDetails(idea.id) }
+                        )
+                    }
                 }
 
-                // Bottom Action Button
+                // Bottom Action Button: Analisar ideias
                 item {
                     Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = onNavigateToIdeas,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(50.dp),
+                            .height(52.dp),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = AguiaColors.PrimaryBlue,
@@ -194,7 +212,7 @@ fun ManagerHomeScreen(
                         Text(
                             text = "Analisar ideias",
                             fontWeight = FontWeight.Bold,
-                            fontSize = 15.sp
+                            fontSize = 16.sp
                         )
                     }
                 }
@@ -218,8 +236,8 @@ private fun GestorMetricCard(
             .fillMaxWidth()
             .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = AguiaColors.CardWhite),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        colors = CardDefaults.cardColors(containerColor = Color.White),
+        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFFEEF2F6))
     ) {
         Row(
             modifier = Modifier
@@ -229,7 +247,7 @@ private fun GestorMetricCard(
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
+                    .size(42.dp)
                     .clip(CircleShape)
                     .background(iconBgColor),
                 contentAlignment = Alignment.Center
@@ -254,7 +272,7 @@ private fun GestorMetricCard(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.titleLarge,
+                    fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
                     color = AguiaColors.NavyDark
                 )

@@ -3,6 +3,7 @@ package br.com.inovagabv2.presentation.manager.projects
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
@@ -15,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
@@ -35,7 +37,10 @@ fun ManagerProjectsScreen(
 
     Scaffold(
         topBar = {
-            AguiaTopBar(roleTag = "GESTOR")
+            AguiaTopBar(
+                role = Role.GESTOR,
+                showRoleBadge = true
+            )
         },
         bottomBar = {
             AguiaBottomBar(
@@ -53,77 +58,109 @@ fun ManagerProjectsScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
                 onClick = onNavigateToCreateProject,
                 containerColor = AguiaColors.PrimaryBlue,
-                contentColor = Color.White
+                contentColor = Color.White,
+                shape = RoundedCornerShape(24.dp),
+                elevation = FloatingActionButtonDefaults.elevation(6.dp)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Novo Projeto")
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "Novo projeto",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 15.sp
+                )
             }
         },
-        containerColor = AguiaColors.Background
+        containerColor = Color.White
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            TabRow(
-                selectedTabIndex = state.selectedTab,
-                containerColor = AguiaColors.Background,
-                contentColor = AguiaColors.PrimaryBlue,
-                indicator = { tabPositions ->
-                    if (state.selectedTab < tabPositions.size) {
-                        TabRowDefaults.SecondaryIndicator(
-                            Modifier.tabIndicatorOffset(tabPositions[state.selectedTab]),
-                            color = AguiaColors.PrimaryBlue
-                        )
-                    }
-                }
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Tab(
-                    selected = state.selectedTab == 0,
-                    onClick = { viewModel.onTabSelected(0) },
-                    text = {
+                // Header Title
+                item {
+                    Column {
                         Text(
-                            text = "Meus projetos",
-                            fontWeight = if (state.selectedTab == 0) FontWeight.Bold else FontWeight.Medium,
-                            color = if (state.selectedTab == 0) AguiaColors.PrimaryBlue else AguiaColors.TextSecondary
+                            text = "Projetos",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AguiaColors.NavyDark
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Acompanhe o portfólio de projetos de inovação.",
+                            fontSize = 14.sp,
+                            color = AguiaColors.TextSecondary
                         )
                     }
-                )
-                Tab(
-                    selected = state.selectedTab == 1,
-                    onClick = { viewModel.onTabSelected(1) },
-                    text = {
-                        Text(
-                            text = "Todos",
-                            fontWeight = if (state.selectedTab == 1) FontWeight.Bold else FontWeight.Medium,
-                            color = if (state.selectedTab == 1) AguiaColors.PrimaryBlue else AguiaColors.TextSecondary
-                        )
-                    }
-                )
-            }
+                }
 
-            if (state.isLoading) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = AguiaColors.PrimaryBlue)
+                // Tab Row: Meus projetos | Todos
+                item {
+                    TabRow(
+                        selectedTabIndex = state.selectedTab,
+                        containerColor = Color.White,
+                        contentColor = AguiaColors.PrimaryBlue,
+                        indicator = { tabPositions ->
+                            if (state.selectedTab < tabPositions.size) {
+                                TabRowDefaults.SecondaryIndicator(
+                                    Modifier.tabIndicatorOffset(tabPositions[state.selectedTab]),
+                                    color = AguiaColors.PrimaryBlue
+                                )
+                            }
+                        }
+                    ) {
+                        Tab(
+                            selected = state.selectedTab == 0,
+                            onClick = { viewModel.onTabSelected(0) },
+                            text = {
+                                Text(
+                                    text = "Meus projetos",
+                                    fontWeight = if (state.selectedTab == 0) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (state.selectedTab == 0) AguiaColors.PrimaryBlue else AguiaColors.TextSecondary
+                                )
+                            }
+                        )
+                        Tab(
+                            selected = state.selectedTab == 1,
+                            onClick = { viewModel.onTabSelected(1) },
+                            text = {
+                                Text(
+                                    text = "Todos",
+                                    fontWeight = if (state.selectedTab == 1) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (state.selectedTab == 1) AguiaColors.PrimaryBlue else AguiaColors.TextSecondary
+                                )
+                            }
+                        )
+                    }
                 }
-            } else if (state.projects.isEmpty()) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text(
-                        text = "Nenhum projeto encontrado.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = AguiaColors.TextSecondary
-                    )
-                }
-            } else {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    items(state.projects) { project ->
+
+                // Loading / Empty / List State
+                if (state.isLoading) {
+                    item {
+                        AguiaLoadingState(message = "Carregando projetos...")
+                    }
+                } else if (state.projects.isEmpty()) {
+                    item {
+                        AguiaEmptyState(
+                            message = "Nenhum projeto encontrado."
+                        )
+                    }
+                } else {
+                    items(state.projects, key = { it.id }) { project ->
                         AguiaProjectCard(
                             project = project,
                             onClick = { onNavigateToDetails(project.id) }

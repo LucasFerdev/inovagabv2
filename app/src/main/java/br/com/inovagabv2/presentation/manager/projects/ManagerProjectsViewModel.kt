@@ -19,7 +19,7 @@ class ManagerProjectsViewModel @Inject constructor(
 
     val state = combine(_allProjects, _selectedTab) { projects, tab ->
         ManagerProjectsState(
-            projects = if (tab == 0) projects.take(2) else projects, // Mocking "My Projects" vs "All"
+            projects = projects,
             isLoading = false,
             selectedTab = tab
         )
