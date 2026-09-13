@@ -39,4 +39,7 @@ sealed class Screen(val route: String) {
     object CreateStrategy : Screen("create_strategy")
     object LeadershipProjects : Screen("leadership_projects")
     object LeadershipResults : Screen("leadership_results")
+    object StrategyDashboard : Screen("strategy_dashboard/{strategyId}") {
+        fun createRoute(strategyId: String) = "strategy_dashboard/$strategyId"
+    }
 }
