@@ -1,15 +1,7 @@
 package br.com.inovagabv2.core.di
 
-import br.com.inovagabv2.data.repository.AuthRepositoryImpl
-import br.com.inovagabv2.data.repository.DashboardRepositoryImpl
-import br.com.inovagabv2.data.repository.IdeaRepositoryImpl
-import br.com.inovagabv2.data.repository.ProjectRepositoryImpl
-import br.com.inovagabv2.data.repository.StrategyRepositoryImpl
-import br.com.inovagabv2.domain.repository.AuthRepository
-import br.com.inovagabv2.domain.repository.DashboardRepository
-import br.com.inovagabv2.domain.repository.IdeaRepository
-import br.com.inovagabv2.domain.repository.ProjectRepository
-import br.com.inovagabv2.domain.repository.StrategyRepository
+import br.com.inovagabv2.data.repository.*
+import br.com.inovagabv2.domain.repository.*
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -49,4 +41,10 @@ abstract class RepositoryModule {
     abstract fun bindDashboardRepository(
         dashboardRepositoryImpl: DashboardRepositoryImpl
     ): DashboardRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindAiRepository(
+        aiRepositoryImpl: AiRepositoryImpl
+    ): AiRepository
 }

@@ -3,7 +3,10 @@ package br.com.inovagabv2.presentation.manager.ideas.details
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.domain.model.AiAnalysis
 import br.com.inovagabv2.domain.model.Idea
+import br.com.inovagabv2.domain.model.IdeaStatus
+import br.com.inovagabv2.domain.repository.AiRepository
 import br.com.inovagabv2.domain.repository.IdeaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -12,20 +15,25 @@ import javax.inject.Inject
 
 data class ManagerIdeaDetailsState(
     val idea: Idea? = null,
+    val aiAnalysis: AiAnalysis? = null,
     val isLoading: Boolean = true,
+    val isLoadingAi: Boolean = false,
     val isSubmitting: Boolean = false,
+    val isSubmittingAi: Boolean = false,
     val selectedPriority: Int? = 3,
     val rejectionReason: String = "",
     val feedbackMessage: String? = null,
     val errorMessage: String? = null,
     val showApprovalDialog: Boolean = false,
     val showRejectionDialog: Boolean = false,
+    val showRecalculateDialog: Boolean = false,
     val shouldNavigateBack: Boolean = false
 )
 
 @HiltViewModel
 class ManagerIdeaDetailsViewModel @Inject constructor(
     private val ideaRepository: IdeaRepository,
+    private val aiRepository: AiRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -36,6 +44,7 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
 
     init {
         loadIdea()
+        loadAiAnalysis()
     }
 
     fun loadIdea() {
@@ -47,6 +56,77 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
                         idea = idea,
                         isLoading = false,
                         selectedPriority = idea?.priority ?: 3
+                    )
+                }
+            }
+        }
+    }
+
+    fun loadAiAnalysis() {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoadingAi = true) }
+            val result = aiRepository.getIdeaAnalysis(ideaId)
+            if (result.isSuccess) {
+                _state.update { it.copy(aiAnalysis = result.getOrNull(), isLoadingAi = false) }
+            } else {
+                _state.update { it.copy(isLoadingAi = false) }
+            }
+        }
+    }
+
+    fun onAnalyzeAi() {
+        if (_state.value.isSubmittingAi) return
+
+        viewModelScope.launch {
+            _state.update { it.copy(isSubmittingAi = true, errorMessage = null) }
+            val result = aiRepository.analyzeIdea(ideaId, recalculate = false)
+            if (result.isSuccess) {
+                _state.update {
+                    it.copy(
+                        aiAnalysis = result.getOrNull(),
+                        isSubmittingAi = false,
+                        feedbackMessage = "Análise realizada com sucesso."
+                    )
+                }
+            } else {
+                _state.update {
+                    it.copy(
+                        isSubmittingAi = false,
+                        errorMessage = result.exceptionOrNull()?.message ?: "Erro ao gerar análise da IA"
+                    )
+                }
+            }
+        }
+    }
+
+    fun onShowRecalculateDialog() {
+        if (_state.value.isSubmittingAi) return
+        _state.update { it.copy(showRecalculateDialog = true) }
+    }
+
+    fun onDismissRecalculateDialog() {
+        _state.update { it.copy(showRecalculateDialog = false) }
+    }
+
+    fun onConfirmRecalculateAi() {
+        if (_state.value.isSubmittingAi) return
+
+        viewModelScope.launch {
+            _state.update { it.copy(isSubmittingAi = true, showRecalculateDialog = false, errorMessage = null) }
+            val result = aiRepository.analyzeIdea(ideaId, recalculate = true)
+            if (result.isSuccess) {
+                _state.update {
+                    it.copy(
+                        aiAnalysis = result.getOrNull(),
+                        isSubmittingAi = false,
+                        feedbackMessage = "Análise recalculada com sucesso."
+                    )
+                }
+            } else {
+                _state.update {
+                    it.copy(
+                        isSubmittingAi = false,
+                        errorMessage = result.exceptionOrNull()?.message ?: "Erro ao recalcular análise da IA"
                     )
                 }
             }

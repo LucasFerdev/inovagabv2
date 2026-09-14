@@ -1,5 +1,6 @@
 package br.com.inovagabv2.presentation.operator.details
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,12 +13,15 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.designsystem.components.AguiaStatusChip
 import br.com.inovagabv2.core.designsystem.components.AguiaTimeline
 import br.com.inovagabv2.core.designsystem.components.AguiaTopBar
+import br.com.inovagabv2.domain.model.Role
 
 @Composable
 fun IdeaDetailsScreen(
@@ -25,11 +29,18 @@ fun IdeaDetailsScreen(
     onBackClick: () -> Unit
 ) {
     val idea by viewModel.idea.collectAsState()
+    val user by viewModel.user.collectAsState()
+    val aiAnalysis by viewModel.aiAnalysis.collectAsState()
+    val isLoadingAi by viewModel.isLoadingAi.collectAsState()
+    val aiError by viewModel.aiError.collectAsState()
+
+    val currentRole = user?.role ?: Role.OPERADOR
 
     Scaffold(
         topBar = {
             AguiaTopBar(
-                roleTag = "OPERADOR",
+                userName = user?.name,
+                role = currentRole,
                 onBackClick = onBackClick
             )
         },
@@ -46,27 +57,22 @@ fun IdeaDetailsScreen(
             ) {
                 // Header Area
                 Column {
-                    Text(
-                        text = item.title,
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = AguiaColors.NavyDark
-                    )
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    // Status Pill Tag
-                    Surface(
-                        color = AguiaColors.SuccessGreen.copy(alpha = 0.12f),
-                        shape = RoundedCornerShape(12.dp)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = item.status.displayName,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = AguiaColors.SuccessGreen,
-                            fontWeight = FontWeight.Medium,
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                            text = item.title,
+                            style = MaterialTheme.typography.headlineMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = AguiaColors.NavyDark,
+                            modifier = Modifier.weight(1f)
                         )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        AguiaStatusChip(status = item.status)
                     }
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -74,7 +80,7 @@ fun IdeaDetailsScreen(
                     // Date & Folder Category Row
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = "Enviada em ${item.createdAt}",
+                            text = if (!item.createdAt.isNullOrBlank()) "Enviada em ${item.createdAt}" else "",
                             fontSize = 12.sp,
                             color = AguiaColors.TextSecondary
                         )
@@ -102,9 +108,18 @@ fun IdeaDetailsScreen(
                 HorizontalDivider(color = AguiaColors.TextSecondary.copy(alpha = 0.15f))
 
                 // Description
-                Section(title = "Descrição") {
+                Section(title = "Problema identificado") {
                     Text(
-                        text = item.description,
+                        text = item.problem.ifBlank { item.description },
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = AguiaColors.NavyDark,
+                        lineHeight = 22.sp
+                    )
+                }
+
+                Section(title = "Solução proposta") {
+                    Text(
+                        text = item.proposedSolution.ifBlank { item.description },
                         style = MaterialTheme.typography.bodyMedium,
                         color = AguiaColors.NavyDark,
                         lineHeight = 22.sp
@@ -119,6 +134,88 @@ fun IdeaDetailsScreen(
                         color = AguiaColors.NavyDark,
                         lineHeight = 22.sp
                     )
+                }
+
+                // Read-only AI Section for Leadership / Gestor
+                if (currentRole == Role.LIDERANCA || currentRole == Role.GESTOR) {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                        border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "Análise da Inteligência Artificial",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = AguiaColors.NavyDark
+                            )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            if (isLoadingAi) {
+                                Box(modifier = Modifier.fillMaxWidth().padding(12.dp), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator(modifier = Modifier.size(24.dp), color = AguiaColors.PrimaryBlue)
+                                }
+                            } else if (aiAnalysis != null) {
+                                val ai = aiAnalysis!!
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Surface(shape = RoundedCornerShape(12.dp), color = Color(0xFFEFF6FF)) {
+                                        Text(
+                                            text = "Pontuação: ${ai.overallScore}/100",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = AguiaColors.PrimaryBlue,
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                        )
+                                    }
+
+                                    Surface(shape = RoundedCornerShape(12.dp), color = Color(0xFFFEF3C7)) {
+                                        Text(
+                                            text = "Prioridade sugerida: P${ai.suggestedPriority}",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = Color(0xFFD97706),
+                                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                Text(text = "Resumo executivo:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AguiaColors.NavyDark)
+                                Text(text = ai.executiveSummary, fontSize = 13.sp, color = AguiaColors.TextSecondary, lineHeight = 18.sp)
+
+                                if (ai.strengths.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Text(text = "Pontos fortes:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF16A34A))
+                                    ai.strengths.forEach { Text(text = "• $it", fontSize = 12.sp, color = AguiaColors.TextSecondary) }
+                                }
+
+                                if (ai.risks.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Text(text = "Riscos:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFFDC2626))
+                                    ai.risks.forEach { Text(text = "• $it", fontSize = 12.sp, color = AguiaColors.TextSecondary) }
+                                }
+
+                                if (ai.recommendations.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Text(text = "Recomendações:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AguiaColors.PrimaryBlue)
+                                    ai.recommendations.forEach { Text(text = "• $it", fontSize = 12.sp, color = AguiaColors.TextSecondary) }
+                                }
+                            } else {
+                                Text(
+                                    text = aiError ?: "Esta ideia ainda não possui análise da IA.",
+                                    fontSize = 13.sp,
+                                    color = AguiaColors.TextSecondary
+                                )
+                            }
+                        }
+                    }
                 }
 
                 // Timeline / Acompanhamento

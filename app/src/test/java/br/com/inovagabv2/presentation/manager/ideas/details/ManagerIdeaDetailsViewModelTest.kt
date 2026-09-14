@@ -1,9 +1,11 @@
 package br.com.inovagabv2.presentation.manager.ideas.details
 
 import androidx.lifecycle.SavedStateHandle
+import br.com.inovagabv2.domain.model.AiAnalysis
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.Pagina
+import br.com.inovagabv2.domain.repository.AiRepository
 import br.com.inovagabv2.domain.repository.IdeaRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -26,14 +28,16 @@ class ManagerIdeaDetailsViewModelTest {
 
     private val testDispatcher = UnconfinedTestDispatcher()
     private lateinit var fakeIdeaRepository: FakeIdeaRepository
+    private lateinit var fakeAiRepository: FakeAiRepository
     private lateinit var viewModel: ManagerIdeaDetailsViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         fakeIdeaRepository = FakeIdeaRepository()
+        fakeAiRepository = FakeAiRepository()
         val savedStateHandle = SavedStateHandle(mapOf("ideaId" to "i100"))
-        viewModel = ManagerIdeaDetailsViewModel(fakeIdeaRepository, savedStateHandle)
+        viewModel = ManagerIdeaDetailsViewModel(fakeIdeaRepository, fakeAiRepository, savedStateHandle)
     }
 
     @After
@@ -150,5 +154,15 @@ class ManagerIdeaDetailsViewModelTest {
         }
 
         override suspend fun arquivar(id: String): Result<Unit> = Result.success(Unit)
+    }
+
+    private class FakeAiRepository : AiRepository {
+        override suspend fun analyzeIdea(ideaId: String, recalculate: Boolean): Result<AiAnalysis> {
+            return Result.failure(Exception("Sem análise"))
+        }
+
+        override suspend fun getIdeaAnalysis(ideaId: String): Result<AiAnalysis> {
+            return Result.failure(Exception("Esta ideia ainda não possui análise da IA."))
+        }
     }
 }

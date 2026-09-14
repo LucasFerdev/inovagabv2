@@ -1,5 +1,6 @@
 package br.com.inovagabv2.presentation.manager.ideas.details
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -101,6 +102,28 @@ fun ManagerIdeaDetailsScreen(
         )
     }
 
+    // Recalculate AI Confirmation Dialog
+    if (state.showRecalculateDialog) {
+        AlertDialog(
+            onDismissRequest = viewModel::onDismissRecalculateDialog,
+            title = { Text("Recalcular Análise da IA", fontWeight = FontWeight.Bold) },
+            text = { Text("Deseja gerar uma nova análise consultiva com a IA para esta ideia?") },
+            confirmButton = {
+                Button(
+                    onClick = viewModel::onConfirmRecalculateAi,
+                    colors = ButtonDefaults.buttonColors(containerColor = AguiaColors.PrimaryBlue)
+                ) {
+                    Text("Confirmar e Recalcular", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::onDismissRecalculateDialog) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
+
     Scaffold(
         topBar = {
             AguiaTopBar(
@@ -127,6 +150,7 @@ fun ManagerIdeaDetailsScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                // Card 1: Main Idea Info
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
@@ -213,6 +237,132 @@ fun ManagerIdeaDetailsScreen(
                     }
                 }
 
+                // Card 2: AI Analysis Section (Gestor)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFF8FAFC)),
+                    border = BorderStroke(1.dp, Color(0xFFE2E8F0))
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Análise da Inteligência Artificial",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = AguiaColors.NavyDark
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "A análise da IA é uma recomendação. A decisão final pertence ao Gestor.",
+                            fontSize = 11.sp,
+                            color = AguiaColors.TextSecondary
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        if (state.isLoadingAi) {
+                            Box(modifier = Modifier.fillMaxWidth().padding(16.dp), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), color = AguiaColors.PrimaryBlue)
+                            }
+                        } else if (state.aiAnalysis != null) {
+                            val ai = state.aiAnalysis!!
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color(0xFFEFF6FF)
+                                ) {
+                                    Text(
+                                        text = "Pontuação: ${ai.overallScore}/100",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = AguiaColors.PrimaryBlue,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    )
+                                }
+
+                                Surface(
+                                    shape = RoundedCornerShape(12.dp),
+                                    color = Color(0xFFFEF3C7)
+                                ) {
+                                    Text(
+                                        text = "Prioridade sugerida: P${ai.suggestedPriority}",
+                                        fontSize = 12.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color(0xFFD97706),
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Text(
+                                text = "Resumo executivo:",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AguiaColors.NavyDark
+                            )
+                            Text(
+                                text = ai.executiveSummary,
+                                fontSize = 13.sp,
+                                color = AguiaColors.TextSecondary,
+                                lineHeight = 18.sp
+                            )
+
+                            if (ai.strengths.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Text(text = "Pontos fortes:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFF16A34A))
+                                ai.strengths.forEach { Text(text = "• $it", fontSize = 12.sp, color = AguiaColors.TextSecondary) }
+                            }
+
+                            if (ai.risks.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Text(text = "Riscos:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color(0xFFDC2626))
+                                ai.risks.forEach { Text(text = "• $it", fontSize = 12.sp, color = AguiaColors.TextSecondary) }
+                            }
+
+                            if (ai.recommendations.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Text(text = "Recomendações:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AguiaColors.PrimaryBlue)
+                                ai.recommendations.forEach { Text(text = "• $it", fontSize = 12.sp, color = AguiaColors.TextSecondary) }
+                            }
+
+                            Spacer(modifier = Modifier.height(14.dp))
+
+                            OutlinedButton(
+                                onClick = viewModel::onShowRecalculateDialog,
+                                modifier = Modifier.fillMaxWidth(),
+                                enabled = !state.isSubmittingAi
+                            ) {
+                                if (state.isSubmittingAi) {
+                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                                } else {
+                                    Text("Recalcular Análise da IA", fontWeight = FontWeight.Bold)
+                                }
+                            }
+                        } else {
+                            Text(
+                                text = "Esta ideia ainda não possui análise da IA.",
+                                fontSize = 13.sp,
+                                color = AguiaColors.TextSecondary
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+                            AguiaButton(
+                                text = "Analisar com IA",
+                                onClick = viewModel::onAnalyzeAi,
+                                modifier = Modifier.fillMaxWidth(),
+                                isLoading = state.isSubmittingAi,
+                                enabled = !state.isSubmittingAi
+                            )
+                        }
+                    }
+                }
+
+                // Card 3: Evaluation Actions (Gestor)
                 if (idea.status == IdeaStatus.ENVIADA || idea.status == IdeaStatus.EM_ANALISE) {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
