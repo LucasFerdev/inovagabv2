@@ -1,9 +1,7 @@
 package br.com.inovagabv2.core.designsystem.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
@@ -13,7 +11,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -21,7 +18,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.domain.model.Project
-import br.com.inovagabv2.domain.model.ProjectStatus
 
 @Composable
 fun AguiaProjectCard(
@@ -53,11 +49,10 @@ fun AguiaProjectCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Status Chip (e.g. "Em andamento" or "Planejamento")
-            val isPlanning = project.status == ProjectStatus.PLANEJADO
-            val statusText = if (isPlanning) "Planejamento" else "Em andamento"
-            val statusBg = if (isPlanning) AguiaColors.PrimaryBlue.copy(alpha = 0.12f) else AguiaColors.SuccessGreen.copy(alpha = 0.12f)
-            val statusColor = if (isPlanning) AguiaColors.PrimaryBlue else AguiaColors.SuccessGreen
+            // Status Chip
+            val statusText = project.status.displayName
+            val statusBg = AguiaColors.PrimaryBlue.copy(alpha = 0.12f)
+            val statusColor = AguiaColors.PrimaryBlue
 
             Surface(
                 color = statusBg,
@@ -92,21 +87,19 @@ fun AguiaProjectCard(
                 Spacer(modifier = Modifier.width(12.dp))
                 
                 Text(
-                    text = "${(project.progress * 100).toInt()}%",
+                    text = "${project.percentualProgresso}%",
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold,
                     color = AguiaColors.TextSecondary
                 )
 
-                if (project.authorName == null) {
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = AguiaColors.TextSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
+                Spacer(modifier = Modifier.width(8.dp))
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = AguiaColors.TextSecondary,
+                    modifier = Modifier.size(20.dp)
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -155,7 +148,7 @@ fun AguiaProjectCard(
                             color = AguiaColors.TextSecondary
                         )
                         Text(
-                            text = project.investment,
+                            text = formatMonetary(project.investment.toDouble()),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.SemiBold,
                             color = AguiaColors.NavyDark
@@ -163,55 +156,14 @@ fun AguiaProjectCard(
                     }
                 }
             }
-
-            if (project.authorName != null) {
-                Spacer(modifier = Modifier.height(16.dp))
-                HorizontalDivider(color = AguiaColors.Background)
-                Spacer(modifier = Modifier.height(12.dp))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    val initials = project.authorName.split(" ")
-                        .mapNotNull { it.firstOrNull()?.toString() }
-                        .take(2)
-                        .joinToString("")
-                        .uppercase()
-
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .background(AguiaColors.PrimaryBlue),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = initials,
-                            color = Color.White,
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.width(10.dp))
-
-                    Text(
-                        text = project.authorName,
-                        style = MaterialTheme.typography.bodySmall,
-                        fontWeight = FontWeight.Medium,
-                        color = AguiaColors.NavyDark,
-                        modifier = Modifier.weight(1f)
-                    )
-
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = AguiaColors.TextSecondary,
-                        modifier = Modifier.size(20.dp)
-                    )
-                }
-            }
         }
+    }
+}
+
+private fun formatMonetary(value: Double): String {
+    return when {
+        value >= 1_000_000 -> String.format(java.util.Locale.US, "R$ %.2f mi", value / 1_000_000).replace(".", ",")
+        value >= 1_000 -> String.format(java.util.Locale.US, "R$ %.0f mil", value / 1_000)
+        else -> String.format(java.util.Locale.US, "R$ %.2f", value).replace(".", ",")
     }
 }

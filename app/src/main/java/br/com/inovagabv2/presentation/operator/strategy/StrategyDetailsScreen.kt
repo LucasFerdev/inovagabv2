@@ -11,17 +11,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
-import br.com.inovagabv2.core.designsystem.components.AguiaTopBar
+import br.com.inovagabv2.core.designsystem.components.*
 
 @Composable
 fun StrategyDetailsScreen(
-    viewModel: OperatorStrategyViewModel,
-    strategyId: String,
-    onBackClick: () -> Unit
+    onBackClick: () -> Unit,
+    viewModel: StrategyDetailsViewModel = hiltViewModel()
 ) {
-    val strategies by viewModel.filteredStrategies.collectAsState()
-    val strategy = strategies.find { it.id == strategyId }
+    val state by viewModel.state.collectAsState()
 
     Scaffold(
         topBar = {
@@ -32,29 +31,44 @@ fun StrategyDetailsScreen(
         },
         containerColor = AguiaColors.Background
     ) { padding ->
-        if (strategy == null) {
+        if (state.isLoading) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text("Diretriz não encontrada")
+                AguiaLoadingState(message = "Carregando diretriz...")
+            }
+        } else if (state.strategy == null) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                AguiaEmptyState(message = state.error ?: "Diretriz não encontrada.")
             }
         } else {
+            val strategy = state.strategy!!
             LazyColumn(
                 modifier = Modifier.fillMaxSize().padding(padding),
-                contentPadding = PaddingValues(16.dp),
+                contentPadding = PaddingValues(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 item {
-                    Text(
-                        text = strategy.title,
-                        style = MaterialTheme.typography.headlineSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = AguiaColors.TextPrimary
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Text(
+                            text = strategy.title,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = AguiaColors.NavyDark,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        AguiaStatusChip(statusText = strategy.status.displayName)
+                    }
                 }
 
                 item {
                     Card(
                         colors = CardDefaults.cardColors(containerColor = AguiaColors.CardWhite),
-                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                        shape = androidx.compose.foundation.shape.RoundedCornerShape(16.dp)
                     ) {
                         Column(modifier = Modifier.padding(16.dp)) {
                             Text(
@@ -67,7 +81,8 @@ fun StrategyDetailsScreen(
                             Text(
                                 text = strategy.description,
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = AguiaColors.TextPrimary
+                                color = AguiaColors.NavyDark,
+                                lineHeight = 20.sp
                             )
                             strategy.category?.let { cat ->
                                 Spacer(modifier = Modifier.height(12.dp))
@@ -77,10 +92,27 @@ fun StrategyDetailsScreen(
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text("Campanha: $camp", fontSize = 13.sp, color = AguiaColors.TextSecondary)
                             }
+                            val formattedDate = formatDatePtBr(strategy.publishedDate ?: strategy.date)
+                            if (formattedDate.isNotBlank()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text("Data: $formattedDate", fontSize = 13.sp, color = AguiaColors.TextSecondary)
+                            }
                         }
                     }
                 }
             }
         }
+    }
+}
+
+private fun formatDatePtBr(isoDate: String?): String {
+    if (isoDate.isNullOrBlank()) return ""
+    return try {
+        val parts = isoDate.split("-")
+        if (parts.size >= 3) {
+            "${parts[2].take(2)}/${parts[1]}/${parts[0]}"
+        } else isoDate
+    } catch (_: Exception) {
+        isoDate
     }
 }

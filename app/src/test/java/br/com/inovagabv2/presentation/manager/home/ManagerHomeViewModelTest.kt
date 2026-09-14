@@ -19,6 +19,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.math.BigDecimal
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ManagerHomeViewModelTest {
@@ -68,7 +69,7 @@ class ManagerHomeViewModelTest {
         fakeIdeaRepository.setIdeas(ideas)
 
         val projects = listOf(
-            Project("p1", "Project 1", "Desc", ProjectStatus.EM_ANDAMENTO, 0.5f, "2026-01-01", "2026-12-31", "R$ 100", "Author")
+            Project("p1", "Project 1", "Desc", "s1", null, ProjectStage.DESENVOLVIMENTO, ProjectStatus.EM_ANDAMENTO, 50, BigDecimal("100000.00"), "2026-12-31")
         )
         fakeProjectRepository.setProjects(projects)
 
@@ -110,8 +111,15 @@ class ManagerHomeViewModelTest {
         private val _flow = MutableStateFlow<List<Project>>(emptyList())
         fun setProjects(list: List<Project>) { _flow.value = list }
         override fun getProjects(): Flow<List<Project>> = _flow
+        override fun getProjectsRemote(status: ProjectStatus?, etapa: ProjectStage?, estrategiaId: String?, gestorId: String?, prazo: String?, pagina: Int, tamanho: Int): Flow<Pagina<Project>> = flowOf(Pagina(_flow.value, 0, 20, _flow.value.size.toLong(), 1, true, true))
         override fun getProjectById(id: String): Flow<Project?> = flowOf(null)
+        override suspend fun createProject(nome: String, descricao: String, estrategiaId: String, ideiaOrigemId: String?, investimento: BigDecimal, prazo: String): Result<Project> = Result.success(Project("p1", nome, descricao))
         override suspend fun createProject(project: Project): Result<Unit> = Result.success(Unit)
+        override suspend fun updateProject(id: String, nome: String, descricao: String, estrategiaId: String, ideiaOrigemId: String?, investimento: BigDecimal, prazo: String): Result<Project> = Result.success(Project("p1", nome, descricao))
         override suspend fun updateProject(project: Project): Result<Unit> = Result.success(Unit)
+        override suspend fun updateProgress(id: String, etapa: ProjectStage, status: ProjectStatus, percentualProgresso: Int, justificativa: String?): Result<Project> = Result.success(Project("p1", "P", "D"))
+        override suspend fun registerResults(id: String, retornoFinanceiro: BigDecimal, ganhoProdutividadePercentual: BigDecimal, resultado: String): Result<Project> = Result.success(Project("p1", "P", "D"))
+        override suspend fun concludeProject(id: String): Result<Project> = Result.success(Project("p1", "P", "D"))
+        override suspend fun cancelProject(id: String): Result<Unit> = Result.success(Unit)
     }
 }

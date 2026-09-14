@@ -3,7 +3,6 @@ package br.com.inovagabv2.core.designsystem.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.Person
@@ -44,7 +43,7 @@ fun AguiaBottomBar(
             NavigationItem(Screen.ManagerHome, Icons.Default.Home, "Início"),
             NavigationItem(Screen.ManagerIdeas, Icons.Outlined.Lightbulb, "Ideias"),
             NavigationItem(Screen.ManagerProjects, Icons.Default.Work, "Projetos"),
-            NavigationItem(Screen.OperatorStrategy, Icons.AutoMirrored.Filled.Assignment, "Estratégia"),
+            NavigationItem(Screen.ManagerStrategy, Icons.Outlined.TrackChanges, "Estratégias"),
             NavigationItem(Screen.Profile, Icons.Outlined.Person, "Perfil")
         )
         Role.LIDERANCA -> listOf(

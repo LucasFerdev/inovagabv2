@@ -29,16 +29,27 @@ sealed class Screen(val route: String) {
         fun createRoute(ideaId: String) = "manager_idea_details/$ideaId"
     }
     object ManagerProjects : Screen("manager_projects")
+    object ManagerCreateProject : Screen("manager_create_project")
     object ManagerProjectDetails : Screen("manager_project_details/{projectId}") {
         fun createRoute(projectId: String) = "manager_project_details/$projectId"
     }
+    object ManagerStrategy : Screen("manager_strategy")
     
     // Liderança
     object LeadershipDashboard : Screen("leadership_dashboard")
     object LeadershipIdeas : Screen("leadership_ideas")
     object LeadershipStrategy : Screen("leadership_strategy")
     object CreateStrategy : Screen("create_strategy")
+    object EditStrategy : Screen("edit_strategy/{strategyId}") {
+        fun createRoute(strategyId: String) = "edit_strategy/$strategyId"
+    }
     object LeadershipProjects : Screen("leadership_projects")
+    object LeadershipProjectDetails : Screen("leadership_project_details/{projectId}") {
+        fun createRoute(projectId: String) = "leadership_project_details/$projectId"
+    }
+    object LeadershipProjectDashboard : Screen("leadership_project_dashboard/{projectId}") {
+        fun createRoute(projectId: String) = "leadership_project_dashboard/$projectId"
+    }
     object LeadershipResults : Screen("leadership_results")
     object StrategyDashboard : Screen("strategy_dashboard/{strategyId}") {
         fun createRoute(strategyId: String) = "strategy_dashboard/$strategyId"

@@ -1,6 +1,8 @@
 package br.com.inovagabv2.presentation.leadership
 
 import br.com.inovagabv2.domain.model.DashboardData
+import br.com.inovagabv2.domain.model.DashboardProjectDetails
+import br.com.inovagabv2.domain.model.DashboardStrategyDetails
 import br.com.inovagabv2.domain.model.Role
 import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
@@ -20,6 +22,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
+import java.math.BigDecimal
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class LeadershipDashboardViewModelTest {
@@ -58,14 +61,16 @@ class LeadershipDashboardViewModelTest {
     private class FakeDashboardRepository : DashboardRepository {
         private val _data = MutableStateFlow(
             DashboardData(
-                roi = "25,0%",
-                profit = "R$ 100 mil",
-                activeProjectsCount = 5,
-                approvedIdeasCount = 10
+                lucroObtido = BigDecimal("100000.00"),
+                roiPercentual = BigDecimal("25.0"),
+                totalEmAndamento = 5,
+                ideiasAprovadas = 10
             )
         )
 
         override fun getDashboardData(): Flow<DashboardData> = _data
+        override fun getDashboardStrategyDetails(strategyId: String): Flow<DashboardStrategyDetails?> = flowOf(null)
+        override fun getDashboardProjectDetails(projectId: String): Flow<DashboardProjectDetails?> = flowOf(null)
     }
 
     private class FakeAuthRepository : AuthRepository {

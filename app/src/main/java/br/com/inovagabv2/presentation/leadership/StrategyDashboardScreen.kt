@@ -19,7 +19,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -33,7 +32,6 @@ import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.Role
-import br.com.inovagabv2.domain.model.Strategy
 
 @Composable
 fun StrategyDashboardScreen(
@@ -46,10 +44,7 @@ fun StrategyDashboardScreen(
     viewModel: StrategyDashboardViewModel = hiltViewModel()
 ) {
     val user by viewModel.user.collectAsState()
-    val strategy by viewModel.strategy.collectAsState()
-    val linkedIdeas by viewModel.linkedIdeas.collectAsState()
-    val linkedProjects by viewModel.linkedProjects.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
+    val state by viewModel.state.collectAsState()
 
     val currentRole = user?.role ?: Role.LIDERANCA
 
@@ -78,16 +73,20 @@ fun StrategyDashboardScreen(
         },
         containerColor = Color.White
     ) { padding ->
-        if (isLoading) {
+        if (state.isLoading) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                AguiaLoadingState(message = "Carregando painel...")
+                AguiaLoadingState(message = "Carregando painel da estratégia...")
             }
-        } else if (strategy == null) {
+        } else if (state.strategy == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                AguiaEmptyState(message = "Estratégia não encontrada.")
+                AguiaEmptyState(message = state.error ?: "Estratégia não encontrada.")
             }
         } else {
-            val currentStrategy = strategy!!
+            val currentStrategy = state.strategy!!
+            val dash = state.dashboardDetails
+            val linkedIdeas = state.linkedIdeas
+            val linkedProjects = state.linkedProjects
+
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -198,12 +197,12 @@ fun StrategyDashboardScreen(
                     }
                 }
 
-                // Card 2: Resultado consolidado
+                // Card 2: Resultado consolidado (From Backend DTO)
                 item {
-                    val totalInvest = linkedProjects.sumOf { parseCurrencyNum(it.investment) }
-                    val totalReturn = linkedProjects.sumOf { parseCurrencyNum(it.description) }
-                    val profit = (totalReturn - totalInvest).coerceAtLeast(0.0)
-                    val roiVal = if (totalInvest > 0) ((totalReturn - totalInvest) / totalInvest) * 100 else 0.0
+                    val totalInvest = dash?.investimento?.toDouble() ?: linkedProjects.sumOf { it.investment.toDouble() }
+                    val totalReturn = dash?.retorno?.toDouble() ?: 0.0
+                    val profit = dash?.lucro?.toDouble() ?: (totalReturn - totalInvest).coerceAtLeast(0.0)
+                    val roiVal = dash?.roiPercentual?.toDouble() ?: (if (totalInvest > 0) ((totalReturn - totalInvest) / totalInvest) * 100 else 0.0)
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -281,7 +280,6 @@ fun StrategyDashboardScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceAround
                             ) {
-                                // Donut Chart Canvas
                                 Box(
                                     modifier = Modifier.size(130.dp),
                                     contentAlignment = Alignment.Center
@@ -338,7 +336,6 @@ fun StrategyDashboardScreen(
                                     }
                                 }
 
-                                // Legend
                                 Column(
                                     verticalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
@@ -362,7 +359,6 @@ fun StrategyDashboardScreen(
                     )
                 }
 
-                // Linked Ideas List or Empty State
                 if (linkedIdeas.isEmpty()) {
                     item {
                         AguiaEmptyState(
@@ -506,12 +502,6 @@ private fun LinkedIdeaCardItem(
             }
         }
     }
-}
-
-private fun parseCurrencyNum(value: String?): Double {
-    if (value.isNullOrBlank()) return 0.0
-    val clean = value.replace("[^0-9,]".toRegex(), "").replace(",", ".")
-    return clean.toDoubleOrNull() ?: 0.0
 }
 
 private fun formatMonetaryVal(value: Double): String {

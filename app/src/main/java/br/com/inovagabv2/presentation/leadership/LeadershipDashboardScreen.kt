@@ -311,11 +311,11 @@ fun LeadershipDashboardScreen(
 
                                 Spacer(modifier = Modifier.height(16.dp))
 
-                                val totalProjects = (data.projectsByStatus.values.sum()).coerceAtLeast(1)
-                                val inProgress = data.projectsByStatus[ProjectStatus.EM_ANDAMENTO] ?: 0
-                                val planned = data.projectsByStatus[ProjectStatus.PLANEJADO] ?: 0
-                                val completed = data.projectsByStatus[ProjectStatus.CONCLUIDO] ?: 0
-                                val delayed = data.projectsByStatus[ProjectStatus.ATRASADO] ?: 0
+                                val totalProjects = data.projetosPorStatus.values.sum().toInt().coerceAtLeast(1)
+                                val inProgress = (data.projetosPorStatus[ProjectStatus.EM_ANDAMENTO] ?: 0L).toInt()
+                                val planned = (data.projetosPorStatus[ProjectStatus.PLANEJADO] ?: 0L).toInt()
+                                val completed = (data.projetosPorStatus[ProjectStatus.CONCLUIDO] ?: 0L).toInt()
+                                val delayed = data.projetosAtrasados.toInt()
 
                                 PortfolioBarRow("Em andamento", inProgress, totalProjects, Color(0xFF2563EB))
                                 Spacer(modifier = Modifier.height(10.dp))

@@ -218,7 +218,7 @@ class IdeaRepositoryImpl @Inject constructor(
         }
         return when (response.code()) {
             400 -> "Dados da requisição inválidos."
-            401 -> "Sessão inválida ou expirada. Faça login novamente."
+            401 -> "Sua sessão expirou. Faça login novamente."
             403 -> "Acesso negado para esta operação."
             404 -> "Ideia não encontrada."
             409 -> "Status incompatível para esta operação."

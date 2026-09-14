@@ -64,7 +64,7 @@ fun ManagerHomeScreen(
                         Screen.ManagerHome.route -> { /* Already here */ }
                         Screen.ManagerIdeas.route -> onNavigateToIdeas()
                         Screen.ManagerProjects.route -> onNavigateToProjects()
-                        Screen.OperatorStrategy.route -> onNavigateToStrategy()
+                        Screen.ManagerStrategy.route -> onNavigateToStrategy()
                         Screen.Profile.route -> onNavigateToProfile()
                     }
                 }

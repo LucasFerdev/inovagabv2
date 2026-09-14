@@ -1,18 +1,27 @@
 package br.com.inovagabv2.domain.model
 
-import kotlinx.serialization.Serializable
+import java.math.BigDecimal
 
-@Serializable
 data class Project(
     val id: String,
     val name: String,
     val description: String,
-    val status: ProjectStatus,
-    val progress: Float, // 0.0 to 1.0
-    val startDate: String,
-    val deadline: String,
-    val investment: String,
-    val authorName: String? = null,
-    val results: List<ProjectMetric> = emptyList(),
-    val nextSteps: List<String> = emptyList()
-)
+    val estrategiaId: String = "",
+    val ideiaOrigemId: String? = null,
+    val stage: ProjectStage = ProjectStage.PLANEJAMENTO,
+    val status: ProjectStatus = ProjectStatus.PLANEJADO,
+    val percentualProgresso: Int = 0,
+    val investment: BigDecimal = BigDecimal.ZERO,
+    val deadline: String = "",
+    val retornoFinanceiro: BigDecimal? = null,
+    val ganhoProdutividadePercentual: BigDecimal? = null,
+    val resultado: String? = null,
+    val gestorResponsavelId: String = "",
+    val isAtrasado: Boolean = false,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
+    val version: Long? = null
+) {
+    val progress: Float get() = (percentualProgresso.coerceIn(0, 100) / 100f)
+    val isReadOnly: Boolean get() = status == ProjectStatus.CONCLUIDO || status == ProjectStatus.CANCELADO
+}

@@ -8,16 +8,22 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import br.com.inovagabv2.core.session.AppInitState
 import br.com.inovagabv2.domain.model.Role
 import br.com.inovagabv2.presentation.auth.LoginScreen
 import br.com.inovagabv2.presentation.auth.LoginViewModel
+import br.com.inovagabv2.presentation.auth.RegisterScreen
+import br.com.inovagabv2.presentation.auth.RegisterViewModel
 import br.com.inovagabv2.presentation.leadership.*
 import br.com.inovagabv2.presentation.manager.home.ManagerHomeScreen
 import br.com.inovagabv2.presentation.manager.ideas.ManagerIdeasScreen
 import br.com.inovagabv2.presentation.manager.ideas.details.ManagerIdeaDetailsScreen
 import br.com.inovagabv2.presentation.manager.projects.ManagerProjectsScreen
+import br.com.inovagabv2.presentation.manager.projects.create.ManagerCreateProjectScreen
 import br.com.inovagabv2.presentation.manager.projects.details.ManagerProjectDetailsScreen
+import br.com.inovagabv2.presentation.manager.strategy.ManagerStrategyScreen
 import br.com.inovagabv2.presentation.onboarding.OnboardingScreen
+import br.com.inovagabv2.presentation.onboarding.OnboardingViewModel
 import br.com.inovagabv2.presentation.operator.communications.CommunicationsScreen
 import br.com.inovagabv2.presentation.operator.create.CreateIdeaScreen
 import br.com.inovagabv2.presentation.operator.create.CreateIdeaViewModel
@@ -26,12 +32,11 @@ import br.com.inovagabv2.presentation.operator.details.IdeaDetailsViewModel
 import br.com.inovagabv2.presentation.operator.home.OperatorHomeScreen
 import br.com.inovagabv2.presentation.operator.home.OperatorHomeViewModel
 import br.com.inovagabv2.presentation.operator.myideas.MyIdeasScreen
-import br.com.inovagabv2.core.session.AppInitState
-import br.com.inovagabv2.presentation.onboarding.OnboardingViewModel
 import br.com.inovagabv2.presentation.operator.myideas.MyIdeasViewModel
 import br.com.inovagabv2.presentation.operator.strategy.OperatorStrategyScreen
 import br.com.inovagabv2.presentation.operator.strategy.OperatorStrategyViewModel
 import br.com.inovagabv2.presentation.operator.strategy.StrategyDetailsScreen
+import br.com.inovagabv2.presentation.operator.strategy.StrategyDetailsViewModel
 import br.com.inovagabv2.presentation.profile.ProfileScreen
 import br.com.inovagabv2.presentation.profile.ProfileViewModel
 import br.com.inovagabv2.presentation.splash.SplashScreen
@@ -91,8 +96,8 @@ fun AguiaNavHost(
         }
 
         composable(Screen.Register.route) {
-            val viewModel: br.com.inovagabv2.presentation.auth.RegisterViewModel = hiltViewModel()
-            br.com.inovagabv2.presentation.auth.RegisterScreen(
+            val viewModel: RegisterViewModel = hiltViewModel()
+            RegisterScreen(
                 viewModel = viewModel,
                 onBackClick = { navController.popBackStack() },
                 onNavigateToLogin = { navController.popBackStack() },
@@ -145,12 +150,8 @@ fun AguiaNavHost(
             arguments = listOf(
                 androidx.navigation.navArgument("strategyId") { type = androidx.navigation.NavType.StringType }
             )
-        ) { backStackEntry ->
-            val strategyId = backStackEntry.arguments?.getString("strategyId") ?: ""
-            val viewModel: OperatorStrategyViewModel = hiltViewModel()
+        ) {
             StrategyDetailsScreen(
-                viewModel = viewModel,
-                strategyId = strategyId,
                 onBackClick = { navController.popBackStack() }
             )
         }
@@ -212,8 +213,18 @@ fun AguiaNavHost(
                     navController.navigate(Screen.ManagerIdeaDetails.createRoute(ideaId))
                 },
                 onNavigateToProjects = { navController.navigate(Screen.ManagerProjects.route) },
-                onNavigateToStrategy = { navController.navigate(Screen.OperatorStrategy.route) },
+                onNavigateToStrategy = { navController.navigate(Screen.ManagerStrategy.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+            )
+        }
+
+        composable(Screen.ManagerStrategy.route) {
+            ManagerStrategyScreen(
+                onNavigateToHome = { navController.navigate(Screen.ManagerHome.route) },
+                onNavigateToIdeas = { navController.navigate(Screen.ManagerIdeas.route) },
+                onNavigateToProjects = { navController.navigate(Screen.ManagerProjects.route) },
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                onStrategyClick = { strategyId -> navController.navigate(Screen.StrategyDetails.createRoute(strategyId)) }
             )
         }
 
@@ -225,7 +236,7 @@ fun AguiaNavHost(
                 onBackClick = { navController.popBackStack() },
                 onNavigateToHome = { navController.navigate(Screen.ManagerHome.route) },
                 onNavigateToProjects = { navController.navigate(Screen.ManagerProjects.route) },
-                onNavigateToStrategy = { navController.navigate(Screen.OperatorStrategy.route) },
+                onNavigateToStrategy = { navController.navigate(Screen.ManagerStrategy.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
             )
         }
@@ -246,11 +257,18 @@ fun AguiaNavHost(
                 onNavigateToDetails = { projectId ->
                     navController.navigate(Screen.ManagerProjectDetails.createRoute(projectId))
                 },
-                onNavigateToCreateProject = { /* Implement if needed */ },
+                onNavigateToCreateProject = { navController.navigate(Screen.ManagerCreateProject.route) },
                 onNavigateToHome = { navController.navigate(Screen.ManagerHome.route) },
                 onNavigateToIdeas = { navController.navigate(Screen.ManagerIdeas.route) },
-                onNavigateToStrategy = { navController.navigate(Screen.OperatorStrategy.route) },
+                onNavigateToStrategy = { navController.navigate(Screen.ManagerStrategy.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+            )
+        }
+
+        composable(Screen.ManagerCreateProject.route) {
+            ManagerCreateProjectScreen(
+                onBackClick = { navController.popBackStack() },
+                onSuccess = { navController.popBackStack() }
             )
         }
 
@@ -294,12 +312,23 @@ fun AguiaNavHost(
             LeadershipStrategyScreen(
                 viewModel = viewModel,
                 onNavigateToCreate = { navController.navigate(Screen.CreateStrategy.route) },
-                onNavigateToEdit = { strategyId -> navController.navigate(Screen.StrategyDashboard.createRoute(strategyId)) },
+                onNavigateToEdit = { strategyId -> navController.navigate(Screen.EditStrategy.createRoute(strategyId)) },
                 onNavigateToDashboard = { navController.navigate(Screen.LeadershipDashboard.route) },
                 onNavigateToProjects = { navController.navigate(Screen.LeadershipProjects.route) },
                 onNavigateToIdeas = { navController.navigate(Screen.LeadershipIdeas.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onNavigateToPanel = { strategyId -> navController.navigate(Screen.StrategyDashboard.createRoute(strategyId)) }
+            )
+        }
+
+        composable(
+            route = Screen.EditStrategy.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("strategyId") { type = androidx.navigation.NavType.StringType }
+            )
+        ) {
+            EditStrategyScreen(
+                onBackClick = { navController.popBackStack() }
             )
         }
 
@@ -338,7 +367,29 @@ fun AguiaNavHost(
                 onNavigateToIdeas = { navController.navigate(Screen.LeadershipIdeas.route) },
                 onNavigateToStrategy = { navController.navigate(Screen.LeadershipStrategy.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                onNavigateToDetails = { projectId -> navController.navigate(Screen.ManagerProjectDetails.createRoute(projectId)) }
+                onNavigateToDetails = { projectId -> navController.navigate(Screen.LeadershipProjectDetails.createRoute(projectId)) }
+            )
+        }
+
+        composable(
+            route = Screen.LeadershipProjectDetails.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("projectId") { type = androidx.navigation.NavType.StringType }
+            )
+        ) {
+            LeadershipProjectDetailsScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route = Screen.LeadershipProjectDashboard.route,
+            arguments = listOf(
+                androidx.navigation.navArgument("projectId") { type = androidx.navigation.NavType.StringType }
+            )
+        ) {
+            LeadershipProjectDashboardScreen(
+                onBackClick = { navController.popBackStack() }
             )
         }
 

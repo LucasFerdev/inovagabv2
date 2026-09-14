@@ -1,69 +1,67 @@
 package br.com.inovagabv2.data.repository
 
+import br.com.inovagabv2.data.mapper.toDomain
+import br.com.inovagabv2.data.remote.api.InovaGabApi
+import br.com.inovagabv2.data.remote.dto.ApiErrorDto
 import br.com.inovagabv2.domain.model.DashboardData
-import br.com.inovagabv2.domain.model.IdeaStatus
-import br.com.inovagabv2.domain.model.ProjectStatus
+import br.com.inovagabv2.domain.model.DashboardProjectDetails
+import br.com.inovagabv2.domain.model.DashboardStrategyDetails
 import br.com.inovagabv2.domain.repository.DashboardRepository
-import br.com.inovagabv2.domain.repository.IdeaRepository
-import br.com.inovagabv2.domain.repository.ProjectRepository
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import java.util.Locale
+import kotlinx.coroutines.flow.flow
+import kotlinx.serialization.json.Json
+import retrofit2.Response
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class DashboardRepositoryImpl @Inject constructor(
-    private val ideaRepository: IdeaRepository,
-    private val projectRepository: ProjectRepository
+    private val api: InovaGabApi,
+    private val json: Json
 ) : DashboardRepository {
 
-    override fun getDashboardData(): Flow<DashboardData> {
-        return combine(
-            ideaRepository.getIdeas(),
-            projectRepository.getProjects()
-        ) { ideas, projects ->
-            val approvedCount = ideas.count { it.status == IdeaStatus.APROVADA }
-            val inAnalysisCount = ideas.count { it.status == IdeaStatus.EM_ANALISE }
-            val activeProjects = projects.filter { it.status == ProjectStatus.EM_ANDAMENTO || it.status == ProjectStatus.PLANEJADO }
-            val statusMap = projects.groupingBy { it.status }.eachCount()
-
-            var totalInvest = 0.0
-            val totalRet = 0.0
-            projects.forEach { proj ->
-                totalInvest += parseCurrency(proj.investment)
-            }
-            val profitVal = (totalRet - totalInvest).coerceAtLeast(0.0)
-            val roiVal = if (totalInvest > 0) ((totalRet - totalInvest) / totalInvest) * 100 else 0.0
-
-            DashboardData(
-                roi = String.format(Locale.US, "%.1f%%", roiVal).replace(".", ","),
-                profit = formatCurrency(profitVal),
-                costReduction = "R$ 0,00",
-                productivity = "0%",
-                investment = totalInvest,
-                financialReturn = totalRet,
-                roiPercentage = roiVal,
-                activeProjectsCount = activeProjects.size,
-                delayedProjectsCount = 0,
-                approvedIdeasCount = approvedCount,
-                inAnalysisIdeasCount = inAnalysisCount,
-                projectsByStatus = statusMap
-            )
+    override fun getDashboardData(): Flow<DashboardData> = flow {
+        val response = api.consultarDashboardResumo()
+        if (response.isSuccessful && response.body() != null) {
+            emit(response.body()!!.toDomain())
+        } else {
+            throw Exception(parseErrorMessage(response))
         }
     }
 
-    private fun parseCurrency(value: String?): Double {
-        if (value.isNullOrBlank()) return 0.0
-        val clean = value.replace("[^0-9,]".toRegex(), "").replace(",", ".")
-        return clean.toDoubleOrNull() ?: 0.0
+    override fun getDashboardStrategyDetails(strategyId: String): Flow<DashboardStrategyDetails?> = flow {
+        val response = api.consultarDashboardEstrategia(strategyId)
+        if (response.isSuccessful && response.body() != null) {
+            emit(response.body()!!.toDomain())
+        } else {
+            throw Exception(parseErrorMessage(response))
+        }
     }
 
-    private fun formatCurrency(value: Double): String {
-        return when {
-            value >= 1_000_000 -> String.format(Locale.US, "R$ %.2f mi", value / 1_000_000).replace(".", ",")
-            value >= 1_000 -> String.format(Locale.US, "R$ %.0f mil", value / 1_000)
-            else -> String.format(Locale.US, "R$ %.2f", value).replace(".", ",")
+    override fun getDashboardProjectDetails(projectId: String): Flow<DashboardProjectDetails?> = flow {
+        val response = api.consultarDashboardProjeto(projectId)
+        if (response.isSuccessful && response.body() != null) {
+            emit(response.body()!!.toDomain())
+        } else {
+            throw Exception(parseErrorMessage(response))
+        }
+    }
+
+    private fun <T> parseErrorMessage(response: Response<T>): String {
+        val errorBody = response.errorBody()?.string()
+        if (!errorBody.isNullOrBlank()) {
+            try {
+                val apiError = json.decodeFromString<ApiErrorDto>(errorBody)
+                if (!apiError.mensagem.isNullOrBlank()) {
+                    return apiError.mensagem
+                }
+            } catch (_: Exception) {}
+        }
+        return when (response.code()) {
+            401 -> "Sua sessão expirou. Faça login novamente."
+            403 -> "Acesso negado ao Dashboard."
+            404 -> "Dados do Dashboard não encontrados."
+            else -> "Serviço do Dashboard indisponível no momento."
         }
     }
 }

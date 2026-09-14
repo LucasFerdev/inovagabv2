@@ -26,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
@@ -63,13 +64,13 @@ fun OperatorStrategyScreen(
         },
         bottomBar = {
             AguiaBottomBar(
-                currentRoute = Screen.OperatorStrategy.route,
+                currentRoute = if (currentRole == Role.GESTOR) Screen.ManagerStrategy.route else Screen.OperatorStrategy.route,
                 role = currentRole,
                 onNavigate = { route ->
                     when (route) {
                         Screen.OperatorHome.route, Screen.ManagerHome.route, Screen.LeadershipDashboard.route -> onNavigateToHome()
                         Screen.MyIdeas.route, Screen.ManagerIdeas.route -> onNavigateToSugestoes()
-                        Screen.OperatorStrategy.route, Screen.LeadershipStrategy.route -> { /* Already here */ }
+                        Screen.OperatorStrategy.route, Screen.ManagerStrategy.route, Screen.LeadershipStrategy.route -> { /* Already here */ }
                         Screen.Profile.route -> onNavigateToProfile()
                         else -> onNavigateToCommunications()
                     }
@@ -85,7 +86,7 @@ fun OperatorStrategyScreen(
         ) {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+                contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 80.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Page Header
@@ -106,7 +107,7 @@ fun OperatorStrategyScreen(
                     }
                 }
 
-                // Hero Banner Card: X estratégias ativas (calculated dynamically)
+                // Hero Banner Card: X estratégias ativas
                 item {
                     val activeCount = strategies.size
                     val countLabel = if (activeCount == 1) "1 estratégia ativa" else "$activeCount estratégias ativas"
@@ -157,7 +158,7 @@ fun OperatorStrategyScreen(
                     }
                 }
 
-                // Category Filter Pills (Horizontal Scroll)
+                // Category Filter Pills
                 item {
                     Row(
                         modifier = Modifier
@@ -166,7 +167,6 @@ fun OperatorStrategyScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // "Todas" pill
                         val isAllSelected = selectedCategory == null
                         FilterChipPill(
                             label = "Todas",
@@ -174,7 +174,6 @@ fun OperatorStrategyScreen(
                             onClick = { viewModel.onCategorySelected(null) }
                         )
 
-                        // Dynamic category pills
                         categories.forEach { category ->
                             val isSelected = selectedCategory.equals(category, ignoreCase = true)
                             FilterChipPill(
@@ -186,7 +185,7 @@ fun OperatorStrategyScreen(
                     }
                 }
 
-                // Section Title: Direcionamentos ativos
+                // Section Title
                 item {
                     Text(
                         text = "Direcionamentos ativos",
@@ -197,20 +196,18 @@ fun OperatorStrategyScreen(
                     )
                 }
 
-                // Loading State
+                // Loading / Empty / Success List
                 if (isLoading) {
                     item {
                         AguiaLoadingState(message = "Carregando estratégias...")
                     }
                 } else if (strategies.isEmpty()) {
-                    // Empty State
                     item {
                         AguiaEmptyState(
                             message = "Nenhuma estratégia ativa disponível no momento."
                         )
                     }
                 } else {
-                    // Strategy Cards List
                     items(strategies, key = { it.id }) { strategy ->
                         StrategyCardItem(
                             strategy = strategy,
@@ -261,13 +258,12 @@ private fun StrategyCardItem(
         Column(
             modifier = Modifier.padding(18.dp)
         ) {
-            // Header Row: Square Category Icon on left, Title + Status Chip on right
+            // Header Row: Square Category Icon on left, Status Chip on right
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                // Category Icon Box
                 val icon = getStrategyIcon(strategy.category)
                 Box(
                     modifier = Modifier
@@ -284,7 +280,6 @@ private fun StrategyCardItem(
                     )
                 }
 
-                // Status Chip: ATIVA
                 AguiaStatusChip(statusText = "ATIVA")
             }
 
@@ -301,6 +296,8 @@ private fun StrategyCardItem(
                     fontSize = 17.sp,
                     fontWeight = FontWeight.Bold,
                     color = AguiaColors.NavyDark,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
 
@@ -312,100 +309,123 @@ private fun StrategyCardItem(
                 )
             }
 
-            Spacer(modifier = Modifier.height(4.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
-            // Subtitle / Description
+            // Description
             Text(
                 text = strategy.description,
                 fontSize = 13.sp,
                 color = AguiaColors.TextSecondary,
-                lineHeight = 18.sp
+                lineHeight = 18.sp,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
             )
 
             Spacer(modifier = Modifier.height(14.dp))
 
-            // Meta row: Tag Category | Flag Campaign | Calendar Date | Ver detalhes >
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+            // Meta row with formatted Brazilian date (dd/MM/yyyy)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 Row(
+                    modifier = Modifier.fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.weight(1f)
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    strategy.category?.let { cat ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Outlined.LocalOffer,
-                                contentDescription = null,
-                                tint = AguiaColors.NavyDark,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = cat,
-                                fontSize = 12.sp,
-                                color = AguiaColors.NavyDark
-                            )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        strategy.category?.let { cat ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Outlined.LocalOffer,
+                                    contentDescription = null,
+                                    tint = AguiaColors.NavyDark,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = cat,
+                                    fontSize = 12.sp,
+                                    color = AguiaColors.NavyDark,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        }
+
+                        strategy.campaign?.let { camp ->
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Flag,
+                                    contentDescription = null,
+                                    tint = AguiaColors.NavyDark,
+                                    modifier = Modifier.size(13.dp)
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    text = camp,
+                                    fontSize = 12.sp,
+                                    color = AguiaColors.NavyDark,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
                         }
                     }
 
-                    strategy.campaign?.let { camp ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Outlined.Flag,
-                                contentDescription = null,
-                                tint = AguiaColors.NavyDark,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = camp,
-                                fontSize = 12.sp,
-                                color = AguiaColors.NavyDark
-                            )
-                        }
-                    }
-
-                    strategy.publishedDate?.let { date ->
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Outlined.CalendarToday,
-                                contentDescription = null,
-                                tint = AguiaColors.TextSecondary,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = date,
-                                fontSize = 12.sp,
-                                color = AguiaColors.TextSecondary
-                            )
-                        }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable { onClick() }
+                    ) {
+                        Text(
+                            text = "Ver detalhes",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = AguiaColors.PrimaryBlue
+                        )
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = AguiaColors.PrimaryBlue,
+                            modifier = Modifier.size(16.dp)
+                        )
                     }
                 }
 
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { onClick() }
-                ) {
-                    Text(
-                        text = "Ver detalhes",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AguiaColors.PrimaryBlue
-                    )
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = null,
-                        tint = AguiaColors.PrimaryBlue,
-                        modifier = Modifier.size(16.dp)
-                    )
+                val formattedDate = formatDatePtBr(strategy.publishedDate ?: strategy.date)
+                if (formattedDate.isNotBlank()) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Outlined.CalendarToday,
+                            contentDescription = null,
+                            tint = AguiaColors.TextSecondary,
+                            modifier = Modifier.size(13.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = formattedDate,
+                            fontSize = 12.sp,
+                            color = AguiaColors.TextSecondary
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+private fun formatDatePtBr(isoDate: String?): String {
+    if (isoDate.isNullOrBlank()) return ""
+    return try {
+        val parts = isoDate.split("-")
+        if (parts.size >= 3) {
+            "${parts[2].take(2)}/${parts[1]}/${parts[0]}"
+        } else isoDate
+    } catch (_: Exception) {
+        isoDate
     }
 }
 

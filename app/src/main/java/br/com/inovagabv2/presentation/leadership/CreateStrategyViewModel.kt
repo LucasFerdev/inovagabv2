@@ -10,6 +10,20 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+data class CreateStrategyState(
+    val title: String = "",
+    val description: String = "",
+    val date: String = "",
+    val category: String = "",
+    val campaign: String = "",
+    val isSaving: Boolean = false,
+    val isSuccess: Boolean = false,
+    val feedbackMessage: String? = null,
+    val error: String? = null
+) {
+    val isValid: Boolean get() = title.isNotBlank() && description.isNotBlank() && category.isNotBlank() && campaign.isNotBlank() && date.isNotBlank()
+}
+
 @HiltViewModel
 class CreateStrategyViewModel @Inject constructor(
     private val repository: StrategyRepository
@@ -30,12 +44,11 @@ class CreateStrategyViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true, error = null) }
-            val dateVal = current.date.ifBlank { "2026-09-15" }
 
             val result = repository.createStrategy(
                 titulo = current.title,
                 descricao = current.description,
-                data = dateVal,
+                data = current.date,
                 categoria = current.category,
                 campanha = current.campaign
             )
@@ -43,9 +56,21 @@ class CreateStrategyViewModel @Inject constructor(
             if (result.isSuccess) {
                 val created = result.getOrNull()
                 if (activateNow && created != null) {
-                    repository.activateStrategy(created.id)
+                    val activateRes = repository.activateStrategy(created.id)
+                    if (activateRes.isSuccess) {
+                        _state.update { it.copy(isSaving = false, isSuccess = true, feedbackMessage = "Estratégia criada e ativada com sucesso.") }
+                    } else {
+                        _state.update {
+                            it.copy(
+                                isSaving = false,
+                                isSuccess = true,
+                                feedbackMessage = "Estratégia criada como rascunho. Não foi possível ativar automaticamente."
+                            )
+                        }
+                    }
+                } else {
+                    _state.update { it.copy(isSaving = false, isSuccess = true, feedbackMessage = "Estratégia salva como rascunho.") }
                 }
-                _state.update { it.copy(isSaving = false, isSuccess = true) }
             } else {
                 _state.update {
                     it.copy(
@@ -56,17 +81,4 @@ class CreateStrategyViewModel @Inject constructor(
             }
         }
     }
-}
-
-data class CreateStrategyState(
-    val title: String = "",
-    val description: String = "",
-    val date: String = "2026-09-15",
-    val category: String = "Operação",
-    val campaign: String = "Inovação 2026",
-    val isSaving: Boolean = false,
-    val isSuccess: Boolean = false,
-    val error: String? = null
-) {
-    val isValid: Boolean get() = title.isNotBlank() && description.isNotBlank() && category.isNotBlank() && campaign.isNotBlank()
 }

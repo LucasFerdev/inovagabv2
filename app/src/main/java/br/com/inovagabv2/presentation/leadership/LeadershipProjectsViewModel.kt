@@ -37,11 +37,12 @@ class LeadershipProjectsViewModel @Inject constructor(
     val totalProjectsCount: StateFlow<Int> = _allProjects.map { it.size }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
-    val delayedCount: StateFlow<Int> = _allProjects.map { list -> list.count { it.status == ProjectStatus.ATRASADO } }
+    val delayedCount: StateFlow<Int> = _allProjects.map { list -> list.count { it.isAtrasado } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     val averageProgress: StateFlow<Int> = _allProjects.map { list ->
-        if (list.isEmpty()) 0 else (list.map { it.progress }.average() * 100).toInt()
+        if (list.isEmpty()) 0
+        else kotlin.math.round(list.sumOf { it.percentualProgresso }.toDouble() / list.size).toInt()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     init {

@@ -1,18 +1,17 @@
 package br.com.inovagabv2.domain.model
 
-import br.com.inovagabv2.core.designsystem.AguiaColors
-import androidx.compose.ui.graphics.Color
-
 enum class ProjectStatus(val displayName: String) {
     PLANEJADO("Planejado"),
     EM_ANDAMENTO("Em andamento"),
+    PAUSADO("Pausado"),
     CONCLUIDO("Concluído"),
-    ATRASADO("Atrasado");
+    CANCELADO("Cancelado")
+}
 
-    fun getColor(): Color = when (this) {
-        PLANEJADO -> AguiaColors.StatusSent
-        EM_ANDAMENTO -> AguiaColors.StatusImplementing
-        CONCLUIDO -> AguiaColors.StatusCompleted
-        ATRASADO -> AguiaColors.ErrorRed
-    }
+enum class ProjectStage(val displayName: String) {
+    PLANEJAMENTO("Planejamento"),
+    DESENVOLVIMENTO("Desenvolvimento"),
+    PILOTO("Piloto"),
+    IMPLEMENTACAO("Implementação"),
+    ENCERRAMENTO("Encerramento")
 }
