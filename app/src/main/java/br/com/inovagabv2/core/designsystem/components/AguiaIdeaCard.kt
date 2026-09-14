@@ -131,14 +131,15 @@ fun AguiaIdeaCard(
                         )
                     }
 
-                    idea.priority?.let { priority ->
-                        val priorityColor = when (priority) {
-                            Priority.ALTA -> AguiaColors.PrimaryBlue
-                            Priority.MEDIA -> if (isApproved) Color(0xFFEAB308) else Color(0xFF0284C7)
-                            Priority.BAIXA -> AguiaColors.PrimaryBlue
+                    idea.priority?.let { priorityVal ->
+                        val priorityLabel = "P$priorityVal"
+                        val priorityColor = when {
+                            priorityVal >= 4 -> AguiaColors.PrimaryBlue
+                            priorityVal == 3 -> Color(0xFFEAB308)
+                            else -> Color(0xFF0284C7)
                         }
                         Text(
-                            text = priority.displayName,
+                            text = priorityLabel,
                             style = MaterialTheme.typography.labelSmall,
                             color = priorityColor,
                             fontWeight = FontWeight.Bold

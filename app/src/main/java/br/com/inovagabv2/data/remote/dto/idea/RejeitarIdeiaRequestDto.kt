@@ -1,0 +1,9 @@
+package br.com.inovagabv2.data.remote.dto.idea
+
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class RejeitarIdeiaRequestDto(
+    @SerialName("justificativa") val justificativa: String
+)

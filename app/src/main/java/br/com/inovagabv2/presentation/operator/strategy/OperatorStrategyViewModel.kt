@@ -60,7 +60,7 @@ class OperatorStrategyViewModel @Inject constructor(
     fun loadStrategies() {
         viewModelScope.launch {
             _isLoading.value = true
-            strategyRepository.getStrategies().collect {
+            strategyRepository.getActiveStrategies().collect {
                 _strategies.value = it
                 _isLoading.value = false
             }

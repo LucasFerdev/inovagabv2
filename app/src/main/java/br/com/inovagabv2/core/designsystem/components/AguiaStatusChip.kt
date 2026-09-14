@@ -54,9 +54,7 @@ fun AguiaStatusChip(
         IdeaStatus.APROVADA -> "APROVADA"
         IdeaStatus.ENVIADA -> "ENVIADA"
         IdeaStatus.REJEITADA -> "REJEITADA"
-        IdeaStatus.AJUSTES_SOLICITADOS -> "AJUSTES"
-        IdeaStatus.EM_IMPLEMENTACAO -> "IMPLEMENTANDO"
-        IdeaStatus.CONCLUIDA -> "CONCLUÍDA"
+        IdeaStatus.ARQUIVADA -> "ARQUIVADA"
     }
     AguiaStatusChip(
         statusText = label,

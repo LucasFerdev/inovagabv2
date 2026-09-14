@@ -35,6 +35,7 @@ sealed class Screen(val route: String) {
     
     // Liderança
     object LeadershipDashboard : Screen("leadership_dashboard")
+    object LeadershipIdeas : Screen("leadership_ideas")
     object LeadershipStrategy : Screen("leadership_strategy")
     object CreateStrategy : Screen("create_strategy")
     object LeadershipProjects : Screen("leadership_projects")

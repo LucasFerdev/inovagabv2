@@ -1,12 +1,7 @@
 package br.com.inovagabv2.presentation.operator.myideas
 
 import br.com.inovagabv2.core.session.FakeSessionManager
-import br.com.inovagabv2.domain.model.Idea
-import br.com.inovagabv2.domain.model.IdeaStatus
-import br.com.inovagabv2.domain.model.Priority
-import br.com.inovagabv2.domain.model.Role
-import br.com.inovagabv2.domain.model.Strategy
-import br.com.inovagabv2.domain.model.User
+import br.com.inovagabv2.domain.model.*
 import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.IdeaRepository
 import br.com.inovagabv2.domain.repository.StrategyRepository
@@ -74,15 +69,16 @@ class MyIdeasViewModelTest {
         val idea = Idea(
             id = "i1",
             title = "Otimização do embarque",
-            description = "Desc",
+            problem = "Desc",
+            proposedSolution = "Solucao",
+            expectedBenefits = "Benefits",
+            category = "Operação",
+            strategyId = "s1",
             authorId = "u1",
             authorName = "Lucas",
             status = IdeaStatus.EM_ANALISE,
-            priority = Priority.ALTA,
-            createdAt = "2026-09-10",
-            benefits = "Benefits",
-            category = "Operação",
-            strategyId = "s1"
+            priority = 4,
+            createdAt = "2026-09-10"
         )
         fakeIdeaRepository.createIdea(idea)
 
@@ -98,10 +94,16 @@ class MyIdeasViewModelTest {
         private val _flow = MutableStateFlow<List<Idea>>(emptyList())
 
         override fun getIdeas(): Flow<List<Idea>> = _flow
-
         override fun getIdeasByAuthor(authorId: String): Flow<List<Idea>> = _flow
-
+        override fun getIdeasRemote(status: IdeaStatus?, categoria: String?, estrategiaId: String?, prioridade: Int?, pagina: Int, tamanho: Int): Flow<Pagina<Idea>> = flowOf(Pagina(_flow.value, 0, 20, _flow.value.size.toLong(), 1, true, true))
+        override fun getMyIdeasRemote(pagina: Int, tamanho: Int): Flow<Pagina<Idea>> = flowOf(Pagina(_flow.value, 0, 20, _flow.value.size.toLong(), 1, true, true))
         override fun getIdeaById(id: String): Flow<Idea?> = flowOf(null)
+
+        override suspend fun createIdea(titulo: String, problema: String, solucaoProposta: String, beneficiosEsperados: String, categoria: String, estrategiaId: String): Result<Idea> {
+            val idea = Idea("i1", titulo, problema, solucaoProposta, beneficiosEsperados, categoria, estrategiaId)
+            createIdea(idea)
+            return Result.success(idea)
+        }
 
         override suspend fun createIdea(idea: Idea): Result<Unit> {
             val list = _flow.value.toMutableList()
@@ -110,7 +112,12 @@ class MyIdeasViewModelTest {
             return Result.success(Unit)
         }
 
-        override suspend fun updateIdeaStatus(id: String, status: IdeaStatus, priority: Priority?): Result<Unit> = Result.success(Unit)
+        override suspend fun updateIdeaStatus(id: String, status: IdeaStatus, priority: Int?, justificativa: String?): Result<Unit> = Result.success(Unit)
+        override suspend fun analisar(id: String): Result<Idea> = Result.success(Idea("1", "T", "P", "S", "B", "C", "E"))
+        override suspend fun priorizar(id: String, prioridade: Int, justificativa: String?): Result<Idea> = Result.success(Idea("1", "T", "P", "S", "B", "C", "E"))
+        override suspend fun aprovar(id: String): Result<Idea> = Result.success(Idea("1", "T", "P", "S", "B", "C", "E"))
+        override suspend fun rejeitar(id: String, justificativa: String): Result<Idea> = Result.success(Idea("1", "T", "P", "S", "B", "C", "E"))
+        override suspend fun arquivar(id: String): Result<Unit> = Result.success(Unit)
     }
 
     private class FakeStrategyRepository : StrategyRepository {
@@ -121,13 +128,17 @@ class MyIdeasViewModelTest {
         }
 
         override fun getStrategies(): Flow<List<Strategy>> = _flow
-
+        override fun getStrategiesRemote(status: StrategyStatus?, categoria: String?, campanha: String?, pagina: Int, tamanho: Int): Flow<Pagina<Strategy>> = flowOf(Pagina(_flow.value, 0, 20, _flow.value.size.toLong(), 1, true, true))
+        override fun getActiveStrategies(): Flow<List<Strategy>> = _flow
         override fun getStrategyById(id: String): Flow<Strategy?> = flowOf(null)
 
+        override suspend fun createStrategy(titulo: String, descricao: String, data: String, categoria: String, campanha: String): Result<Strategy> = Result.success(Strategy("1", titulo, descricao))
         override suspend fun createStrategy(strategy: Strategy): Result<Unit> = Result.success(Unit)
-
+        override suspend fun updateStrategy(id: String, titulo: String, descricao: String, data: String, categoria: String, campanha: String): Result<Strategy> = Result.success(Strategy("1", titulo, descricao))
         override suspend fun updateStrategy(strategy: Strategy): Result<Unit> = Result.success(Unit)
-
+        override suspend fun activateStrategy(id: String): Result<Strategy> = Result.success(Strategy("1", "T", "D", status = StrategyStatus.ATIVA))
+        override suspend fun deactivateStrategy(id: String): Result<Strategy> = Result.success(Strategy("1", "T", "D", status = StrategyStatus.INATIVA))
+        override suspend fun archiveStrategy(id: String): Result<Unit> = Result.success(Unit)
         override suspend fun deleteStrategy(id: String): Result<Unit> = Result.success(Unit)
     }
 

@@ -4,9 +4,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -25,6 +27,7 @@ import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.AguiaButton
 import br.com.inovagabv2.core.designsystem.components.AguiaTextField
 import br.com.inovagabv2.core.designsystem.components.AguiaTopBar
+import br.com.inovagabv2.domain.model.Strategy
 
 @Composable
 fun CreateIdeaScreen(
@@ -65,19 +68,32 @@ fun CreateIdeaScreen(
             Box(modifier = Modifier.weight(1f)) {
                 when (state.currentStep) {
                     1 -> CategoryStep(
+                        state = state,
+                        onStrategySelected = viewModel::onStrategySelected,
                         selectedCategory = state.category,
                         onCategorySelected = viewModel::onCategoryChange
                     )
                     2 -> DetailsStep(
                         title = state.title,
-                        description = state.description,
-                        benefits = state.benefits,
+                        problem = state.problem,
+                        solution = state.proposedSolution,
+                        benefits = state.expectedBenefits,
                         onTitleChange = viewModel::onTitleChange,
-                        onDescriptionChange = viewModel::onDescriptionChange,
-                        onBenefitsChange = viewModel::onBenefitsChange
+                        onProblemChange = viewModel::onProblemChange,
+                        onSolutionChange = viewModel::onProposedSolutionChange,
+                        onBenefitsChange = viewModel::onExpectedBenefitsChange
                     )
                     3 -> ReviewStep(state = state)
                 }
+            }
+
+            if (!state.error.isNullOrBlank()) {
+                Text(
+                    text = state.error!!,
+                    color = MaterialTheme.colorScheme.error,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                )
             }
 
             Row(
@@ -108,7 +124,7 @@ fun CreateIdeaScreen(
                     enabled = when (state.currentStep) {
                         1 -> state.isStep1Valid
                         2 -> state.isStep2Valid
-                        else -> !state.isLoading
+                        else -> !state.isLoading && state.selectedStrategy != null
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = AguiaColors.PrimaryBlue,
@@ -141,7 +157,7 @@ private fun StepIndicator(currentStep: Int) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        StepItem(label = "Categoria", step = 1, currentStep = currentStep, modifier = Modifier.weight(1f))
+        StepItem(label = "Estratégia & Categoria", step = 1, currentStep = currentStep, modifier = Modifier.weight(1f))
         HorizontalDivider(modifier = Modifier.width(16.dp), color = AguiaColors.TextSecondary.copy(alpha = 0.2f))
         StepItem(label = "Detalhes", step = 2, currentStep = currentStep, modifier = Modifier.weight(1f))
         HorizontalDivider(modifier = Modifier.width(16.dp), color = AguiaColors.TextSecondary.copy(alpha = 0.2f))
@@ -172,7 +188,7 @@ private fun StepItem(label: String, step: Int, currentStep: Int, modifier: Modif
         Spacer(modifier = Modifier.height(4.dp))
         Text(
             text = label,
-            fontSize = 11.sp,
+            fontSize = 10.sp,
             color = if (isCurrent) AguiaColors.PrimaryBlue else AguiaColors.TextSecondary,
             fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Normal
         )
@@ -181,6 +197,8 @@ private fun StepItem(label: String, step: Int, currentStep: Int, modifier: Modif
 
 @Composable
 private fun CategoryStep(
+    state: CreateIdeaState,
+    onStrategySelected: (Strategy) -> Unit,
     selectedCategory: String,
     onCategorySelected: (String) -> Unit
 ) {
@@ -197,12 +215,56 @@ private fun CategoryStep(
 
     Column {
         Text(
+            text = "Estratégia Vinculada",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = AguiaColors.NavyDark
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (state.isLoadingStrategies) {
+            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = AguiaColors.PrimaryBlue)
+        } else if (state.activeStrategies.isEmpty()) {
+            Text(
+                text = "Nenhuma estratégia ativa disponível. Aguarde a definição de uma estratégia pela Liderança.",
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.error,
+                fontWeight = FontWeight.Medium
+            )
+        } else {
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                items(state.activeStrategies) { strategy ->
+                    val isSelected = state.selectedStrategy?.id == strategy.id
+                    Surface(
+                        modifier = Modifier.clickable { onStrategySelected(strategy) },
+                        shape = RoundedCornerShape(20.dp),
+                        color = if (isSelected) AguiaColors.PrimaryBlue else Color.White,
+                        border = if (isSelected) null else androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF3B82F6))
+                    ) {
+                        Text(
+                            text = strategy.title,
+                            fontSize = 12.sp,
+                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                            color = if (isSelected) Color.White else AguiaColors.PrimaryBlue,
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        Text(
             text = "Selecione a categoria da sua sugestão",
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
             color = AguiaColors.NavyDark
         )
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
         LazyVerticalGrid(
             columns = GridCells.Fixed(2),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -212,7 +274,7 @@ private fun CategoryStep(
                 val isSelected = selectedCategory == category.name
                 Card(
                     modifier = Modifier
-                        .height(64.dp)
+                        .height(56.dp)
                         .clip(RoundedCornerShape(12.dp))
                         .border(
                             width = if (isSelected) 2.dp else 0.dp,
@@ -233,7 +295,7 @@ private fun CategoryStep(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(36.dp)
+                                .size(32.dp)
                                 .clip(CircleShape)
                                 .background(if (isSelected) AguiaColors.PrimaryBlue else AguiaColors.PrimaryBlue.copy(alpha = 0.1f)),
                             contentAlignment = Alignment.Center
@@ -242,15 +304,15 @@ private fun CategoryStep(
                                 imageVector = category.icon,
                                 contentDescription = null,
                                 tint = if (isSelected) Color.White else AguiaColors.PrimaryBlue,
-                                modifier = Modifier.size(18.dp)
+                                modifier = Modifier.size(16.dp)
                             )
                         }
 
-                        Spacer(modifier = Modifier.width(10.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
 
                         Text(
                             text = category.name,
-                            fontSize = 13.sp,
+                            fontSize = 12.sp,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                             color = if (isSelected) AguiaColors.PrimaryBlue else AguiaColors.NavyDark
                         )
@@ -264,13 +326,15 @@ private fun CategoryStep(
 @Composable
 private fun DetailsStep(
     title: String,
-    description: String,
+    problem: String,
+    solution: String,
     benefits: String,
     onTitleChange: (String) -> Unit,
-    onDescriptionChange: (String) -> Unit,
+    onProblemChange: (String) -> Unit,
+    onSolutionChange: (String) -> Unit,
     onBenefitsChange: (String) -> Unit
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(
             text = "Conte-nos mais sobre sua ideia",
             style = MaterialTheme.typography.titleMedium,
@@ -283,18 +347,25 @@ private fun DetailsStep(
             label = "Título da sugestão"
         )
         AguiaTextField(
-            value = description,
-            onValueChange = onDescriptionChange,
-            label = "Descrição detalhada",
+            value = problem,
+            onValueChange = onProblemChange,
+            label = "Problema identificado",
             singleLine = false,
-            modifier = Modifier.heightIn(min = 120.dp)
+            modifier = Modifier.heightIn(min = 70.dp)
+        )
+        AguiaTextField(
+            value = solution,
+            onValueChange = onSolutionChange,
+            label = "Solução proposta",
+            singleLine = false,
+            modifier = Modifier.heightIn(min = 70.dp)
         )
         AguiaTextField(
             value = benefits,
             onValueChange = onBenefitsChange,
-            label = "Principais benefícios",
+            label = "Benefícios esperados",
             singleLine = false,
-            modifier = Modifier.heightIn(min = 100.dp)
+            modifier = Modifier.heightIn(min = 70.dp)
         )
     }
 }
@@ -315,10 +386,12 @@ private fun ReviewStep(state: CreateIdeaState) {
             shape = RoundedCornerShape(12.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                ReviewItem(label = "Estratégia", value = state.selectedStrategy?.title ?: "Nenhuma")
                 ReviewItem(label = "Categoria", value = state.category)
                 ReviewItem(label = "Título", value = state.title)
-                ReviewItem(label = "Descrição", value = state.description)
-                ReviewItem(label = "Benefícios", value = state.benefits)
+                ReviewItem(label = "Problema", value = state.problem.ifBlank { state.proposedSolution })
+                ReviewItem(label = "Solução Proposta", value = state.proposedSolution.ifBlank { state.problem })
+                ReviewItem(label = "Benefícios", value = state.expectedBenefits)
             }
         }
         

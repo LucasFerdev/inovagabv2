@@ -1,12 +1,6 @@
 package br.com.inovagabv2.presentation.manager.home
 
-import br.com.inovagabv2.domain.model.Idea
-import br.com.inovagabv2.domain.model.IdeaStatus
-import br.com.inovagabv2.domain.model.Priority
-import br.com.inovagabv2.domain.model.Project
-import br.com.inovagabv2.domain.model.ProjectStatus
-import br.com.inovagabv2.domain.model.Role
-import br.com.inovagabv2.domain.model.User
+import br.com.inovagabv2.domain.model.*
 import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.IdeaRepository
 import br.com.inovagabv2.domain.repository.ProjectRepository
@@ -67,9 +61,9 @@ class ManagerHomeViewModelTest {
     @Test
     fun `metrics are calculated dynamically from repositories`() = runTest {
         val ideas = listOf(
-            Idea("1", "Idea 1", "Desc", "u1", "Author", IdeaStatus.ENVIADA, Priority.MEDIA, "2026-09-12", null, "Benefits", "Operação"),
-            Idea("2", "Idea 2", "Desc", "u2", "Author", IdeaStatus.EM_ANALISE, Priority.ALTA, "2026-09-12", null, "Benefits", "Manutenção"),
-            Idea("3", "Idea 3", "Desc", "u3", "Author", IdeaStatus.APROVADA, Priority.ALTA, "2026-09-12", null, "Benefits", "Tecnologia")
+            Idea("1", "Idea 1", "Prob", "Sol", "Ben", "Operação", "s1", "u1", "Author", IdeaStatus.ENVIADA, 2),
+            Idea("2", "Idea 2", "Prob", "Sol", "Ben", "Manutenção", "s1", "u2", "Author", IdeaStatus.EM_ANALISE, 4),
+            Idea("3", "Idea 3", "Prob", "Sol", "Ben", "Tecnologia", "s1", "u3", "Author", IdeaStatus.APROVADA, 5)
         )
         fakeIdeaRepository.setIdeas(ideas)
 
@@ -99,9 +93,17 @@ class ManagerHomeViewModelTest {
         fun setIdeas(list: List<Idea>) { _flow.value = list }
         override fun getIdeas(): Flow<List<Idea>> = _flow
         override fun getIdeasByAuthor(authorId: String): Flow<List<Idea>> = _flow
+        override fun getIdeasRemote(status: IdeaStatus?, categoria: String?, estrategiaId: String?, prioridade: Int?, pagina: Int, tamanho: Int): Flow<Pagina<Idea>> = flowOf(Pagina(_flow.value, 0, 20, _flow.value.size.toLong(), 1, true, true))
+        override fun getMyIdeasRemote(pagina: Int, tamanho: Int): Flow<Pagina<Idea>> = flowOf(Pagina(_flow.value, 0, 20, _flow.value.size.toLong(), 1, true, true))
         override fun getIdeaById(id: String): Flow<Idea?> = flowOf(null)
+        override suspend fun createIdea(titulo: String, problema: String, solucaoProposta: String, beneficiosEsperados: String, categoria: String, estrategiaId: String): Result<Idea> = Result.success(Idea("1", titulo, problema, solucaoProposta, beneficiosEsperados, categoria, estrategiaId))
         override suspend fun createIdea(idea: Idea): Result<Unit> = Result.success(Unit)
-        override suspend fun updateIdeaStatus(id: String, status: IdeaStatus, priority: Priority?): Result<Unit> = Result.success(Unit)
+        override suspend fun updateIdeaStatus(id: String, status: IdeaStatus, priority: Int?, justificativa: String?): Result<Unit> = Result.success(Unit)
+        override suspend fun analisar(id: String): Result<Idea> = Result.success(Idea("1", "T", "P", "S", "B", "C", "E"))
+        override suspend fun priorizar(id: String, prioridade: Int, justificativa: String?): Result<Idea> = Result.success(Idea("1", "T", "P", "S", "B", "C", "E"))
+        override suspend fun aprovar(id: String): Result<Idea> = Result.success(Idea("1", "T", "P", "S", "B", "C", "E"))
+        override suspend fun rejeitar(id: String, justificativa: String): Result<Idea> = Result.success(Idea("1", "T", "P", "S", "B", "C", "E"))
+        override suspend fun arquivar(id: String): Result<Unit> = Result.success(Unit)
     }
 
     private class FakeProjectRepository : ProjectRepository {

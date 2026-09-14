@@ -6,16 +6,23 @@ import kotlinx.serialization.Serializable
 data class Idea(
     val id: String,
     val title: String,
-    val description: String,
-    val authorId: String,
-    val authorName: String,
-    val status: IdeaStatus,
-    val priority: Priority? = null,
-    val createdAt: String,
-    val updatedAt: String? = null,
-    val benefits: String,
+    val problem: String = "",
+    val proposedSolution: String = "",
+    val expectedBenefits: String = "",
     val category: String,
-    val strategyId: String? = null,
-    val attachments: List<String> = emptyList(),
+    val strategyId: String = "",
+    val authorId: String = "",
+    val authorName: String = "Autor não informado",
+    val status: IdeaStatus = IdeaStatus.ENVIADA,
+    val priority: Int? = null,
+    val evaluationJustification: String? = null,
+    val evaluatedById: String? = null,
+    val evaluatedAt: String? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
+    val version: Long? = null,
     val timeline: List<TimelineEvent> = emptyList()
-)
+) {
+    val description: String get() = problem.ifBlank { proposedSolution }
+    val benefits: String get() = expectedBenefits
+}

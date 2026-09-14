@@ -1,8 +1,6 @@
 package br.com.inovagabv2.presentation.operator.strategy
 
-import br.com.inovagabv2.domain.model.Role
-import br.com.inovagabv2.domain.model.Strategy
-import br.com.inovagabv2.domain.model.User
+import br.com.inovagabv2.domain.model.*
 import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.StrategyRepository
 import kotlinx.coroutines.Dispatchers
@@ -52,8 +50,8 @@ class OperatorStrategyViewModelTest {
     @Test
     fun `categories and filteredStrategies calculated dynamically from returned list`() = runTest {
         val list = listOf(
-            Strategy("1", "Excelência", "Desc", category = "Experiência", isPublished = true),
-            Strategy("2", "Eficiência", "Desc", category = "Sustentabilidade", isPublished = true)
+            Strategy("1", "Excelência", "Desc", category = "Experiência", status = StrategyStatus.ATIVA),
+            Strategy("2", "Eficiência", "Desc", category = "Sustentabilidade", status = StrategyStatus.ATIVA)
         )
         fakeStrategyRepository.setStrategies(list)
         viewModel = OperatorStrategyViewModel(fakeStrategyRepository, fakeAuthRepository)
@@ -80,13 +78,17 @@ class OperatorStrategyViewModelTest {
         }
 
         override fun getStrategies(): Flow<List<Strategy>> = _flow
-
+        override fun getStrategiesRemote(status: StrategyStatus?, categoria: String?, campanha: String?, pagina: Int, tamanho: Int): Flow<Pagina<Strategy>> = flowOf(Pagina(_flow.value, 0, 20, _flow.value.size.toLong(), 1, true, true))
+        override fun getActiveStrategies(): Flow<List<Strategy>> = _flow
         override fun getStrategyById(id: String): Flow<Strategy?> = flowOf(null)
 
+        override suspend fun createStrategy(titulo: String, descricao: String, data: String, categoria: String, campanha: String): Result<Strategy> = Result.success(Strategy("1", titulo, descricao))
         override suspend fun createStrategy(strategy: Strategy): Result<Unit> = Result.success(Unit)
-
+        override suspend fun updateStrategy(id: String, titulo: String, descricao: String, data: String, categoria: String, campanha: String): Result<Strategy> = Result.success(Strategy("1", titulo, descricao))
         override suspend fun updateStrategy(strategy: Strategy): Result<Unit> = Result.success(Unit)
-
+        override suspend fun activateStrategy(id: String): Result<Strategy> = Result.success(Strategy("1", "T", "D", status = StrategyStatus.ATIVA))
+        override suspend fun deactivateStrategy(id: String): Result<Strategy> = Result.success(Strategy("1", "T", "D", status = StrategyStatus.INATIVA))
+        override suspend fun archiveStrategy(id: String): Result<Unit> = Result.success(Unit)
         override suspend fun deleteStrategy(id: String): Result<Unit> = Result.success(Unit)
     }
 

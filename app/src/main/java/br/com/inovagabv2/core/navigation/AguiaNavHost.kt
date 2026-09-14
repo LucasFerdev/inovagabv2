@@ -271,9 +271,21 @@ fun AguiaNavHost(
             LeadershipDashboardScreen(
                 viewModel = viewModel,
                 onNavigateToProjects = { navController.navigate(Screen.LeadershipProjects.route) },
-                onNavigateToIdeas = { navController.navigate(Screen.LeadershipStrategy.route) },
+                onNavigateToIdeas = { navController.navigate(Screen.LeadershipIdeas.route) },
                 onNavigateToStrategy = { navController.navigate(Screen.LeadershipStrategy.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+            )
+        }
+
+        composable(Screen.LeadershipIdeas.route) {
+            val viewModel: LeadershipIdeasViewModel = hiltViewModel()
+            LeadershipIdeasScreen(
+                onNavigateToDetails = { ideaId -> navController.navigate(Screen.IdeaDetails.createRoute(ideaId)) },
+                onNavigateToHome = { navController.navigate(Screen.LeadershipDashboard.route) },
+                onNavigateToProjects = { navController.navigate(Screen.LeadershipProjects.route) },
+                onNavigateToStrategy = { navController.navigate(Screen.LeadershipStrategy.route) },
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                viewModel = viewModel
             )
         }
 
@@ -285,7 +297,7 @@ fun AguiaNavHost(
                 onNavigateToEdit = { strategyId -> navController.navigate(Screen.StrategyDashboard.createRoute(strategyId)) },
                 onNavigateToDashboard = { navController.navigate(Screen.LeadershipDashboard.route) },
                 onNavigateToProjects = { navController.navigate(Screen.LeadershipProjects.route) },
-                onNavigateToIdeas = { navController.navigate(Screen.LeadershipStrategy.route) },
+                onNavigateToIdeas = { navController.navigate(Screen.LeadershipIdeas.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onNavigateToPanel = { strategyId -> navController.navigate(Screen.StrategyDashboard.createRoute(strategyId)) }
             )
@@ -304,7 +316,7 @@ fun AguiaNavHost(
                 onIdeaClick = { ideaId -> navController.navigate(Screen.IdeaDetails.createRoute(ideaId)) },
                 onNavigateToHome = { navController.navigate(Screen.LeadershipDashboard.route) },
                 onNavigateToProjects = { navController.navigate(Screen.LeadershipProjects.route) },
-                onNavigateToIdeas = { navController.navigate(Screen.LeadershipStrategy.route) },
+                onNavigateToIdeas = { navController.navigate(Screen.LeadershipIdeas.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
             )
         }
@@ -323,7 +335,7 @@ fun AguiaNavHost(
             LeadershipProjectsScreen(
                 viewModel = viewModel,
                 onNavigateToDashboard = { navController.navigate(Screen.LeadershipDashboard.route) },
-                onNavigateToIdeas = { navController.navigate(Screen.LeadershipStrategy.route) },
+                onNavigateToIdeas = { navController.navigate(Screen.LeadershipIdeas.route) },
                 onNavigateToStrategy = { navController.navigate(Screen.LeadershipStrategy.route) },
                 onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
                 onNavigateToDetails = { projectId -> navController.navigate(Screen.ManagerProjectDetails.createRoute(projectId)) }

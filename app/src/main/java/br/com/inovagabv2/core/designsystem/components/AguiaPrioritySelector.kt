@@ -12,19 +12,20 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
-import br.com.inovagabv2.domain.model.Priority
 
 @Composable
 fun AguiaPrioritySelector(
-    selectedPriority: Priority?,
-    onPrioritySelected: (Priority) -> Unit,
+    selectedPriority: Int?,
+    onPrioritySelected: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(modifier = modifier) {
         Text(
-            text = "Prioridade",
+            text = "Definir Prioridade (1 a 5)",
             style = MaterialTheme.typography.titleSmall,
             color = AguiaColors.TextPrimary
         )
@@ -33,32 +34,36 @@ fun AguiaPrioritySelector(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Priority.entries.forEach { priority ->
-                val isSelected = selectedPriority == priority
-                val color = priority.getColor()
-                
+            (1..5).forEach { level ->
+                val isSelected = selectedPriority == level
+                val color = when {
+                    level >= 4 -> AguiaColors.PrimaryBlue
+                    level == 3 -> Color(0xFFEAB308)
+                    else -> Color(0xFF0284C7)
+                }
+
                 Box(
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
                         .background(
-                            if (isSelected) color.copy(alpha = 0.1f)
+                            if (isSelected) color.copy(alpha = 0.15f)
                             else Color.Transparent
                         )
                         .border(
-                            width = 1.dp,
-                            color = if (isSelected) color else AguiaColors.TextSecondary.copy(alpha = 0.3f),
+                            width = if (isSelected) 2.dp else 1.dp,
+                            color = if (isSelected) color else Color(0xFFE2E8F0),
                             shape = RoundedCornerShape(8.dp)
                         )
-                        .clickable { onPrioritySelected(priority) }
-                        .padding(vertical = 12.dp),
+                        .clickable { onPrioritySelected(level) }
+                        .padding(vertical = 10.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = priority.displayName,
-                        style = MaterialTheme.typography.labelLarge,
+                        text = "P$level",
+                        fontSize = 13.sp,
                         color = if (isSelected) color else AguiaColors.TextSecondary,
-                        fontWeight = if (isSelected) androidx.compose.ui.text.font.FontWeight.Bold else null
+                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                     )
                 }
             }
