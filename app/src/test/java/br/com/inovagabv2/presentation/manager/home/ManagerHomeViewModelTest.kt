@@ -79,7 +79,7 @@ class ManagerHomeViewModelTest {
         assertEquals(1, currentState.metrics.inAnalysisIdeas)
         assertEquals(1, currentState.metrics.approvedIdeas)
         assertEquals(1, currentState.metrics.activeProjects)
-        assertEquals(2, currentState.ideas.size) // ENVIADA & EM_ANALISE
+        assertEquals(2, currentState.ideas.size)
     }
 
     private class FakeAuthRepository : AuthRepository {
@@ -97,6 +97,8 @@ class ManagerHomeViewModelTest {
         override fun getIdeasRemote(status: IdeaStatus?, categoria: String?, estrategiaId: String?, prioridade: Int?, pagina: Int, tamanho: Int): Flow<Pagina<Idea>> = flowOf(Pagina(_flow.value, 0, 20, _flow.value.size.toLong(), 1, true, true))
         override fun getMyIdeasRemote(pagina: Int, tamanho: Int): Flow<Pagina<Idea>> = flowOf(Pagina(_flow.value, 0, 20, _flow.value.size.toLong(), 1, true, true))
         override fun getIdeaById(id: String): Flow<Idea?> = flowOf(null)
+        override fun consultarHistorico(id: String): Flow<List<HistoryItem>> = flowOf(emptyList())
+
         override suspend fun createIdea(titulo: String, problema: String, solucaoProposta: String, beneficiosEsperados: String, categoria: String, estrategiaId: String): Result<Idea> = Result.success(Idea("1", titulo, problema, solucaoProposta, beneficiosEsperados, categoria, estrategiaId))
         override suspend fun createIdea(idea: Idea): Result<Unit> = Result.success(Unit)
         override suspend fun updateIdeaStatus(id: String, status: IdeaStatus, priority: Int?, justificativa: String?): Result<Unit> = Result.success(Unit)
@@ -113,6 +115,8 @@ class ManagerHomeViewModelTest {
         override fun getProjects(): Flow<List<Project>> = _flow
         override fun getProjectsRemote(status: ProjectStatus?, etapa: ProjectStage?, estrategiaId: String?, gestorId: String?, prazo: String?, pagina: Int, tamanho: Int): Flow<Pagina<Project>> = flowOf(Pagina(_flow.value, 0, 20, _flow.value.size.toLong(), 1, true, true))
         override fun getProjectById(id: String): Flow<Project?> = flowOf(null)
+        override fun consultarHistorico(id: String): Flow<List<HistoryItem>> = flowOf(emptyList())
+
         override suspend fun createProject(nome: String, descricao: String, estrategiaId: String, ideiaOrigemId: String?, investimento: BigDecimal, prazo: String): Result<Project> = Result.success(Project("p1", nome, descricao))
         override suspend fun createProject(project: Project): Result<Unit> = Result.success(Unit)
         override suspend fun updateProject(id: String, nome: String, descricao: String, estrategiaId: String, ideiaOrigemId: String?, investimento: BigDecimal, prazo: String): Result<Project> = Result.success(Project("p1", nome, descricao))

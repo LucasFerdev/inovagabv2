@@ -1,5 +1,6 @@
 package br.com.inovagabv2.domain.repository
 
+import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Pagina
 import br.com.inovagabv2.domain.model.Strategy
 import br.com.inovagabv2.domain.model.StrategyStatus
@@ -16,6 +17,7 @@ interface StrategyRepository {
     ): Flow<Pagina<Strategy>>
     fun getActiveStrategies(): Flow<List<Strategy>>
     fun getStrategyById(id: String): Flow<Strategy?>
+    fun consultarHistorico(id: String): Flow<List<HistoryItem>>
     suspend fun createStrategy(
         titulo: String,
         descricao: String,

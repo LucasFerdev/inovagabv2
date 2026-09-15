@@ -3,6 +3,7 @@ package br.com.inovagabv2.presentation.manager.projects.details
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Project
 import br.com.inovagabv2.domain.model.ProjectStage
 import br.com.inovagabv2.domain.model.ProjectStatus
@@ -15,7 +16,9 @@ import javax.inject.Inject
 
 data class ManagerProjectDetailsState(
     val project: Project? = null,
+    val historyItems: List<HistoryItem> = emptyList(),
     val isLoading: Boolean = true,
+    val isLoadingHistory: Boolean = false,
     val isSubmitting: Boolean = false,
     val feedbackMessage: String? = null,
     val errorMessage: String? = null,
@@ -23,6 +26,7 @@ data class ManagerProjectDetailsState(
     val showResultsDialog: Boolean = false,
     val showConcludeDialog: Boolean = false,
     val showCancelDialog: Boolean = false,
+    val showHistoryDialog: Boolean = false,
     val shouldNavigateBack: Boolean = false
 )
 
@@ -48,6 +52,19 @@ class ManagerProjectDetailsViewModel @Inject constructor(
                 _state.update { it.copy(project = project, isLoading = false) }
             }
         }
+    }
+
+    fun onShowHistoryDialog() {
+        _state.update { it.copy(showHistoryDialog = true, isLoadingHistory = true) }
+        viewModelScope.launch {
+            projectRepository.consultarHistorico(projectId).collect { history ->
+                _state.update { it.copy(historyItems = history, isLoadingHistory = false) }
+            }
+        }
+    }
+
+    fun onDismissHistoryDialog() {
+        _state.update { it.copy(showHistoryDialog = false) }
     }
 
     fun onShowProgressDialog() = _state.update { it.copy(showProgressDialog = true) }

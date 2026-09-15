@@ -1,5 +1,6 @@
 package br.com.inovagabv2.domain.repository
 
+import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.Pagina
@@ -18,6 +19,7 @@ interface IdeaRepository {
     ): Flow<Pagina<Idea>>
     fun getMyIdeasRemote(pagina: Int = 0, tamanho: Int = 20): Flow<Pagina<Idea>>
     fun getIdeaById(id: String): Flow<Idea?>
+    fun consultarHistorico(id: String): Flow<List<HistoryItem>>
     suspend fun createIdea(
         titulo: String,
         problema: String,

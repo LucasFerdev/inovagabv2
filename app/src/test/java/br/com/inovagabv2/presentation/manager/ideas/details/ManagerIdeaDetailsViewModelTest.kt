@@ -124,6 +124,7 @@ class ManagerIdeaDetailsViewModelTest {
         override fun getIdeasRemote(status: IdeaStatus?, categoria: String?, estrategiaId: String?, prioridade: Int?, pagina: Int, tamanho: Int): Flow<Pagina<Idea>> = flowOf(Pagina(listOf(currentIdea), 0, 20, 1, 1, true, true))
         override fun getMyIdeasRemote(pagina: Int, tamanho: Int): Flow<Pagina<Idea>> = flowOf(Pagina(listOf(currentIdea), 0, 20, 1, 1, true, true))
         override fun getIdeaById(id: String): Flow<Idea?> = flowOf(currentIdea)
+        override fun consultarHistorico(id: String): Flow<List<br.com.inovagabv2.domain.model.HistoryItem>> = flowOf(emptyList())
 
         override suspend fun createIdea(titulo: String, problema: String, solucaoProposta: String, beneficiosEsperados: String, categoria: String, estrategiaId: String): Result<Idea> = Result.success(currentIdea)
         override suspend fun createIdea(idea: Idea): Result<Unit> = Result.success(Unit)

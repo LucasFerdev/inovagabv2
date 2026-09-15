@@ -4,8 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.inovagabv2.domain.model.AiAnalysis
+import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Idea
-import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.repository.AiRepository
 import br.com.inovagabv2.domain.repository.IdeaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -16,8 +16,10 @@ import javax.inject.Inject
 data class ManagerIdeaDetailsState(
     val idea: Idea? = null,
     val aiAnalysis: AiAnalysis? = null,
+    val historyItems: List<HistoryItem> = emptyList(),
     val isLoading: Boolean = true,
     val isLoadingAi: Boolean = false,
+    val isLoadingHistory: Boolean = false,
     val isSubmitting: Boolean = false,
     val isSubmittingAi: Boolean = false,
     val selectedPriority: Int? = 3,
@@ -27,6 +29,7 @@ data class ManagerIdeaDetailsState(
     val showApprovalDialog: Boolean = false,
     val showRejectionDialog: Boolean = false,
     val showRecalculateDialog: Boolean = false,
+    val showHistoryDialog: Boolean = false,
     val shouldNavigateBack: Boolean = false
 )
 
@@ -50,15 +53,19 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
     fun loadIdea() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
-            ideaRepository.getIdeaById(ideaId).collect { idea ->
-                _state.update {
-                    it.copy(
-                        idea = idea,
-                        isLoading = false,
-                        selectedPriority = idea?.priority ?: 3
-                    )
+            ideaRepository.getIdeaById(ideaId)
+                .catch { e ->
+                    _state.update { it.copy(isLoading = false, errorMessage = e.message ?: "Erro ao carregar ideia.") }
                 }
-            }
+                .collect { idea ->
+                    _state.update {
+                        it.copy(
+                            idea = idea,
+                            isLoading = false,
+                            selectedPriority = idea?.priority ?: 3
+                        )
+                    }
+                }
         }
     }
 
@@ -72,6 +79,37 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
                 _state.update { it.copy(isLoadingAi = false) }
             }
         }
+    }
+
+    fun onShowHistoryDialog() {
+        _state.update { it.copy(showHistoryDialog = true, isLoadingHistory = true) }
+        viewModelScope.launch {
+            try {
+                ideaRepository.consultarHistorico(ideaId)
+                    .catch { e ->
+                        _state.update {
+                            it.copy(
+                                isLoadingHistory = false,
+                                errorMessage = e.message ?: "Erro ao carregar histórico."
+                            )
+                        }
+                    }
+                    .collect { history ->
+                        _state.update { it.copy(historyItems = history, isLoadingHistory = false) }
+                    }
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(
+                        isLoadingHistory = false,
+                        errorMessage = e.message ?: "Erro ao carregar histórico."
+                    )
+                }
+            }
+        }
+    }
+
+    fun onDismissHistoryDialog() {
+        _state.update { it.copy(showHistoryDialog = false) }
     }
 
     fun onAnalyzeAi() {

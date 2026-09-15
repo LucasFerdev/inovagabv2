@@ -81,6 +81,15 @@ class IdeaRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun consultarHistorico(id: String): Flow<List<br.com.inovagabv2.domain.model.HistoryItem>> = flow {
+        val response = api.consultarHistoricoIdeia(id)
+        if (response.isSuccessful && response.body() != null) {
+            emit(response.body()!!.map { it.toDomain() })
+        } else {
+            emit(emptyList())
+        }
+    }
+
     override suspend fun createIdea(
         titulo: String,
         problema: String,

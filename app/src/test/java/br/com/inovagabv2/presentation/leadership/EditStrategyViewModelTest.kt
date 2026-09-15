@@ -1,6 +1,7 @@
 package br.com.inovagabv2.presentation.leadership
 
 import androidx.lifecycle.SavedStateHandle
+import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Pagina
 import br.com.inovagabv2.domain.model.Strategy
 import br.com.inovagabv2.domain.model.StrategyStatus
@@ -92,6 +93,7 @@ class EditStrategyViewModelTest {
         override fun getStrategiesRemote(status: StrategyStatus?, categoria: String?, campanha: String?, pagina: Int, tamanho: Int): Flow<Pagina<Strategy>> = flowOf(Pagina(listOf(current), 0, 20, 1, 1, true, true))
         override fun getActiveStrategies(): Flow<List<Strategy>> = flowOf(listOf(current))
         override fun getStrategyById(id: String): Flow<Strategy?> = flowOf(current)
+        override fun consultarHistorico(id: String): Flow<List<HistoryItem>> = flowOf(emptyList())
 
         override suspend fun createStrategy(titulo: String, descricao: String, data: String, categoria: String, campanha: String): Result<Strategy> = Result.success(current)
         override suspend fun createStrategy(strategy: Strategy): Result<Unit> = Result.success(Unit)

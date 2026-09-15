@@ -18,9 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
-import br.com.inovagabv2.core.designsystem.components.AguiaStatusChip
-import br.com.inovagabv2.core.designsystem.components.AguiaTimeline
-import br.com.inovagabv2.core.designsystem.components.AguiaTopBar
+import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.domain.model.Role
 
 @Composable
@@ -34,7 +32,20 @@ fun IdeaDetailsScreen(
     val isLoadingAi by viewModel.isLoadingAi.collectAsState()
     val aiError by viewModel.aiError.collectAsState()
 
+    val historyItems by viewModel.historyItems.collectAsState()
+    val isLoadingHistory by viewModel.isLoadingHistory.collectAsState()
+    val showHistoryDialog by viewModel.showHistoryDialog.collectAsState()
+
     val currentRole = user?.role ?: Role.OPERADOR
+
+    if (showHistoryDialog) {
+        AguiaHistoryDialog(
+            historyItems = historyItems,
+            isLoading = isLoadingHistory,
+            onDismiss = viewModel::onDismissHistoryDialog,
+            title = "Histórico da Ideia"
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -102,6 +113,14 @@ fun IdeaDetailsScreen(
                             color = AguiaColors.TextSecondary,
                             fontWeight = FontWeight.Medium
                         )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+                    TextButton(
+                        onClick = viewModel::onShowHistoryDialog,
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text("Ver histórico de alterações", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AguiaColors.PrimaryBlue)
                     }
                 }
 

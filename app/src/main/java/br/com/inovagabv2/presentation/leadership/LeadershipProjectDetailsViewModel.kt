@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.inovagabv2.domain.model.DashboardProjectDetails
+import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Project
 import br.com.inovagabv2.domain.repository.DashboardRepository
 import br.com.inovagabv2.domain.repository.ProjectRepository
@@ -15,7 +16,10 @@ import javax.inject.Inject
 data class LeadershipProjectDetailsState(
     val project: Project? = null,
     val dashboardDetails: DashboardProjectDetails? = null,
+    val historyItems: List<HistoryItem> = emptyList(),
     val isLoading: Boolean = true,
+    val isLoadingHistory: Boolean = false,
+    val showHistoryDialog: Boolean = false,
     val error: String? = null
 )
 
@@ -51,5 +55,18 @@ class LeadershipProjectDetailsViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun onShowHistoryDialog() {
+        _state.update { it.copy(showHistoryDialog = true, isLoadingHistory = true) }
+        viewModelScope.launch {
+            projectRepository.consultarHistorico(projectId).collect { history ->
+                _state.update { it.copy(historyItems = history, isLoadingHistory = false) }
+            }
+        }
+    }
+
+    fun onDismissHistoryDialog() {
+        _state.update { it.copy(showHistoryDialog = false) }
     }
 }

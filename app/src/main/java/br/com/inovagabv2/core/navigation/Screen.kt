@@ -8,6 +8,7 @@ sealed class Screen(val route: String) {
     
     // Shared
     object Profile : Screen("profile")
+    object InnovationRanking : Screen("innovation_ranking")
 
     // Operador
     object OperatorHome : Screen("operator_home")

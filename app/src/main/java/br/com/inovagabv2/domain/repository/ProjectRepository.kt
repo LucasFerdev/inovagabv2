@@ -1,5 +1,6 @@
 package br.com.inovagabv2.domain.repository
 
+import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Pagina
 import br.com.inovagabv2.domain.model.Project
 import br.com.inovagabv2.domain.model.ProjectStage
@@ -19,6 +20,7 @@ interface ProjectRepository {
         tamanho: Int = 20
     ): Flow<Pagina<Project>>
     fun getProjectById(id: String): Flow<Project?>
+    fun consultarHistorico(id: String): Flow<List<HistoryItem>>
     suspend fun createProject(
         nome: String,
         descricao: String,

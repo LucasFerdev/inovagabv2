@@ -98,6 +98,7 @@ class MyIdeasViewModelTest {
         override fun getIdeasRemote(status: IdeaStatus?, categoria: String?, estrategiaId: String?, prioridade: Int?, pagina: Int, tamanho: Int): Flow<Pagina<Idea>> = flowOf(Pagina(_flow.value, 0, 20, _flow.value.size.toLong(), 1, true, true))
         override fun getMyIdeasRemote(pagina: Int, tamanho: Int): Flow<Pagina<Idea>> = flowOf(Pagina(_flow.value, 0, 20, _flow.value.size.toLong(), 1, true, true))
         override fun getIdeaById(id: String): Flow<Idea?> = flowOf(null)
+        override fun consultarHistorico(id: String): Flow<List<HistoryItem>> = flowOf(emptyList())
 
         override suspend fun createIdea(titulo: String, problema: String, solucaoProposta: String, beneficiosEsperados: String, categoria: String, estrategiaId: String): Result<Idea> {
             val idea = Idea("i1", titulo, problema, solucaoProposta, beneficiosEsperados, categoria, estrategiaId)
@@ -131,6 +132,7 @@ class MyIdeasViewModelTest {
         override fun getStrategiesRemote(status: StrategyStatus?, categoria: String?, campanha: String?, pagina: Int, tamanho: Int): Flow<Pagina<Strategy>> = flowOf(Pagina(_flow.value, 0, 20, _flow.value.size.toLong(), 1, true, true))
         override fun getActiveStrategies(): Flow<List<Strategy>> = _flow
         override fun getStrategyById(id: String): Flow<Strategy?> = flowOf(null)
+        override fun consultarHistorico(id: String): Flow<List<HistoryItem>> = flowOf(emptyList())
 
         override suspend fun createStrategy(titulo: String, descricao: String, data: String, categoria: String, campanha: String): Result<Strategy> = Result.success(Strategy("1", titulo, descricao))
         override suspend fun createStrategy(strategy: Strategy): Result<Unit> = Result.success(Unit)

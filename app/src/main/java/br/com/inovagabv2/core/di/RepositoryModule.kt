@@ -47,4 +47,10 @@ abstract class RepositoryModule {
     abstract fun bindAiRepository(
         aiRepositoryImpl: AiRepositoryImpl
     ): AiRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindRankingRepository(
+        rankingRepositoryImpl: RankingRepositoryImpl
+    ): RankingRepository
 }

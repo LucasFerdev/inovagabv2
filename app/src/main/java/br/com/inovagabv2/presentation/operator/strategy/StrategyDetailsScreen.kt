@@ -22,6 +22,15 @@ fun StrategyDetailsScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
+    if (state.showHistoryDialog) {
+        AguiaHistoryDialog(
+            historyItems = state.historyItems,
+            isLoading = state.isLoadingHistory,
+            onDismiss = viewModel::onDismissHistoryDialog,
+            title = "Histórico da Estratégia"
+        )
+    }
+
     Scaffold(
         topBar = {
             AguiaTopBar(
@@ -96,6 +105,14 @@ fun StrategyDetailsScreen(
                             if (formattedDate.isNotBlank()) {
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text("Data: $formattedDate", fontSize = 13.sp, color = AguiaColors.TextSecondary)
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+                            TextButton(
+                                onClick = viewModel::onShowHistoryDialog,
+                                modifier = Modifier.align(Alignment.End)
+                            ) {
+                                Text("Ver histórico de alterações", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AguiaColors.PrimaryBlue)
                             }
                         }
                     }

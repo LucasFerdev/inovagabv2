@@ -3,6 +3,7 @@ package br.com.inovagabv2.presentation.leadership
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Strategy
 import br.com.inovagabv2.domain.model.StrategyStatus
 import br.com.inovagabv2.domain.repository.StrategyRepository
@@ -13,6 +14,7 @@ import javax.inject.Inject
 
 data class EditStrategyState(
     val strategy: Strategy? = null,
+    val historyItems: List<HistoryItem> = emptyList(),
     val title: String = "",
     val description: String = "",
     val date: String = "",
@@ -20,8 +22,10 @@ data class EditStrategyState(
     val campaign: String = "",
     val status: StrategyStatus = StrategyStatus.RASCUNHO,
     val isLoading: Boolean = true,
+    val isLoadingHistory: Boolean = false,
     val isSaving: Boolean = false,
     val showArchiveDialog: Boolean = false,
+    val showHistoryDialog: Boolean = false,
     val feedbackMessage: String? = null,
     val errorMessage: String? = null,
     val shouldNavigateBack: Boolean = false
@@ -66,6 +70,19 @@ class EditStrategyViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun onShowHistoryDialog() {
+        _state.update { it.copy(showHistoryDialog = true, isLoadingHistory = true) }
+        viewModelScope.launch {
+            repository.consultarHistorico(strategyId).collect { history ->
+                _state.update { it.copy(historyItems = history, isLoadingHistory = false) }
+            }
+        }
+    }
+
+    fun onDismissHistoryDialog() {
+        _state.update { it.copy(showHistoryDialog = false) }
     }
 
     fun onTitleChange(v: String) = _state.update { it.copy(title = v) }

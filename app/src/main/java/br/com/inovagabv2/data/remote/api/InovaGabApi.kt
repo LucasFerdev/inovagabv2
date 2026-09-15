@@ -11,6 +11,7 @@ import br.com.inovagabv2.data.remote.dto.dashboard.DashboardProjetoResponseDto
 import br.com.inovagabv2.data.remote.dto.dashboard.DashboardResumoResponseDto
 import br.com.inovagabv2.data.remote.dto.idea.*
 import br.com.inovagabv2.data.remote.dto.project.*
+import br.com.inovagabv2.data.remote.dto.ranking.RankingColaboradorResponseDto
 import br.com.inovagabv2.data.remote.dto.strategy.*
 import retrofit2.Response
 import retrofit2.http.*
@@ -225,4 +226,8 @@ interface InovaGabApi {
     suspend fun consultarDashboardProjeto(
         @Path("projetoId") projetoId: String
     ): Response<DashboardProjetoResponseDto>
+
+    // Ranking
+    @GET("api/ranking/colaboradores")
+    suspend fun getRankingColaboradores(): Response<List<RankingColaboradorResponseDto>>
 }

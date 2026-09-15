@@ -36,9 +36,9 @@ import br.com.inovagabv2.presentation.operator.myideas.MyIdeasViewModel
 import br.com.inovagabv2.presentation.operator.strategy.OperatorStrategyScreen
 import br.com.inovagabv2.presentation.operator.strategy.OperatorStrategyViewModel
 import br.com.inovagabv2.presentation.operator.strategy.StrategyDetailsScreen
-import br.com.inovagabv2.presentation.operator.strategy.StrategyDetailsViewModel
 import br.com.inovagabv2.presentation.profile.ProfileScreen
 import br.com.inovagabv2.presentation.profile.ProfileViewModel
+import br.com.inovagabv2.presentation.ranking.InnovationRankingScreen
 import br.com.inovagabv2.presentation.splash.SplashScreen
 
 @Composable
@@ -404,6 +404,12 @@ fun AguiaNavHost(
             )
         }
 
+        composable(Screen.InnovationRanking.route) {
+            InnovationRankingScreen(
+                onBackClick = { navController.popBackStack() }
+            )
+        }
+
         composable(Screen.Profile.route) {
             val viewModel: ProfileViewModel = hiltViewModel()
             val userState by viewModel.user.collectAsState()
@@ -437,6 +443,9 @@ fun AguiaNavHost(
                         else -> Screen.OperatorCommunications.route
                     }
                     navController.navigate(route)
+                },
+                onNavigateToRanking = {
+                    navController.navigate(Screen.InnovationRanking.route)
                 }
             )
         }

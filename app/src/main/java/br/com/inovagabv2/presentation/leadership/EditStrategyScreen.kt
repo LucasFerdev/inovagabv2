@@ -46,6 +46,16 @@ fun EditStrategyScreen(
         }
     }
 
+    // History Dialog
+    if (state.showHistoryDialog) {
+        AguiaHistoryDialog(
+            historyItems = state.historyItems,
+            isLoading = state.isLoadingHistory,
+            onDismiss = viewModel::onDismissHistoryDialog,
+            title = "Histórico da Estratégia"
+        )
+    }
+
     if (state.showArchiveDialog) {
         AlertDialog(
             onDismissRequest = viewModel::onDismissArchiveDialog,
@@ -140,7 +150,14 @@ fun EditStrategyScreen(
                     modifier = Modifier.heightIn(min = 100.dp)
                 )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                TextButton(
+                    onClick = viewModel::onShowHistoryDialog,
+                    modifier = Modifier.align(Alignment.End)
+                ) {
+                    Text("Ver histórico de alterações", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AguiaColors.PrimaryBlue)
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
 
                 // Action buttons
                 Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {

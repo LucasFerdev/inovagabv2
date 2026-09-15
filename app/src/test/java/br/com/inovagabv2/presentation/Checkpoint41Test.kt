@@ -84,6 +84,7 @@ class Checkpoint41Test {
             )
             override fun getProjectsRemote(status: ProjectStatus?, etapa: ProjectStage?, estrategiaId: String?, gestorId: String?, prazo: String?, pagina: Int, tamanho: Int) = flowOf(Pagina<Project>(emptyList(), 0, 20, 0, 0, true, true))
             override fun getProjectById(id: String) = flowOf(null)
+            override fun consultarHistorico(id: String) = flowOf(emptyList<br.com.inovagabv2.domain.model.HistoryItem>())
             override suspend fun createProject(nome: String, descricao: String, estrategiaId: String, ideiaOrigemId: String?, investimento: BigDecimal, prazo: String) = Result.failure<Project>(Exception())
             override suspend fun createProject(project: Project) = Result.success(Unit)
             override suspend fun updateProject(id: String, nome: String, descricao: String, estrategiaId: String, ideiaOrigemId: String?, investimento: BigDecimal, prazo: String) = Result.failure<Project>(Exception())

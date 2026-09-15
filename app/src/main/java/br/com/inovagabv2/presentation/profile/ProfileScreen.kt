@@ -1,7 +1,10 @@
 package br.com.inovagabv2.presentation.profile
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -13,6 +16,7 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.outlined.Business
 import androidx.compose.material.icons.outlined.CalendarToday
 import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.outlined.EmojiEvents
 import androidx.compose.material.icons.outlined.HeadsetMic
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Shield
@@ -24,10 +28,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.BuildConfig
+import br.com.inovagabv2.R
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.AguiaBottomBar
 import br.com.inovagabv2.core.designsystem.components.AguiaTopBar
@@ -41,10 +48,39 @@ fun ProfileScreen(
     onLogout: () -> Unit,
     onNavigateToHome: () -> Unit,
     onNavigateToSugestoes: () -> Unit,
-    onNavigateToCommunications: () -> Unit
+    onNavigateToCommunications: () -> Unit,
+    onNavigateToRanking: () -> Unit = {}
 ) {
     val user by viewModel.user.collectAsState()
     val scrollState = rememberScrollState()
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    val supportEmail = stringResource(R.string.support_email)
+
+    fun openSupportEmail() {
+        try {
+            val subject = "Suporte InovaGAB"
+            val body = """
+                Olá, preciso de ajuda com o InovaGAB.
+
+                Nome: ${user?.name ?: "Não informado"}
+                E-mail: ${user?.email ?: "Não informado"}
+                Empresa: ${user?.company ?: "Viação Águia Branca"}
+                Perfil: ${UserUtils.formatRoleName(user?.role)}
+
+                Descrição do problema:
+            """.trimIndent()
+
+            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                data = Uri.parse("mailto:$supportEmail")
+                putExtra(Intent.EXTRA_SUBJECT, subject)
+                putExtra(Intent.EXTRA_TEXT, body)
+            }
+            context.startActivity(intent)
+        } catch (_: Exception) {
+            // Friendly fallback if no email app installed
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -54,6 +90,7 @@ fun ProfileScreen(
                 showRoleBadge = true
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             user?.let { sessionUser ->
                 AguiaBottomBar(
@@ -63,7 +100,7 @@ fun ProfileScreen(
                         when (route) {
                             Screen.OperatorHome.route, Screen.ManagerHome.route, Screen.LeadershipDashboard.route -> onNavigateToHome()
                             Screen.MyIdeas.route, Screen.ManagerIdeas.route -> onNavigateToSugestoes()
-                            Screen.OperatorCommunications.route, Screen.ManagerProjects.route, Screen.LeadershipProjects.route, Screen.OperatorStrategy.route, Screen.LeadershipStrategy.route -> onNavigateToCommunications()
+                            Screen.OperatorCommunications.route, Screen.ManagerProjects.route, Screen.LeadershipProjects.route, Screen.OperatorStrategy.route, Screen.ManagerStrategy.route, Screen.LeadershipStrategy.route -> onNavigateToCommunications()
                             Screen.Profile.route -> { /* Already here */ }
                             else -> {}
                         }
@@ -242,10 +279,63 @@ fun ProfileScreen(
                         color = Color(0xFFF1F5F9)
                     )
 
-                    // Item 5: Falar com o suporte
+                    // Item 5: Ranking de inovação (BEFORE Support!)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
+                            .clickable { onNavigateToRanking() }
+                            .padding(vertical = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFFEFF6FF)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.EmojiEvents,
+                                contentDescription = null,
+                                tint = AguiaColors.PrimaryBlue,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(14.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Ranking de inovação",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = AguiaColors.NavyDark
+                            )
+                            Text(
+                                text = "Veja os colaboradores que transformaram ideias em resultados",
+                                fontSize = 12.sp,
+                                color = AguiaColors.TextSecondary
+                            )
+                        }
+
+                        Icon(
+                            imageVector = Icons.Default.ChevronRight,
+                            contentDescription = null,
+                            tint = AguiaColors.TextSecondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        color = Color(0xFFF1F5F9)
+                    )
+
+                    // Item 6: Falar com o suporte
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { openSupportEmail() }
                             .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {

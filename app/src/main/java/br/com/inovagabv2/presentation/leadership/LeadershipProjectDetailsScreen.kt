@@ -23,6 +23,15 @@ fun LeadershipProjectDetailsScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
+    if (state.showHistoryDialog) {
+        AguiaHistoryDialog(
+            historyItems = state.historyItems,
+            isLoading = state.isLoadingHistory,
+            onDismiss = viewModel::onDismissHistoryDialog,
+            title = "Histórico do Projeto"
+        )
+    }
+
     Scaffold(
         topBar = {
             AguiaTopBar(
@@ -102,6 +111,14 @@ fun LeadershipProjectDetailsScreen(
                         dash?.ideiaOrigemTitulo?.let { ideaTitle ->
                             Spacer(modifier = Modifier.height(4.dp))
                             Text("Ideia de Origem: $ideaTitle", fontSize = 12.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Medium)
+                        }
+
+                        Spacer(modifier = Modifier.height(10.dp))
+                        TextButton(
+                            onClick = viewModel::onShowHistoryDialog,
+                            modifier = Modifier.align(Alignment.End)
+                        ) {
+                            Text("Ver histórico de alterações", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AguiaColors.PrimaryBlue)
                         }
                     }
                 }

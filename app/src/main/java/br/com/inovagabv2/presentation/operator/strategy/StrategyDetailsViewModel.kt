@@ -3,6 +3,7 @@ package br.com.inovagabv2.presentation.operator.strategy
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Strategy
 import br.com.inovagabv2.domain.repository.StrategyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -12,7 +13,10 @@ import javax.inject.Inject
 
 data class StrategyDetailsState(
     val strategy: Strategy? = null,
+    val historyItems: List<HistoryItem> = emptyList(),
     val isLoading: Boolean = true,
+    val isLoadingHistory: Boolean = false,
+    val showHistoryDialog: Boolean = false,
     val error: String? = null
 )
 
@@ -42,5 +46,18 @@ class StrategyDetailsViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun onShowHistoryDialog() {
+        _state.update { it.copy(showHistoryDialog = true, isLoadingHistory = true) }
+        viewModelScope.launch {
+            strategyRepository.consultarHistorico(strategyId).collect { history ->
+                _state.update { it.copy(historyItems = history, isLoadingHistory = false) }
+            }
+        }
+    }
+
+    fun onDismissHistoryDialog() {
+        _state.update { it.copy(showHistoryDialog = false) }
     }
 }

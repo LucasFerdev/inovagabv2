@@ -46,6 +46,16 @@ fun ManagerIdeaDetailsScreen(
         }
     }
 
+    // History Dialog
+    if (state.showHistoryDialog) {
+        AguiaHistoryDialog(
+            historyItems = state.historyItems,
+            isLoading = state.isLoadingHistory,
+            onDismiss = viewModel::onDismissHistoryDialog,
+            title = "Histórico da Ideia"
+        )
+    }
+
     // Approval Confirmation Dialog
     if (state.showApprovalDialog) {
         AlertDialog(
@@ -234,6 +244,14 @@ fun ManagerIdeaDetailsScreen(
                             style = MaterialTheme.typography.bodyMedium,
                             color = AguiaColors.TextSecondary
                         )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+                        TextButton(
+                            onClick = viewModel::onShowHistoryDialog,
+                            modifier = Modifier.align(Alignment.End)
+                        ) {
+                            Text("Ver histórico de alterações", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = AguiaColors.PrimaryBlue)
+                        }
                     }
                 }
 

@@ -8,19 +8,19 @@ import java.math.BigDecimal
 @Serializable
 data class HistoricoProjetoResponseDto(
     @SerialName("id") val id: String,
-    @SerialName("acao") val acao: RemoteAcaoHistoricoProjeto,
+    @SerialName("acao") val acao: String,
     @SerialName("dataHora") val dataHora: String,
-    @SerialName("usuarioId") val usuarioId: String,
-    @SerialName("nome") val nome: String,
-    @SerialName("descricao") val descricao: String,
-    @SerialName("estrategiaId") val estrategiaId: String,
+    @SerialName("usuarioId") val usuarioId: String? = null,
+    @SerialName("nome") val nome: String? = null,
+    @SerialName("descricao") val descricao: String? = null,
+    @SerialName("estrategiaId") val estrategiaId: String? = null,
     @SerialName("ideiaOrigemId") val ideiaOrigemId: String? = null,
-    @SerialName("etapa") val etapa: RemoteEtapaProjeto,
-    @SerialName("status") val status: RemoteStatusProjeto,
-    @SerialName("percentualProgresso") val percentualProgresso: Int,
+    @SerialName("etapa") val etapa: String? = null,
+    @SerialName("status") val status: String? = null,
+    @SerialName("percentualProgresso") val percentualProgresso: Int? = null,
     @Serializable(with = BigDecimalSerializer::class)
-    @SerialName("investimento") val investimento: BigDecimal,
-    @SerialName("prazo") val prazo: String,
+    @SerialName("investimento") val investimento: BigDecimal? = null,
+    @SerialName("prazo") val prazo: String? = null,
     @Serializable(with = BigDecimalSerializer::class)
     @SerialName("retornoFinanceiro") val retornoFinanceiro: BigDecimal? = null,
     @Serializable(with = BigDecimalSerializer::class)

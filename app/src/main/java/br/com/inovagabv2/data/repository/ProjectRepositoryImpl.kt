@@ -67,6 +67,15 @@ class ProjectRepositoryImpl @Inject constructor(
         }
     }
 
+    override fun consultarHistorico(id: String): Flow<List<br.com.inovagabv2.domain.model.HistoryItem>> = flow {
+        val response = api.consultarHistoricoProjeto(id)
+        if (response.isSuccessful && response.body() != null) {
+            emit(response.body()!!.map { it.toDomain() })
+        } else {
+            emit(emptyList())
+        }
+    }
+
     override suspend fun createProject(
         nome: String,
         descricao: String,

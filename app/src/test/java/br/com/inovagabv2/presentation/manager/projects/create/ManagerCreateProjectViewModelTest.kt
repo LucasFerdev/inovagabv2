@@ -84,6 +84,7 @@ class ManagerCreateProjectViewModelTest {
         override fun getProjects(): Flow<List<Project>> = flowOf(emptyList())
         override fun getProjectsRemote(status: ProjectStatus?, etapa: ProjectStage?, estrategiaId: String?, gestorId: String?, prazo: String?, pagina: Int, tamanho: Int): Flow<Pagina<Project>> = flowOf(Pagina(emptyList(), 0, 20, 0, 0, true, true))
         override fun getProjectById(id: String): Flow<Project?> = flowOf(null)
+        override fun consultarHistorico(id: String): Flow<List<HistoryItem>> = flowOf(emptyList())
 
         override suspend fun createProject(nome: String, descricao: String, estrategiaId: String, ideiaOrigemId: String?, investimento: BigDecimal, prazo: String): Result<Project> {
             return Result.success(
@@ -115,6 +116,7 @@ class ManagerCreateProjectViewModelTest {
         override fun getStrategiesRemote(status: StrategyStatus?, categoria: String?, campanha: String?, pagina: Int, tamanho: Int): Flow<Pagina<Strategy>> = flowOf(Pagina(listOf(activeStrategy), 0, 20, 1, 1, true, true))
         override fun getActiveStrategies(): Flow<List<Strategy>> = flowOf(listOf(activeStrategy))
         override fun getStrategyById(id: String): Flow<Strategy?> = flowOf(activeStrategy)
+        override fun consultarHistorico(id: String): Flow<List<HistoryItem>> = flowOf(emptyList())
 
         override suspend fun createStrategy(titulo: String, descricao: String, data: String, categoria: String, campanha: String): Result<Strategy> = Result.success(activeStrategy)
         override suspend fun createStrategy(strategy: Strategy): Result<Unit> = Result.success(Unit)
@@ -134,6 +136,7 @@ class ManagerCreateProjectViewModelTest {
         override fun getIdeasRemote(status: IdeaStatus?, categoria: String?, estrategiaId: String?, prioridade: Int?, pagina: Int, tamanho: Int): Flow<Pagina<Idea>> = flowOf(Pagina(listOf(approvedIdea), 0, 20, 1, 1, true, true))
         override fun getMyIdeasRemote(pagina: Int, tamanho: Int): Flow<Pagina<Idea>> = flowOf(Pagina(listOf(approvedIdea), 0, 20, 1, 1, true, true))
         override fun getIdeaById(id: String): Flow<Idea?> = flowOf(approvedIdea)
+        override fun consultarHistorico(id: String): Flow<List<HistoryItem>> = flowOf(emptyList())
 
         override suspend fun createIdea(titulo: String, problema: String, solucaoProposta: String, beneficiosEsperados: String, categoria: String, estrategiaId: String): Result<Idea> = Result.success(approvedIdea)
         override suspend fun createIdea(idea: Idea): Result<Unit> = Result.success(Unit)

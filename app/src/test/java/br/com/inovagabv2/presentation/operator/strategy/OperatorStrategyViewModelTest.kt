@@ -81,6 +81,7 @@ class OperatorStrategyViewModelTest {
         override fun getStrategiesRemote(status: StrategyStatus?, categoria: String?, campanha: String?, pagina: Int, tamanho: Int): Flow<Pagina<Strategy>> = flowOf(Pagina(_flow.value, 0, 20, _flow.value.size.toLong(), 1, true, true))
         override fun getActiveStrategies(): Flow<List<Strategy>> = _flow
         override fun getStrategyById(id: String): Flow<Strategy?> = flowOf(null)
+        override fun consultarHistorico(id: String): Flow<List<HistoryItem>> = flowOf(emptyList())
 
         override suspend fun createStrategy(titulo: String, descricao: String, data: String, categoria: String, campanha: String): Result<Strategy> = Result.success(Strategy("1", titulo, descricao))
         override suspend fun createStrategy(strategy: Strategy): Result<Unit> = Result.success(Unit)

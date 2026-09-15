@@ -4,6 +4,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.inovagabv2.domain.model.AiAnalysis
+import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.Role
 import br.com.inovagabv2.domain.model.User
@@ -40,6 +41,15 @@ class IdeaDetailsViewModel @Inject constructor(
     private val _aiError = MutableStateFlow<String?>(null)
     val aiError: StateFlow<String?> = _aiError.asStateFlow()
 
+    private val _historyItems = MutableStateFlow<List<HistoryItem>>(emptyList())
+    val historyItems: StateFlow<List<HistoryItem>> = _historyItems.asStateFlow()
+
+    private val _isLoadingHistory = MutableStateFlow(false)
+    val isLoadingHistory: StateFlow<Boolean> = _isLoadingHistory.asStateFlow()
+
+    private val _showHistoryDialog = MutableStateFlow(false)
+    val showHistoryDialog: StateFlow<Boolean> = _showHistoryDialog.asStateFlow()
+
     init {
         loadIdea()
         loadAiAnalysisForLeadership()
@@ -69,5 +79,20 @@ class IdeaDetailsViewModel @Inject constructor(
                 _isLoadingAi.value = false
             }
         }
+    }
+
+    fun onShowHistoryDialog() {
+        _showHistoryDialog.value = true
+        _isLoadingHistory.value = true
+        viewModelScope.launch {
+            ideaRepository.consultarHistorico(ideaId).collect { history ->
+                _historyItems.value = history
+                _isLoadingHistory.value = false
+            }
+        }
+    }
+
+    fun onDismissHistoryDialog() {
+        _showHistoryDialog.value = false
     }
 }
