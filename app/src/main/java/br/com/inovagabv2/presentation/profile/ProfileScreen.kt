@@ -46,9 +46,7 @@ import br.com.inovagabv2.core.util.UserUtils
 fun ProfileScreen(
     viewModel: ProfileViewModel,
     onLogout: () -> Unit,
-    onNavigateToHome: () -> Unit,
-    onNavigateToSugestoes: () -> Unit,
-    onNavigateToCommunications: () -> Unit,
+    onBottomNavigate: (String) -> Unit = {},
     onNavigateToRanking: () -> Unit = {}
 ) {
     val user by viewModel.user.collectAsState()
@@ -97,12 +95,8 @@ fun ProfileScreen(
                     currentRoute = Screen.Profile.route,
                     role = sessionUser.role,
                     onNavigate = { route ->
-                        when (route) {
-                            Screen.OperatorHome.route, Screen.ManagerHome.route, Screen.LeadershipDashboard.route -> onNavigateToHome()
-                            Screen.MyIdeas.route, Screen.ManagerIdeas.route -> onNavigateToSugestoes()
-                            Screen.OperatorCommunications.route, Screen.ManagerProjects.route, Screen.LeadershipProjects.route, Screen.OperatorStrategy.route, Screen.ManagerStrategy.route, Screen.LeadershipStrategy.route -> onNavigateToCommunications()
-                            Screen.Profile.route -> { /* Already here */ }
-                            else -> {}
+                        if (route != Screen.Profile.route) {
+                            onBottomNavigate(route)
                         }
                     }
                 )

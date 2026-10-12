@@ -17,19 +17,24 @@ class AuthInterceptor @Inject constructor(
         val request = chain.request()
         val path = request.url.encodedPath
 
-        if (path.contains("/api/auth/login") || path.contains("/api/auth/cadastro")) {
-            return chain.proceed(request)
-        }
+        val isAuthEndpoint = path.contains("/api/auth/login") || path.contains("/api/auth/cadastro")
 
         val token = runBlocking { sessionManager.jwtToken.firstOrNull() }
 
-        return if (!token.isNullOrBlank()) {
-            val authenticatedRequest = request.newBuilder()
+        val authenticatedRequest = if (!token.isNullOrBlank() && !isAuthEndpoint) {
+            request.newBuilder()
                 .header("Authorization", "Bearer $token")
                 .build()
-            chain.proceed(authenticatedRequest)
         } else {
-            chain.proceed(request)
+            request
         }
+
+        val response = chain.proceed(authenticatedRequest)
+
+        if (response.code == 401 && !isAuthEndpoint && !token.isNullOrBlank()) {
+            runBlocking { sessionManager.clearSessionIfTokenMatches(token) }
+        }
+
+        return response
     }
 }

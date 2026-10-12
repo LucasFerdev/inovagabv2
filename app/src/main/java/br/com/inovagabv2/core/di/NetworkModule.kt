@@ -8,6 +8,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
+import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -38,6 +39,25 @@ object NetworkModule {
             } else {
                 HttpLoggingInterceptor.Level.NONE
             }
+            redactHeader("Authorization")
+            redactHeader("Cookie")
+        }
+    }
+
+    @Provides
+    @Singleton
+    fun provideTimeoutInterceptor(): Interceptor {
+        return Interceptor { chain ->
+            val request = chain.request()
+            val path = request.url.encodedPath
+            if (path.contains("/api/ia/")) {
+                chain.withConnectTimeout(60, TimeUnit.SECONDS)
+                    .withReadTimeout(60, TimeUnit.SECONDS)
+                    .withWriteTimeout(60, TimeUnit.SECONDS)
+                    .proceed(request)
+            } else {
+                chain.proceed(request)
+            }
         }
     }
 
@@ -45,14 +65,16 @@ object NetworkModule {
     @Singleton
     fun provideOkHttpClient(
         authInterceptor: AuthInterceptor,
+        timeoutInterceptor: Interceptor,
         loggingInterceptor: HttpLoggingInterceptor
     ): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(authInterceptor)
+            .addInterceptor(timeoutInterceptor)
             .addInterceptor(loggingInterceptor)
-            .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(15, TimeUnit.SECONDS)
-            .writeTimeout(15, TimeUnit.SECONDS)
+            .connectTimeout(20, TimeUnit.SECONDS)
+            .readTimeout(20, TimeUnit.SECONDS)
+            .writeTimeout(20, TimeUnit.SECONDS)
             .build()
     }
 

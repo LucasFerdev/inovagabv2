@@ -7,11 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
-import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
@@ -51,7 +47,7 @@ fun ManagerProjectsScreen(
                         Screen.ManagerHome.route -> onNavigateToHome()
                         Screen.ManagerIdeas.route -> onNavigateToIdeas()
                         Screen.ManagerProjects.route -> { /* Already here */ }
-                        Screen.OperatorStrategy.route -> onNavigateToStrategy()
+                        Screen.ManagerStrategy.route -> onNavigateToStrategy()
                         Screen.Profile.route -> onNavigateToProfile()
                     }
                 }
@@ -60,23 +56,12 @@ fun ManagerProjectsScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onNavigateToCreateProject,
-                containerColor = AguiaColors.PrimaryBlue,
+                containerColor = AguiaColors.ManagerPurple,
                 contentColor = Color.White,
-                shape = RoundedCornerShape(24.dp),
-                elevation = FloatingActionButtonDefaults.elevation(6.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Novo projeto",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
-                )
-            }
+                shape = RoundedCornerShape(16.dp),
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text("Novo projeto", fontWeight = FontWeight.Bold) }
+            )
         },
         containerColor = Color.White
     ) { padding ->
@@ -90,7 +75,7 @@ fun ManagerProjectsScreen(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Header Title
+                // Page Title
                 item {
                     Column {
                         Text(
@@ -101,36 +86,29 @@ fun ManagerProjectsScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Acompanhe o portfólio de projetos de inovação.",
+                            text = "Acompanhe os projetos atrelados às ideias aprovadas.",
                             fontSize = 14.sp,
                             color = AguiaColors.TextSecondary
                         )
                     }
                 }
 
-                // Tab Row: Meus projetos | Todos
+                // Tab Pills: [Meus projetos] [Todos]
                 item {
                     TabRow(
                         selectedTabIndex = state.selectedTab,
-                        containerColor = Color.White,
-                        contentColor = AguiaColors.PrimaryBlue,
-                        indicator = { tabPositions ->
-                            if (state.selectedTab < tabPositions.size) {
-                                TabRowDefaults.SecondaryIndicator(
-                                    Modifier.tabIndicatorOffset(tabPositions[state.selectedTab]),
-                                    color = AguiaColors.PrimaryBlue
-                                )
-                            }
-                        }
+                        containerColor = Color(0xFFF1F5F9),
+                        indicator = {},
+                        divider = {}
                     ) {
                         Tab(
                             selected = state.selectedTab == 0,
                             onClick = { viewModel.onTabSelected(0) },
                             text = {
                                 Text(
-                                    text = "Meus projetos",
+                                    "Meus projetos",
                                     fontWeight = if (state.selectedTab == 0) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (state.selectedTab == 0) AguiaColors.PrimaryBlue else AguiaColors.TextSecondary
+                                    color = if (state.selectedTab == 0) AguiaColors.ManagerPurple else AguiaColors.TextSecondary
                                 )
                             }
                         )
@@ -139,24 +117,33 @@ fun ManagerProjectsScreen(
                             onClick = { viewModel.onTabSelected(1) },
                             text = {
                                 Text(
-                                    text = "Todos",
+                                    "Todos",
                                     fontWeight = if (state.selectedTab == 1) FontWeight.Bold else FontWeight.Medium,
-                                    color = if (state.selectedTab == 1) AguiaColors.PrimaryBlue else AguiaColors.TextSecondary
+                                    color = if (state.selectedTab == 1) AguiaColors.ManagerPurple else AguiaColors.TextSecondary
                                 )
                             }
                         )
                     }
                 }
 
-                // Loading / Empty / List State
                 if (state.isLoading) {
                     item {
                         AguiaLoadingState(message = "Carregando projetos...")
                     }
+                } else if (state.error != null) {
+                    item {
+                        AguiaErrorState(
+                            message = state.error ?: "Erro ao carregar projetos.",
+                            onRetry = viewModel::loadProjects
+                        )
+                    }
                 } else if (state.projects.isEmpty()) {
                     item {
                         AguiaEmptyState(
-                            message = "Nenhum projeto encontrado."
+                            message = if (state.selectedTab == 0)
+                                "Você ainda não possui projetos cadastrados."
+                            else
+                                "Nenhum projeto cadastrado no sistema."
                         )
                     }
                 } else {

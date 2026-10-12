@@ -45,7 +45,6 @@ fun OperatorHomeScreen(
     onNavigateToStrategies: () -> Unit,
     onNavigateToMyIdeas: () -> Unit,
     onNavigateToIdeaDetails: (String) -> Unit,
-    onNavigateToCommunications: () -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
@@ -69,10 +68,9 @@ fun OperatorHomeScreen(
                 onNavigate = { route ->
                     when (route) {
                         Screen.OperatorHome.route -> { /* Already here */ }
-                        Screen.MyIdeas.route, Screen.ManagerIdeas.route -> onNavigateToMyIdeas()
+                        Screen.MyIdeas.route -> onNavigateToMyIdeas()
                         Screen.OperatorStrategy.route -> onNavigateToStrategies()
                         Screen.Profile.route -> onNavigateToProfile()
-                        else -> onNavigateToCommunications()
                     }
                 }
             )

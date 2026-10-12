@@ -54,7 +54,7 @@ fun ProjetoResponseDto.toDomain(): Project {
         retornoFinanceiro = retornoFinanceiro,
         ganhoProdutividadePercentual = ganhoProdutividadePercentual,
         resultado = resultado,
-        gestorResponsavelId = gestorResponsavelId,
+        gestorResponsavelId = gestorResponsavelId ?: "",
         createdAt = criadoEm,
         updatedAt = atualizadoEm,
         version = versao

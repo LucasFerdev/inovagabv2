@@ -24,7 +24,6 @@ import br.com.inovagabv2.presentation.manager.projects.details.ManagerProjectDet
 import br.com.inovagabv2.presentation.manager.strategy.ManagerStrategyScreen
 import br.com.inovagabv2.presentation.onboarding.OnboardingScreen
 import br.com.inovagabv2.presentation.onboarding.OnboardingViewModel
-import br.com.inovagabv2.presentation.operator.communications.CommunicationsScreen
 import br.com.inovagabv2.presentation.operator.create.CreateIdeaScreen
 import br.com.inovagabv2.presentation.operator.create.CreateIdeaViewModel
 import br.com.inovagabv2.presentation.operator.details.IdeaDetailsScreen
@@ -120,13 +119,18 @@ fun AguiaNavHost(
             OperatorHomeScreen(
                 viewModel = viewModel,
                 onNavigateToCreateIdea = { navController.navigate(Screen.CreateIdea.route) },
-                onNavigateToStrategies = { navController.navigate(Screen.OperatorStrategy.route) },
-                onNavigateToMyIdeas = { navController.navigate(Screen.MyIdeas.route) },
+                onNavigateToStrategies = {
+                    navController.navigate(Screen.OperatorStrategy.route) { launchSingleTop = true }
+                },
+                onNavigateToMyIdeas = {
+                    navController.navigate(Screen.MyIdeas.route) { launchSingleTop = true }
+                },
                 onNavigateToIdeaDetails = { ideaId -> 
                     navController.navigate(Screen.IdeaDetails.createRoute(ideaId)) 
                 },
-                onNavigateToCommunications = { navController.navigate(Screen.OperatorCommunications.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) { launchSingleTop = true }
+                }
             )
         }
 
@@ -138,10 +142,15 @@ fun AguiaNavHost(
                 onStrategyClick = { strategyId ->
                     navController.navigate(Screen.StrategyDetails.createRoute(strategyId))
                 },
-                onNavigateToHome = { navController.navigate(Screen.OperatorHome.route) },
-                onNavigateToSugestoes = { navController.navigate(Screen.MyIdeas.route) },
-                onNavigateToCommunications = { navController.navigate(Screen.OperatorCommunications.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+                onNavigateToHome = {
+                    navController.navigate(Screen.OperatorHome.route) { launchSingleTop = true }
+                },
+                onNavigateToSugestoes = {
+                    navController.navigate(Screen.MyIdeas.route) { launchSingleTop = true }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) { launchSingleTop = true }
+                }
             )
         }
 
@@ -178,17 +187,15 @@ fun AguiaNavHost(
                     navController.navigate(Screen.IdeaDetails.createRoute(ideaId))
                 },
                 onNavigateToCreateIdea = { navController.navigate(Screen.CreateIdea.route) },
-                onNavigateToHome = { navController.navigate(Screen.OperatorHome.route) },
-                onNavigateToCommunications = { navController.navigate(Screen.OperatorCommunications.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
-            )
-        }
-
-        composable(Screen.OperatorCommunications.route) {
-            CommunicationsScreen(
-                onNavigateToHome = { navController.navigate(Screen.OperatorHome.route) },
-                onNavigateToSugestoes = { navController.navigate(Screen.MyIdeas.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+                onNavigateToHome = {
+                    navController.navigate(Screen.OperatorHome.route) { launchSingleTop = true }
+                },
+                onNavigateToStrategies = {
+                    navController.navigate(Screen.OperatorStrategy.route) { launchSingleTop = true }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) { launchSingleTop = true }
+                }
             )
         }
 
@@ -208,22 +215,38 @@ fun AguiaNavHost(
         // Gestor
         composable(Screen.ManagerHome.route) {
             ManagerHomeScreen(
-                onNavigateToIdeas = { navController.navigate(Screen.ManagerIdeas.route) },
+                onNavigateToIdeas = {
+                    navController.navigate(Screen.ManagerIdeas.route) { launchSingleTop = true }
+                },
                 onNavigateToIdeaDetails = { ideaId ->
                     navController.navigate(Screen.ManagerIdeaDetails.createRoute(ideaId))
                 },
-                onNavigateToProjects = { navController.navigate(Screen.ManagerProjects.route) },
-                onNavigateToStrategy = { navController.navigate(Screen.ManagerStrategy.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+                onNavigateToProjects = {
+                    navController.navigate(Screen.ManagerProjects.route) { launchSingleTop = true }
+                },
+                onNavigateToStrategy = {
+                    navController.navigate(Screen.ManagerStrategy.route) { launchSingleTop = true }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) { launchSingleTop = true }
+                }
             )
         }
 
         composable(Screen.ManagerStrategy.route) {
             ManagerStrategyScreen(
-                onNavigateToHome = { navController.navigate(Screen.ManagerHome.route) },
-                onNavigateToIdeas = { navController.navigate(Screen.ManagerIdeas.route) },
-                onNavigateToProjects = { navController.navigate(Screen.ManagerProjects.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                onNavigateToHome = {
+                    navController.navigate(Screen.ManagerHome.route) { launchSingleTop = true }
+                },
+                onNavigateToIdeas = {
+                    navController.navigate(Screen.ManagerIdeas.route) { launchSingleTop = true }
+                },
+                onNavigateToProjects = {
+                    navController.navigate(Screen.ManagerProjects.route) { launchSingleTop = true }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) { launchSingleTop = true }
+                },
                 onStrategyClick = { strategyId -> navController.navigate(Screen.StrategyDetails.createRoute(strategyId)) }
             )
         }
@@ -234,10 +257,18 @@ fun AguiaNavHost(
                     navController.navigate(Screen.ManagerIdeaDetails.createRoute(ideaId))
                 },
                 onBackClick = { navController.popBackStack() },
-                onNavigateToHome = { navController.navigate(Screen.ManagerHome.route) },
-                onNavigateToProjects = { navController.navigate(Screen.ManagerProjects.route) },
-                onNavigateToStrategy = { navController.navigate(Screen.ManagerStrategy.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+                onNavigateToHome = {
+                    navController.navigate(Screen.ManagerHome.route) { launchSingleTop = true }
+                },
+                onNavigateToProjects = {
+                    navController.navigate(Screen.ManagerProjects.route) { launchSingleTop = true }
+                },
+                onNavigateToStrategy = {
+                    navController.navigate(Screen.ManagerStrategy.route) { launchSingleTop = true }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) { launchSingleTop = true }
+                }
             )
         }
 
@@ -258,10 +289,18 @@ fun AguiaNavHost(
                     navController.navigate(Screen.ManagerProjectDetails.createRoute(projectId))
                 },
                 onNavigateToCreateProject = { navController.navigate(Screen.ManagerCreateProject.route) },
-                onNavigateToHome = { navController.navigate(Screen.ManagerHome.route) },
-                onNavigateToIdeas = { navController.navigate(Screen.ManagerIdeas.route) },
-                onNavigateToStrategy = { navController.navigate(Screen.ManagerStrategy.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+                onNavigateToHome = {
+                    navController.navigate(Screen.ManagerHome.route) { launchSingleTop = true }
+                },
+                onNavigateToIdeas = {
+                    navController.navigate(Screen.ManagerIdeas.route) { launchSingleTop = true }
+                },
+                onNavigateToStrategy = {
+                    navController.navigate(Screen.ManagerStrategy.route) { launchSingleTop = true }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) { launchSingleTop = true }
+                }
             )
         }
 
@@ -288,10 +327,18 @@ fun AguiaNavHost(
             val viewModel: LeadershipDashboardViewModel = hiltViewModel()
             LeadershipDashboardScreen(
                 viewModel = viewModel,
-                onNavigateToProjects = { navController.navigate(Screen.LeadershipProjects.route) },
-                onNavigateToIdeas = { navController.navigate(Screen.LeadershipIdeas.route) },
-                onNavigateToStrategy = { navController.navigate(Screen.LeadershipStrategy.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+                onNavigateToProjects = {
+                    navController.navigate(Screen.LeadershipProjects.route) { launchSingleTop = true }
+                },
+                onNavigateToIdeas = {
+                    navController.navigate(Screen.LeadershipIdeas.route) { launchSingleTop = true }
+                },
+                onNavigateToStrategy = {
+                    navController.navigate(Screen.LeadershipStrategy.route) { launchSingleTop = true }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) { launchSingleTop = true }
+                }
             )
         }
 
@@ -299,10 +346,18 @@ fun AguiaNavHost(
             val viewModel: LeadershipIdeasViewModel = hiltViewModel()
             LeadershipIdeasScreen(
                 onNavigateToDetails = { ideaId -> navController.navigate(Screen.IdeaDetails.createRoute(ideaId)) },
-                onNavigateToHome = { navController.navigate(Screen.LeadershipDashboard.route) },
-                onNavigateToProjects = { navController.navigate(Screen.LeadershipProjects.route) },
-                onNavigateToStrategy = { navController.navigate(Screen.LeadershipStrategy.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                onNavigateToHome = {
+                    navController.navigate(Screen.LeadershipDashboard.route) { launchSingleTop = true }
+                },
+                onNavigateToProjects = {
+                    navController.navigate(Screen.LeadershipProjects.route) { launchSingleTop = true }
+                },
+                onNavigateToStrategy = {
+                    navController.navigate(Screen.LeadershipStrategy.route) { launchSingleTop = true }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) { launchSingleTop = true }
+                },
                 viewModel = viewModel
             )
         }
@@ -313,10 +368,18 @@ fun AguiaNavHost(
                 viewModel = viewModel,
                 onNavigateToCreate = { navController.navigate(Screen.CreateStrategy.route) },
                 onNavigateToEdit = { strategyId -> navController.navigate(Screen.EditStrategy.createRoute(strategyId)) },
-                onNavigateToDashboard = { navController.navigate(Screen.LeadershipDashboard.route) },
-                onNavigateToProjects = { navController.navigate(Screen.LeadershipProjects.route) },
-                onNavigateToIdeas = { navController.navigate(Screen.LeadershipIdeas.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                onNavigateToDashboard = {
+                    navController.navigate(Screen.LeadershipDashboard.route) { launchSingleTop = true }
+                },
+                onNavigateToProjects = {
+                    navController.navigate(Screen.LeadershipProjects.route) { launchSingleTop = true }
+                },
+                onNavigateToIdeas = {
+                    navController.navigate(Screen.LeadershipIdeas.route) { launchSingleTop = true }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) { launchSingleTop = true }
+                },
                 onNavigateToPanel = { strategyId -> navController.navigate(Screen.StrategyDashboard.createRoute(strategyId)) }
             )
         }
@@ -343,10 +406,18 @@ fun AguiaNavHost(
                 viewModel = viewModel,
                 onBackClick = { navController.popBackStack() },
                 onIdeaClick = { ideaId -> navController.navigate(Screen.IdeaDetails.createRoute(ideaId)) },
-                onNavigateToHome = { navController.navigate(Screen.LeadershipDashboard.route) },
-                onNavigateToProjects = { navController.navigate(Screen.LeadershipProjects.route) },
-                onNavigateToIdeas = { navController.navigate(Screen.LeadershipIdeas.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+                onNavigateToHome = {
+                    navController.navigate(Screen.LeadershipDashboard.route) { launchSingleTop = true }
+                },
+                onNavigateToProjects = {
+                    navController.navigate(Screen.LeadershipProjects.route) { launchSingleTop = true }
+                },
+                onNavigateToIdeas = {
+                    navController.navigate(Screen.LeadershipIdeas.route) { launchSingleTop = true }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) { launchSingleTop = true }
+                }
             )
         }
 
@@ -363,10 +434,18 @@ fun AguiaNavHost(
             val viewModel: LeadershipProjectsViewModel = hiltViewModel()
             LeadershipProjectsScreen(
                 viewModel = viewModel,
-                onNavigateToDashboard = { navController.navigate(Screen.LeadershipDashboard.route) },
-                onNavigateToIdeas = { navController.navigate(Screen.LeadershipIdeas.route) },
-                onNavigateToStrategy = { navController.navigate(Screen.LeadershipStrategy.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                onNavigateToDashboard = {
+                    navController.navigate(Screen.LeadershipDashboard.route) { launchSingleTop = true }
+                },
+                onNavigateToIdeas = {
+                    navController.navigate(Screen.LeadershipIdeas.route) { launchSingleTop = true }
+                },
+                onNavigateToStrategy = {
+                    navController.navigate(Screen.LeadershipStrategy.route) { launchSingleTop = true }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) { launchSingleTop = true }
+                },
                 onNavigateToDetails = { projectId -> navController.navigate(Screen.LeadershipProjectDetails.createRoute(projectId)) }
             )
         }
@@ -397,10 +476,18 @@ fun AguiaNavHost(
             val viewModel: LeadershipResultsViewModel = hiltViewModel()
             LeadershipResultsScreen(
                 viewModel = viewModel,
-                onNavigateToDashboard = { navController.navigate(Screen.LeadershipDashboard.route) },
-                onNavigateToProjects = { navController.navigate(Screen.LeadershipProjects.route) },
-                onNavigateToStrategy = { navController.navigate(Screen.LeadershipStrategy.route) },
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) }
+                onNavigateToDashboard = {
+                    navController.navigate(Screen.LeadershipDashboard.route) { launchSingleTop = true }
+                },
+                onNavigateToProjects = {
+                    navController.navigate(Screen.LeadershipProjects.route) { launchSingleTop = true }
+                },
+                onNavigateToStrategy = {
+                    navController.navigate(Screen.LeadershipStrategy.route) { launchSingleTop = true }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) { launchSingleTop = true }
+                }
             )
         }
 
@@ -412,7 +499,6 @@ fun AguiaNavHost(
 
         composable(Screen.Profile.route) {
             val viewModel: ProfileViewModel = hiltViewModel()
-            val userState by viewModel.user.collectAsState()
             
             ProfileScreen(
                 viewModel = viewModel,
@@ -421,31 +507,15 @@ fun AguiaNavHost(
                         popUpTo(0) { inclusive = true }
                     }
                 },
-                onNavigateToHome = {
-                    val route = when (userState?.role) {
-                        Role.OPERADOR -> Screen.OperatorHome.route
-                        Role.GESTOR -> Screen.ManagerHome.route
-                        Role.LIDERANCA -> Screen.LeadershipDashboard.route
-                        else -> Screen.Login.route
+                onBottomNavigate = { targetRoute ->
+                    navController.navigate(targetRoute) {
+                        launchSingleTop = true
                     }
-                    navController.navigate(route) {
-                        popUpTo(Screen.Profile.route) { inclusive = true }
-                    }
-                },
-                onNavigateToSugestoes = {
-                    val route = if (userState?.role == Role.GESTOR) Screen.ManagerIdeas.route else Screen.MyIdeas.route
-                    navController.navigate(route)
-                },
-                onNavigateToCommunications = {
-                    val route = when (userState?.role) {
-                        Role.GESTOR -> Screen.ManagerProjects.route
-                        Role.LIDERANCA -> Screen.LeadershipProjects.route
-                        else -> Screen.OperatorCommunications.route
-                    }
-                    navController.navigate(route)
                 },
                 onNavigateToRanking = {
-                    navController.navigate(Screen.InnovationRanking.route)
+                    navController.navigate(Screen.InnovationRanking.route) {
+                        launchSingleTop = true
+                    }
                 }
             )
         }

@@ -22,7 +22,7 @@ fun ManagerStrategyScreen(
         onStrategyClick = onStrategyClick,
         onNavigateToHome = onNavigateToHome,
         onNavigateToSugestoes = onNavigateToIdeas,
-        onNavigateToCommunications = onNavigateToProjects,
+        onNavigateToProjects = onNavigateToProjects,
         onNavigateToProfile = onNavigateToProfile
     )
 }

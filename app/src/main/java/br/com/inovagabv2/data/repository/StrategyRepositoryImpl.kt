@@ -28,7 +28,7 @@ class StrategyRepositoryImpl @Inject constructor(
         if (response.isSuccessful && response.body() != null) {
             emit(response.body()!!.conteudo.map { it.toDomain() })
         } else {
-            emit(emptyList())
+            throw Exception(parseErrorMessage(response))
         }
     }
 

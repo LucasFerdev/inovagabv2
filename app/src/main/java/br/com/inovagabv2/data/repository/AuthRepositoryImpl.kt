@@ -1,5 +1,6 @@
 package br.com.inovagabv2.data.repository
 
+import android.util.Log
 import br.com.inovagabv2.core.session.SessionManager
 import br.com.inovagabv2.data.remote.api.InovaGabApi
 import br.com.inovagabv2.data.remote.dto.ApiErrorDto
@@ -34,7 +35,7 @@ class AuthRepositoryImpl @Inject constructor(
                 val body = response.body()
                 if (body != null) {
                     val user = body.usuario.toDomain()
-                    sessionManager.saveSession(user = user, token = body.token)
+                    sessionManager.saveSession(user = user, token = body.token, expiresInSeconds = body.expiresIn)
                     Result.success(user)
                 } else {
                     Result.failure(Exception("Resposta do servidor vazia."))
@@ -44,6 +45,7 @@ class AuthRepositoryImpl @Inject constructor(
                 Result.failure(Exception(errorMessage))
             }
         } catch (e: Exception) {
+            logError("AuthRepository", "Erro durante o login", e)
             Result.failure(Exception(parseExceptionMessage(e)))
         }
     }
@@ -72,6 +74,7 @@ class AuthRepositoryImpl @Inject constructor(
                 Result.failure(Exception(errorMessage))
             }
         } catch (e: Exception) {
+            logError("AuthRepository", "Erro durante o cadastro", e)
             Result.failure(Exception(parseExceptionMessage(e)))
         }
     }
@@ -82,6 +85,14 @@ class AuthRepositoryImpl @Inject constructor(
 
     override fun getCurrentUser(): Flow<User?> {
         return sessionManager.userSession
+    }
+
+    private fun logError(tag: String, message: String, throwable: Throwable) {
+        try {
+            Log.e(tag, message, throwable)
+        } catch (_: Throwable) {
+            println("$tag: $message - ${throwable.message}")
+        }
     }
 
     private fun <T> parseErrorMessage(response: Response<T>): String {
@@ -112,9 +123,9 @@ class AuthRepositoryImpl @Inject constructor(
             is SocketTimeoutException ->
                 "O tempo de resposta do servidor expirou. Verifique se o backend está ligado e se a API_BASE_URL está correta."
             is SerializationException ->
-                "Erro ao processar a resposta do servidor."
+                "Erro ao processar a resposta do servidor: ${e.message}"
             is IOException ->
-                "Erro de rede ao se comunicar com o servidor. O backend pode estar desligado ou a API_BASE_URL incorreta."
+                "Erro de rede ao se comunicar com o servidor: ${e.localizedMessage ?: e.message}"
             else ->
                 e.message ?: "Ocorreu um erro inesperado."
         }

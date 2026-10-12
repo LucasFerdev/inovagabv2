@@ -6,9 +6,40 @@ if (localPropertiesFile.exists()) {
     localPropertiesFile.inputStream().use { localProperties.load(it) }
 }
 
-var apiBaseUrl: String = localProperties.getProperty("API_BASE_URL")?.trim()?.ifBlank { null } ?: "http://10.0.2.2:8080/"
-if (!apiBaseUrl.endsWith("/")) {
-    apiBaseUrl = "$apiBaseUrl/"
+val defaultRenderUrl = "https://inovagab-api-ys68.onrender.com/"
+
+// Debug API Base URL Configuration
+// Precedence: 1. Env var PROD_API_BASE_URL / API_BASE_URL / DEBUG_API_BASE_URL, 2. Property API_BASE_URL in local.properties, 3. Render Production URL
+var debugApiBaseUrl: String = System.getenv("PROD_API_BASE_URL")?.trim()?.ifBlank { null }
+    ?: System.getenv("API_BASE_URL")?.trim()?.ifBlank { null }
+    ?: System.getenv("DEBUG_API_BASE_URL")?.trim()?.ifBlank { null }
+    ?: localProperties.getProperty("API_BASE_URL")?.trim()?.ifBlank { null }
+    ?: defaultRenderUrl
+
+if (!debugApiBaseUrl.endsWith("/")) {
+    debugApiBaseUrl = "$debugApiBaseUrl/"
+}
+
+// Release Production API Base URL Configuration
+// Precedence: 1. Env var PROD_API_BASE_URL, 2. Property PROD_API_BASE_URL / API_BASE_URL_PROD in local.properties, 3. Render Production URL
+val rawProdUrl: String = System.getenv("PROD_API_BASE_URL")?.trim()?.ifBlank { null }
+    ?: localProperties.getProperty("PROD_API_BASE_URL")?.trim()?.ifBlank { null }
+    ?: localProperties.getProperty("API_BASE_URL_PROD")?.trim()?.ifBlank { null }
+    ?: defaultRenderUrl
+
+val prodApiBaseUrl: String = if (rawProdUrl.endsWith("/")) rawProdUrl else "$rawProdUrl/"
+
+fun isInvalidProdUrl(url: String?): Boolean {
+    if (url.isNullOrBlank()) return true
+    val lower = url.lowercase()
+    if (!lower.startsWith("https://")) return true
+    val forbidden = listOf(
+        "localhost", "127.0.0.1", "10.0.2.2", "192.168.", "10."
+    )
+    if (forbidden.any { lower.contains(it) }) return true
+    val regex172 = Regex("""172\.(1[6-9]|2[0-9]|3[0-1])\.""")
+    if (regex172.containsMatchIn(lower)) return true
+    return false
 }
 
 plugins {
@@ -22,9 +53,7 @@ plugins {
 
 android {
     namespace = "br.com.inovagabv2"
-    compileSdk {
-        version = release(37)
-    }
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "br.com.inovagabv2"
@@ -33,13 +62,16 @@ android {
         versionCode = 1
         versionName = "1.0"
 
-        buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
+        debug {
+            buildConfigField("String", "API_BASE_URL", "\"$debugApiBaseUrl\"")
+        }
         release {
+            val releaseUrl = if (!isInvalidProdUrl(prodApiBaseUrl)) prodApiBaseUrl else "UNCONFIGURED_PROD_URL/"
+            buildConfigField("String", "API_BASE_URL", "\"$releaseUrl\"")
             optimization {
                 enable = false
             }

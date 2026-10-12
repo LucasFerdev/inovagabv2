@@ -23,7 +23,7 @@ data class ProjetoResponseDto(
     @Serializable(with = BigDecimalSerializer::class)
     @SerialName("ganhoProdutividadePercentual") val ganhoProdutividadePercentual: BigDecimal? = null,
     @SerialName("resultado") val resultado: String? = null,
-    @SerialName("gestorResponsavelId") val gestorResponsavelId: String,
+    @SerialName("gestorResponsavelId") val gestorResponsavelId: String? = null,
     @SerialName("criadoEm") val criadoEm: String? = null,
     @SerialName("atualizadoEm") val atualizadoEm: String? = null,
     @SerialName("versao") val versao: Long? = null

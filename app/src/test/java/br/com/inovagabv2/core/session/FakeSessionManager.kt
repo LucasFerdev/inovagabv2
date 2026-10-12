@@ -36,7 +36,7 @@ class FakeSessionManager : SessionManager(DummyContext()) {
         return _jwtToken.value
     }
 
-    override suspend fun saveSession(user: User, token: String) {
+    override suspend fun saveSession(user: User, token: String, expiresInSeconds: Long?) {
         _userSession.value = user
         _jwtToken.value = token
         _isOnboardingCompleted.value = true

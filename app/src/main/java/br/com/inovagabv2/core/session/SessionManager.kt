@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import br.com.inovagabv2.domain.model.User
@@ -24,6 +25,7 @@ open class SessionManager @Inject constructor(
 ) {
     private val USER_KEY = stringPreferencesKey("user_session")
     private val TOKEN_KEY = stringPreferencesKey("jwt_token")
+    private val EXPIRATION_KEY = longPreferencesKey("jwt_expiration_epoch")
     private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_concluido")
 
     protected open val dataStore: DataStore<Preferences> by lazy {
@@ -58,9 +60,12 @@ open class SessionManager @Inject constructor(
         dataStore.data.map { preferences ->
             val userJson = preferences[USER_KEY]
             val token = preferences[TOKEN_KEY]
+            val expirationEpoch = preferences[EXPIRATION_KEY] ?: 0L
             val onboardingCompleted = preferences[ONBOARDING_COMPLETED_KEY] ?: false
 
-            val user = if (!userJson.isNullOrBlank() && !token.isNullOrBlank()) {
+            val isExpired = expirationEpoch > 0L && System.currentTimeMillis() >= expirationEpoch
+
+            val user = if (!userJson.isNullOrBlank() && !token.isNullOrBlank() && !isExpired) {
                 try {
                     Json.decodeFromString<User>(userJson)
                 } catch (_: Exception) {
@@ -82,10 +87,17 @@ open class SessionManager @Inject constructor(
         return jwtToken.firstOrNull()
     }
 
-    open suspend fun saveSession(user: User, token: String) {
+    open suspend fun saveSession(user: User, token: String, expiresInSeconds: Long? = null) {
+        val expirationEpoch = if (expiresInSeconds != null && expiresInSeconds > 0) {
+            System.currentTimeMillis() + (expiresInSeconds * 1000L)
+        } else {
+            0L
+        }
+
         dataStore.edit { preferences ->
             preferences[USER_KEY] = Json.encodeToString(User.serializer(), user)
             preferences[TOKEN_KEY] = token
+            preferences[EXPIRATION_KEY] = expirationEpoch
             preferences[ONBOARDING_COMPLETED_KEY] = true
         }
     }
@@ -100,6 +112,14 @@ open class SessionManager @Inject constructor(
         dataStore.edit { preferences ->
             preferences.remove(USER_KEY)
             preferences.remove(TOKEN_KEY)
+            preferences.remove(EXPIRATION_KEY)
+        }
+    }
+
+    open suspend fun clearSessionIfTokenMatches(requestToken: String) {
+        val currentToken = getToken()
+        if (currentToken != null && currentToken == requestToken) {
+            clearSession()
         }
     }
 }

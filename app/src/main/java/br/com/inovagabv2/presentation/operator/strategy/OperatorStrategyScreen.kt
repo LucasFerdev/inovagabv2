@@ -43,7 +43,7 @@ fun OperatorStrategyScreen(
     onStrategyClick: (String) -> Unit,
     onNavigateToHome: () -> Unit,
     onNavigateToSugestoes: () -> Unit,
-    onNavigateToCommunications: () -> Unit,
+    onNavigateToProjects: () -> Unit = {},
     onNavigateToProfile: () -> Unit
 ) {
     val user by viewModel.user.collectAsState()
@@ -70,9 +70,9 @@ fun OperatorStrategyScreen(
                     when (route) {
                         Screen.OperatorHome.route, Screen.ManagerHome.route, Screen.LeadershipDashboard.route -> onNavigateToHome()
                         Screen.MyIdeas.route, Screen.ManagerIdeas.route -> onNavigateToSugestoes()
+                        Screen.ManagerProjects.route -> onNavigateToProjects()
                         Screen.OperatorStrategy.route, Screen.ManagerStrategy.route, Screen.LeadershipStrategy.route -> { /* Already here */ }
                         Screen.Profile.route -> onNavigateToProfile()
-                        else -> onNavigateToCommunications()
                     }
                 }
             )

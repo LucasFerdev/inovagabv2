@@ -1,28 +1,21 @@
 package br.com.inovagabv2.presentation.operator.myideas
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.outlined.BarChart
-import androidx.compose.material.icons.outlined.Build
-import androidx.compose.material.icons.outlined.DirectionsBus
-import androidx.compose.material.icons.outlined.Eco
-import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -30,6 +23,7 @@ import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Idea
+import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.Role
 
 @Composable
@@ -39,15 +33,21 @@ fun MyIdeasScreen(
     onIdeaClick: (String) -> Unit,
     onNavigateToCreateIdea: () -> Unit,
     onNavigateToHome: () -> Unit,
-    onNavigateToCommunications: () -> Unit,
+    onNavigateToStrategies: () -> Unit,
     onNavigateToProfile: () -> Unit
 ) {
     val user by viewModel.user.collectAsState()
     val ideas by viewModel.ideas.collectAsState()
     val strategiesMap by viewModel.strategiesMap.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    var selectedStatus by remember { mutableStateOf<IdeaStatus?>(null) }
 
     val currentRole = user?.role ?: Role.OPERADOR
+
+    val filteredIdeas = remember(ideas, selectedStatus) {
+        if (selectedStatus == null) ideas
+        else ideas.filter { it.status == selectedStatus }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.loadData()
@@ -67,11 +67,10 @@ fun MyIdeasScreen(
                 role = currentRole,
                 onNavigate = { route ->
                     when (route) {
-                        Screen.OperatorHome.route, Screen.ManagerHome.route, Screen.LeadershipDashboard.route -> onNavigateToHome()
+                        Screen.OperatorHome.route -> onNavigateToHome()
                         Screen.MyIdeas.route -> { /* Already here */ }
-                        Screen.OperatorStrategy.route -> onNavigateToCommunications()
+                        Screen.OperatorStrategy.route -> onNavigateToStrategies()
                         Screen.Profile.route -> onNavigateToProfile()
-                        else -> onNavigateToCommunications()
                     }
                 }
             )
@@ -81,23 +80,11 @@ fun MyIdeasScreen(
                 onClick = onNavigateToCreateIdea,
                 containerColor = AguiaColors.PrimaryBlue,
                 contentColor = Color.White,
-                shape = RoundedCornerShape(24.dp),
-                elevation = FloatingActionButtonDefaults.elevation(6.dp)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Add,
-                    contentDescription = null,
-                    modifier = Modifier.size(20.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Nova ideia",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 15.sp
-                )
-            }
-        },
-        containerColor = Color.White
+                shape = RoundedCornerShape(16.dp),
+                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                text = { Text("Nova ideia", fontWeight = FontWeight.Bold) }
+            )
+        }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -109,7 +96,7 @@ fun MyIdeasScreen(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Page Header
+                // Page Title
                 item {
                     Column {
                         Text(
@@ -120,83 +107,63 @@ fun MyIdeasScreen(
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Acompanhe suas contribuições e veja cada etapa.",
+                            text = "Acompanhe o status e a evolução das suas propostas.",
                             fontSize = 14.sp,
                             color = AguiaColors.TextSecondary
                         )
                     }
                 }
 
-                // Hero Banner Card: X ideias enviadas (calculated dynamically)
+                // Filter Pills
                 item {
-                    val count = ideas.size
-                    val countLabel = if (count == 1) "1 ideia enviada" else "$count ideias enviadas"
-
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color(0xFFEFF6FF)),
-                        border = BorderStroke(1.dp, Color(0xFFDBEAFE))
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(
-                            modifier = Modifier.padding(18.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .size(52.dp)
-                                    .clip(CircleShape)
-                                    .background(Color(0xFFDBEAFE)),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Outlined.Lightbulb,
-                                    contentDescription = null,
-                                    tint = AguiaColors.PrimaryBlue,
-                                    modifier = Modifier.size(28.dp)
-                                )
-                            }
+                        val isAllSelected = selectedStatus == null
+                        StatusFilterPill(
+                            label = "Todas",
+                            isSelected = isAllSelected,
+                            onClick = { selectedStatus = null }
+                        )
 
-                            Spacer(modifier = Modifier.width(16.dp))
-
-                            Column {
-                                Text(
-                                    text = countLabel,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = AguiaColors.NavyDark
-                                )
-                                Spacer(modifier = Modifier.height(2.dp))
-                                Text(
-                                    text = "Toque em uma ideia para ver os detalhes e o histórico.",
-                                    fontSize = 12.sp,
-                                    color = AguiaColors.TextSecondary,
-                                    lineHeight = 16.sp
-                                )
-                            }
+                        listOf(
+                            IdeaStatus.ENVIADA to "Enviadas",
+                            IdeaStatus.EM_ANALISE to "Em análise",
+                            IdeaStatus.APROVADA to "Aprovadas",
+                            IdeaStatus.REJEITADA to "Rejeitadas"
+                        ).forEach { (status, label) ->
+                            val isSelected = selectedStatus == status
+                            StatusFilterPill(
+                                label = label,
+                                isSelected = isSelected,
+                                onClick = { selectedStatus = status }
+                            )
                         }
                     }
                 }
 
-                // Loading State
+                // List Items
                 if (isLoading) {
                     item {
                         AguiaLoadingState(message = "Carregando suas ideias...")
                     }
-                } else if (ideas.isEmpty()) {
-                    // Empty State
+                } else if (filteredIdeas.isEmpty()) {
                     item {
                         AguiaEmptyState(
-                            message = "Você ainda não enviou nenhuma ideia.",
-                            actionText = "Criar primeira ideia",
-                            onActionClick = onNavigateToCreateIdea
+                            message = if (selectedStatus == null)
+                                "Você ainda não cadastrou nenhuma ideia. Clique em '+ Nova ideia' para enviar!"
+                            else
+                                "Nenhuma ideia encontrada com o filtro selecionado."
                         )
                     }
                 } else {
-                    // Ideas List
-                    items(ideas, key = { it.id }) { idea ->
-                        val strategyTitle = idea.strategyId?.let { strategiesMap[it] } ?: "Estratégia não identificada"
-                        IdeaCardItem(
+                    items(filteredIdeas, key = { it.id }) { idea ->
+                        val strategyTitle = strategiesMap[idea.strategyId]
+                        MyIdeaCardItem(
                             idea = idea,
                             strategyTitle = strategyTitle,
                             onClick = { onIdeaClick(idea.id) }
@@ -209,9 +176,31 @@ fun MyIdeasScreen(
 }
 
 @Composable
-private fun IdeaCardItem(
+private fun StatusFilterPill(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        modifier = Modifier.clickable { onClick() },
+        shape = RoundedCornerShape(20.dp),
+        color = if (isSelected) AguiaColors.PrimaryBlue else Color.White,
+        border = if (isSelected) null else BorderStroke(1.dp, Color(0xFF3B82F6))
+    ) {
+        Text(
+            text = label,
+            fontSize = 13.sp,
+            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+            color = if (isSelected) Color.White else AguiaColors.PrimaryBlue,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+    }
+}
+
+@Composable
+private fun MyIdeaCardItem(
     idea: Idea,
-    strategyTitle: String,
+    strategyTitle: String?,
     onClick: () -> Unit
 ) {
     Card(
@@ -225,101 +214,79 @@ private fun IdeaCardItem(
         Column(
             modifier = Modifier.padding(18.dp)
         ) {
-            // Top Row: Square Icon + Title + Status Chip
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Top
             ) {
-                // Category Icon
-                val icon = getCategoryIcon(idea.category)
-                Box(
-                    modifier = Modifier
-                        .size(48.dp)
-                        .clip(RoundedCornerShape(14.dp))
-                        .background(Color(0xFFEFF6FF)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(
-                        imageVector = icon,
-                        contentDescription = null,
-                        tint = AguiaColors.PrimaryBlue,
-                        modifier = Modifier.size(24.dp)
-                    )
-                }
+                Text(
+                    text = idea.title,
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = AguiaColors.NavyDark,
+                    modifier = Modifier.weight(1f)
+                )
 
-                // Status Chip
+                Spacer(modifier = Modifier.width(8.dp))
+
                 AguiaStatusChip(status = idea.status)
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
-            // Title
-            Text(
-                text = idea.title,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.Bold,
-                color = AguiaColors.NavyDark
-            )
-
-            Spacer(modifier = Modifier.height(2.dp))
-
-            // Category Subtitle
             Text(
                 text = idea.category,
                 fontSize = 13.sp,
                 color = AguiaColors.TextSecondary
             )
 
-            Spacer(modifier = Modifier.height(4.dp))
+            if (!strategyTitle.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(8.dp))
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = Color(0xFFEFF6FF)
+                ) {
+                    Text(
+                        text = "Estratégia: $strategyTitle",
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = AguiaColors.PrimaryBlue,
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                    )
+                }
+            }
 
-            // Strategy Line
-            Text(
-                text = "Estratégia: $strategyTitle",
-                fontSize = 12.sp,
-                color = Color(0xFF64748B)
-            )
+            Spacer(modifier = Modifier.height(14.dp))
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Bottom Row: Date + Chevron
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val dateText = when {
-                    !idea.updatedAt.isNullOrBlank() -> "Atualizada em ${idea.updatedAt}"
-                    else -> "Enviada em ${idea.createdAt}"
-                }
-
                 Text(
-                    text = dateText,
+                    text = if (!idea.createdAt.isNullOrBlank()) "Enviada em ${idea.createdAt}" else "",
                     fontSize = 12.sp,
                     color = AguiaColors.TextSecondary
                 )
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.clickable { onClick() }
+                ) {
+                    Text(
+                        text = "Ver detalhes",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AguiaColors.PrimaryBlue
+                    )
                     Icon(
                         imageVector = Icons.Default.ChevronRight,
                         contentDescription = null,
-                        tint = AguiaColors.TextSecondary,
-                        modifier = Modifier.size(20.dp)
+                        tint = AguiaColors.PrimaryBlue,
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
         }
-    }
-}
-
-private fun getCategoryIcon(category: String?): ImageVector {
-    if (category == null) return Icons.Outlined.Lightbulb
-    val cat = category.lowercase().trim()
-    return when {
-        cat.contains("operação") || cat.contains("embarque") || cat.contains("frota") -> Icons.Outlined.DirectionsBus
-        cat.contains("sustentab") || cat.contains("coleta") || cat.contains("eco") -> Icons.Outlined.Eco
-        cat.contains("manutenção") || cat.contains("checklist") -> Icons.Outlined.Build
-        cat.contains("eficiência") || cat.contains("marcha") || cat.contains("tecnologia") -> Icons.Outlined.BarChart
-        else -> Icons.Outlined.Lightbulb
     }
 }

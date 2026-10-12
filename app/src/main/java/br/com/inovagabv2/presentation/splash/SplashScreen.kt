@@ -95,7 +95,7 @@ private fun SplashContent(
             ),
             contentDescription = "Viação Águia Branca",
             modifier = Modifier
-                .fillMaxWidth(0.99f)
+                .fillMaxWidth(0.80f)
                 .heightIn(max = 250.dp)
                 .scale(1.17f)
                 .offset {
