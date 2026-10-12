@@ -1,237 +1,309 @@
-# InovaGAB — Gestão de Inovação Águia Branca
+# InovaGAB — Gestão de Inovação Águia Branca (Android)
 
-Plataforma corporativa móvel para gestão de sugestões, diretrizes estratégicas e indicadores de impacto, focada no setor de transporte rodoviário de passageiros da **Viação Águia Branca**.
-
-Projeto focado em produtividade, experiência do usuário e inovação corporativa — **Desenvolvimento Android Nativo com Jetpack Compose**.
+Plataforma corporativa móvel nativa Android para gestão de ideias, diretrizes estratégicas, projetos de inovação e análise consultiva com Inteligência Artificial, desenvolvida para a **Viação Águia Branca**.
 
 ---
 
-## Sumário
-* [Sobre o Projeto](#sobre-o-projeto)
-* [Tecnologias Utilizadas](#tecnologias-utilizadas)
-* [Funcionalidades e Telas](#funcionalidades-e-telas)
-* [Perfis de Acesso](#perfis-de-acesso)
-* [Arquitetura](#arquitetura)
-* [Estrutura do Projeto](#estrutura-do-projeto)
-* [Como Executar](#como-executar)
-* [Boas Práticas e Padrões](#boas-práticas-e-padrões)
-* [Autor](#autor)
+## 📋 Sumário
+- [Visão Geral](#-visão-geral)
+- [Funcionalidades por Perfil](#-funcionalidades-por-perfil)
+- [Tecnologias Utilizadas](#-tecnologias-utilizadas)
+- [Pré-requisitos](#-pré-requisitos)
+- [Clonagem e Abertura do Projeto](#-clonagem-e-abertura-do-projeto)
+- [Configuração da API (Backend)](#-configuração-da-api-backend)
+- [Compilação e Execução](#-execução)
+- [Cadastro e Autenticação](#-cadastro-e-autenticação)
+- [Fluxo de Demonstração Recomendado](#-fluxo-de-demonstração-recomendado)
+- [Arquitetura](#-arquitetura)
+- [Estados das Telas](#-estados-das-telas)
+- [Inteligência Artificial (IA)](#-inteligência-artificial-ia)
+- [Testes Automatizados](#-testes)
+- [Solução de Problemas](#-solução-de-problemas)
+- [Segurança](#-segurança)
+- [Estado do Projeto](#-estado-do-projeto)
 
 ---
 
-## Sobre o Projeto
+## 🎯 Visão Geral
 
-O **InovaGAB** é um ecossistema mobile corporativo que conecta desde os colaboradores da operação até a diretoria executiva da empresa. O objetivo é democratizar a inovação, permitindo que colaboradores da ponta enviem sugestões de melhoria enquanto gestores e diretores acompanham projetos e indicadores financeiros/operacionais em tempo real.
+O **InovaGAB** é uma aplicação Android nativa desenvolvida para conectar colaboradores operacionais, gestores e a liderança executiva da Viação Águia Branca em um fluxo unificado de inovação corporativa.
 
-O projeto simula o fluxo completo de inovação corporativa:
-1. **Onboarding & Autenticação:** Apresentação da proposta de valor, criação de conta e login unificado com suporte a atalhos rápidos para teste de perfis.
-2. **Operador:** Consulta orientações estratégicas, cadastra sugestões via assistente em etapas (3 steps) com escolha de categorias e acompanha a evolução via linha do tempo.
-3. **Gestor:** Analisa ideias pendentes, define prioridades, gerencia portfólio de projetos ativos com acompanhamento dos responsáveis.
-4. **Liderança:** Dashboard executivo de alto nível com métricas de impacto, ROI Global, lucro gerado, redução de custos em gráficos *sparklines* e mensuração de resultados por projeto.
+O aplicativo integra-se diretamente via HTTP REST/JSON com a **InovaGAB API (Spring Boot)**. Toda a persistência de dados, regras de negócio, cálculo de ROI, consolidação de indicadores e comunicação com a API do Google Gemini são gerenciadas exclusivamente pelo backend.
+
+O sistema atende a três perfis de acesso bem definidos:
+- **OPERADOR:** Colaborador da linha de frente que sugere ideias e acompanha seu progresso.
+- **GESTOR:** Responsável por analisar, priorizar, aprovar/rejeitar ideias, consultar a IA e administrar o portfólio de projetos ativos.
+- **LIDERANÇA:** Diretoria responsável por definir as estratégias corporativas e acompanhar os dashboards executivos de resultados.
 
 ---
 
-## Tecnologias Utilizadas
+## ⚙️ Funcionalidades por Perfil
 
-### Mobile Stack
+### 👷 OPERADOR
+- **Direcionamentos Estratégicos:** Consulta a lista de estratégias ativas publicadas pela liderança.
+- **Submissão de Ideias:** Cadastra novas ideias selecionando categoria, descrição detalhada do problema, solução proposta, benefícios esperados e estratégia vinculada.
+- **Acompanhamento de Ideias:** Acessa *"Minhas Ideias"*, filtra por status (*Enviadas*, *Em análise*, *Aprovadas*, *Rejeitadas*) e consulta detalhes e histórico de alterações em tempo real.
+- **Ranking de Inovação:** Visualiza a classificação geral e destaques dos colaboradores com ideias transformadas em projetos concluídos.
+- **Perfil e Suporte:** Acessa os dados da conta ativa e dispara solicitação de suporte via aplicativo de e-mail.
+
+### 👔 GESTOR
+- **Avaliação de Ideias:** Filtra ideias enviadas e em análise, define a prioridade de P1 a P5, e executa ações de aprovação ou rejeição (com justificativa obrigatória).
+- **Análise Consultiva da IA:** Solicita e reavalia análises automáticas geradas pela Inteligência Artificial contendo pontuação (0–100), prioridade sugerida, pontos fortes, riscos e recomendações.
+- **Administração de Projetos:** Cria projetos vinculados a estratégias ativas e ideias aprovadas. Atualiza etapa, status e percentual de progresso (com justificativa em caso de redução).
+- **Registro de Resultados:** Registra retorno financeiro obtido, ganho de produtividade (%) e resumo de resultados. Executa conclusão ou cancelamento de projetos.
+- **Consultas e Ranking:** Consulta diretrizes estratégicas, ranking de inovação, histórico de alterações de cada item e perfil de acesso.
+
+### 📊 LIDERANÇA
+- **Administração de Estratégias:** Cria, edita, ativa, desativa e arquiva diretrizes estratégicas corporativas.
+- **Dashboard Executivo:** Visualiza métricas consolidadas pelo backend, incluindo Investimento Total, Retorno Financeiro, Lucro Gerado, ROI Global %, Produtividade Média, Projetos em Atraso e distribuição de projetos por status.
+- **Dashboard por Estratégia e Projeto:** Consulta indicadores detalhados e gráficos consolidados por diretriz estratégica e por projeto individual.
+- **Consultas Globais:** Consulta portfólio de ideias, análises da IA, histórico de alterações, ranking de inovação e perfil executivo.
+
+---
+
+## 🛠️ Tecnologias Utilizadas
+
+As seguintes tecnologias estão integradas no projeto Android:
+
 | Categoria | Tecnologia |
 | :--- | :--- |
-| **Linguagem** | **Kotlin** (100% Kotlin) |
-| **Interface** | **Jetpack Compose** (Declarativo) |
-| **Design System** | **Material 3** personalizado |
+| **Linguagem** | **Kotlin 100%** (JVM Target 17) |
+| **Interface do Usuário** | **Jetpack Compose** & **Material 3** |
+| **Arquitetura** | **MVVM (Model-View-ViewModel)** & **Unidirectional Data Flow** |
 | **Injeção de Dependência** | **Hilt (Dagger)** |
+| **Comunicação de Rede** | **Retrofit 2** & **OkHttp 4** (HttpLoggingInterceptor) |
+| **Serialização JSON** | **Kotlinx Serialization** |
+| **Sessão Local** | **DataStore Preferences** |
 | **Navegação** | **Navigation Compose** |
-| **Animações e Pager** | **Compose Foundation (HorizontalPager, Canvas Sparklines)** |
-| **Persistência Local & Sessão** | **Room Database** & **DataStore (Preferences)** |
-| **Carregamento de Imagens** | **Coil 3** |
-| **Concorrência** | **Kotlin Coroutines & StateFlow / Flow** |
+| **Concorrência** | **Kotlin Coroutines** & **StateFlow / Flow** |
+| **Testes Automatizados** | **JUnit 4** & **MockWebServer** |
 
-### Network & Libs
-| Categoria | Tecnologia |
-| :--- | :--- |
-| **API Client** | **Retrofit 2** & **OkHttp 4** |
-| **Serialization** | **Kotlinx Serialization** |
-| **Logs** | **HttpLoggingInterceptor** |
+*(Nota: O aplicativo não utiliza persitência estática offline local ou bibliotecas não declaradas no Gradle).*
 
 ---
 
-## Funcionalidades e Telas
+## 💻 Pré-requisitos
 
-### 🚀 Onboarding & Autenticação
-* **Splash Screen:** Tela de abertura animada com animação suave de saída do logo da Águia Branca.
-* **Onboarding Interativo:** Carrossel de 3 páginas (`HorizontalPager`) com imagens ilustrativas (`res/drawable`), indicadores de página (dots) e botões de ação `Começar →` e `Acessar`.
-* **Tela de Login (`Acesse sua conta`):**
-  * Cabeçalho corporativo com logo e tag `INOVAGAB`.
-  * Form e-mail e senha com alternância de visibilidade (olho).
-  * Atalho "Esqueci minha senha".
-  * Link para "Criar conta" e selo "Seus dados estão protegidos".
-  * Autenticação integrada diretamente com o backend Spring Boot via token JWT.
-* **Tela de Cadastro (`Crie sua conta`):**
-  * Campos para *Nome completo*, *E-mail*, *Empresa ou unidade*, *Senha*, *Confirmar senha* e opção expansível de *Código de acesso* (opcional).
-  * Checkbox dos Termos de Uso e Política de Privacidade.
-  * Integração com repositório para criação, atribuição de perfil via backend e autenticação automática do novo usuário.
+Para compilar e executar o aplicativo, certifique-se de possuir:
+1. **Android Studio:** Versão Ladybug (2024.2.1) ou superior.
+2. **JDK:** Java 17 (exigido pelas configurações do Gradle).
+3. **Android SDK:** API Level 34 ou superior (compileSdk 37, minSdk 26).
+4. **Dispositivo/Emulador:** Aparelho físico com depuração USB ativada ou emulador Android Studio (API 26+).
+5. **InovaGAB API:** Servidor Spring Boot da aplicação em execução na rede local (porta `8080`).
+6. **Git:** Ferramenta de controle de versão instalada.
 
 ---
 
-### 👤 Perfil Operador (`João Silva` — `operador@aguia.com`)
-* **Header de Operador:** TopBar com logo e tag exclusiva `OPERADOR`.
-* **Home do Operador:**
-  * Métricas em cards lado a lado: *Enviadas*, *Em análise* e *Aprovadas*.
-  * Seções "Orientações estratégicas" e "Acompanhe suas sugestões".
-  * Botão de ação principal `+ Nova sugestão`.
-* **Nova Sugestão (Multi-step Wizard):**
-  * Indicador de progresso em 3 etapas: `(1) Categoria` ➔ `(2) Detalhes` ➔ `(3) Revisão`.
-  * Grid de 8 categorias: *Atendimento*, *Segurança*, *Operação*, *Manutenção*, *Tecnologia*, *Sustentabilidade*, *Pessoas* e *Outros*.
-* **Minhas Sugestões:**
-  * Carrossel de pílulas de filtro (*Todas*, *Enviadas*, *Em análise*, *Aprovadas*).
-  * Cards detalhados indicando data, categoria e status.
-* **Detalhes da Sugestão:**
-  * Visualização da descrição completa, benefícios esperados e **Linha do tempo de Acompanhamento** (*Enviada*, *Recebida pelo gestor*, *Aguardando decisão*).
-* **Mural de Comunicações:**
-  * Comunicados e avisos internos organizados por cartões com ícones e categorias (*Inovação*, *Frota*, *Sustentabilidade*).
-* **Perfil do Colaborador:**
-  * Exibição de foto/avatar, nome, cargo (*Operador*), e-mail, opções de *Dados pessoais*, *Segurança* e botão de logout *Sair*.
+## 📥 Clonagem e Abertura do Projeto
+
+1. **Clone o repositório:**
+   ```bash
+   git clone https://github.com/LucasFerdev/inovagab-android.git
+   ```
+
+2. **Abra o projeto no Android Studio:**
+   - Selecione a pasta raiz `inovagabv2-main`.
+   - Aguarde o término do **Gradle Sync**.
+   - Verifique na barra superior se o módulo escolhido para execução é o `:app`.
 
 ---
 
-### 💼 Perfil Gestor (`Mariana Costa` — `gestor@aguia.com`)
-* **Header de Gestor:** TopBar com logo e tag exclusiva `GESTOR`.
-* **Home do Gestor:**
-  * Grid 2x2 com ícones circulares coloridos: *Recebidas (24)*, *Em análise (8)*, *Aprovadas (10)* e *Projetos (6)*.
-  * Seção "Ideias para análise" com atalho "Ver todas" e botão de ação `Analisar ideias`.
-* **Análise de Ideias:**
-  * Campo de busca ("Buscar ideias...") com botão de filtro.
-  * Carrossel de pílulas de status (*Todas*, *Enviadas*, *Em análise*, *Aprovadas*).
-  * Visualização do autor da ideia (*Lucas Almeida*, *Juliana Martins*, *Rafael Souza*, *Beatriz Lima*) e indicador de prioridade (*Alta*, *Média*, *Baixa*).
-* **Gestão de Projetos:**
-  * Abas de navegação (*Meus projetos* | *Todos*).
-  * Cards de projetos atrelados com barra de progresso (%), prazo, investimento e avatar com as iniciais do responsável (ex: `LA` para *Lucas Almeida*).
-* **Perfil da Gestora:**
-  * Layout corporativo adaptado (*Mariana Costa* — *Gestora de Inovação*).
+## 🌐 Configuração da API (Backend)
+
+O aplicativo Android lê o endereço do servidor backend a partir do arquivo `local.properties` situado na raiz do projeto Android.
+
+### 1. Editar ou Criar o Arquivo `local.properties`
+Crie ou edite o arquivo `local.properties` na raiz do projeto Android e adicione a propriedade `API_BASE_URL`:
+
+- **Caso esteja utilizando o Emulador Android Studio:**
+  ```properties
+  API_BASE_URL=http://10.0.2.2:8080/
+  ```
+
+- **Caso esteja utilizando um Dispositivo Físico (Celular via Wi-Fi):**
+  ```properties
+  API_BASE_URL=http://192.168.X.X:8080/
+  ```
+  *(Substitua `192.168.X.X` pelo endereço IPv4 atual do computador onde o backend está rodando).*
+
+> [!NOTE]
+> - O script `build.gradle.kts` ajusta automaticamente a barra `/` final caso seja omitida.
+> - O arquivo `local.properties` está no `.gitignore` e **nunca** deve ser commitado no repositório.
+
+### 2. Descobrir o IP do Computador na Rede Local
+- **Windows:** Abra o Terminal/Prompt de Comando e digite `ipconfig`. Procure pelo *Endereço IPv4* do seu adaptador Wi-Fi ou Ethernet (ex: `192.168.1.15`).
+- **Linux/macOS:** Abra o Terminal e digite `ifconfig` ou `ip a`.
+
+### 3. Validação de Conexão na Rede
+1. Certifique-se de que o computador e o celular físico estão conectados na **mesma rede Wi-Fi**.
+2. Abra o navegador do celular e acesse:
+   ```text
+   http://<IP_DO_SEU_COMPUTADOR>:8080/actuator/health
+   ```
+   Se a conexão estiver correta, a página retornará `{"status":"UP"}`.
+3. Caso a conexão falhe, verifique se a porta `8080` está liberada no Firewall do Windows/OS.
 
 ---
 
-### 📊 Perfil Liderança (`Carlos Mendes` — `lideranca@aguia.com`)
-* **Header de Liderança:** TopBar com logo e tag exclusiva `LIDERANÇA`.
-* **Dashboard Executivo:**
-  * Grid de métricas 2x2 com **gráficos sparklines em verde desenhados em Canvas** para visualizar tendências:
-    * **ROI Global:** `24,8%`
-    * **Lucro Gerado:** `R$ 2,4 mi`
-    * **Redução de Custos:** `R$ 1,1 mi`
-    * **Produtividade:** `+32%`
-  * Cards de Resumo Operacional (*Projetos em andamento* e *Ideias aprovadas*).
-* **Diretrizes Estratégicas:**
-  * Abas (*Publicadas* | *Rascunhos*) e campo de busca.
-  * Ações de *Editar*, *Visualizar* e *Excluir* diretrizes.
-  * Botão flutuante estendido `+ Nova diretriz`.
-* **Gestão de Portfólio:**
-  * Resumo com **Investimento Total (R$ 455 mi)** e **Total de Projetos (3)**.
-* **Mensuração de Resultados:**
-  * Exibição do ROI, Retorno Financeiro e Investimento por projeto organizado em 3 colunas métricas.
-* **Perfil Executivo:**
-  * Exibição completa do perfil (*Carlos Mendes* — *Diretor de Inovação*).
+## 🚀 Compilação e Execução
+
+1. **Inicie o Backend:** Garanta que a aplicação Spring Boot do InovaGAB esteja em execução.
+2. **Execute o Gradle Sync:** No Android Studio, clique no ícone do elefante (*Sync Project with Gradle Files*).
+3. **Execute o Módulo `:app`:** Selecione o emulador ou dispositivo conectado e clique no botão **Run** (`Shift + F10`).
+
+### Comandos de Linha de Comando (CLI)
+
+- **Executar Testes Unitários:**
+  - Windows: `gradlew.bat testDebugUnitTest`
+  - Unix/macOS: `./gradlew testDebugUnitTest`
+
+- **Gerar APK de Debug:**
+  - Windows: `gradlew.bat assembleDebug`
+  - Unix/macOS: `./gradlew assembleDebug`
+
+> O APK compilado será gerado no diretório:
+> `app/build/outputs/apk/debug/app-debug.apk`
 
 ---
 
-## Autenticação Backend (Spring Boot)
+## 🔐 Cadastro e Autenticação
 
-O aplicativo integra com o backend real Spring Boot via endpoints REST e autenticação JWT Bearer:
-
-* **Endpoint de Login:** `POST /api/auth/login`
-* **Endpoint de Cadastro:** `POST /api/auth/cadastro` (cria usuário com papel `OPERADOR`)
-* **Endpoint de Perfil:** `GET /api/auth/me`
-* **JWT Persistence:** Token armazenado no `DataStore` e enviado via `AuthInterceptor` em rotas protegidas (`Authorization: Bearer <token>`).
+1. **Cadastro Padrão:** Qualquer novo cadastro efetuado na tela de registro cria automaticamente um usuário com o papel **OPERADOR**.
+2. **Cadastro com Código de Acesso Especial:** Caso seja fornecido um código de acesso válido configurado no backend, a conta é criada como **GESTOR** ou **LIDERANÇA**. Os Codigos estão disponiveis no documento de apresentação InovaGAB pagina 27 Perfil de Gestor. Consta Codigo de gestor e liderança
+3. **Persistência do JWT:** O token JWT de autenticação retornado no login é armazenado com segurança no `DataStore Preferences` e injetado via `AuthInterceptor` no cabeçalho HTTP (`Authorization: Bearer <token>`).
+4. **Sessão Expirada (HTTP 401):** Quando a sessão expira, o aplicativo captura o erro 401, limpa o token mantendo o estado de onboarding concluído e orienta o usuário a refazer o login com segurança, sem fechamento do app.
 
 ---
 
-## Arquitetura
+## 🔄 Fluxo de Demonstração Recomendado
 
-O projeto adota **Clean Architecture** aliada ao padrão **MVVM (Model-View-ViewModel)** com **Unidirectional Data Flow (UDF)**.
+Para testar o fluxo integrado completo de ponta a ponta:
 
-```text
-UI (Jetpack Compose) ──► ViewModel (StateFlow) ──► Repository (Domain/Data) ──► Local / Remote Data
-```
+1. **Visão da Liderança:**
+   - Faça login como Liderança ou crie uma conta com o código de acesso correspondente.
+   - Crie e ative uma nova Diretriz Estratégica (ex: *"Eficiência Energética na Frota"*).
 
-### Princípios Aplicados
-* **Single Source of Truth (SSOT):** O estado da tela é mantido no ViewModel em um `StateFlow` único.
-* **Componentização Reutilizável:** Design System centralizado para padronização gráfica.
-* **Injeção de Dependências:** Hilt provê instâncias únicas de repositórios e gerenciadores de sessão (`SessionManager`).
+2. **Visão do Operador:**
+   - Faça login com um perfil Operador.
+   - Acesse a aba de Estratégias e visualize a nova diretriz publicada.
+   - Cadastre uma nova ideia vinculada a essa estratégia.
+   - Acompanhe o status da ideia na tela *"Minhas Ideias"*.
+
+3. **Visão do Gestor:**
+   - Faça login com um perfil Gestor.
+   - Acesse a tela de Avaliação de Ideias e visualize a proposta enviada.
+   - Solicite a análise consultiva da Inteligência Artificial.
+   - Defina a prioridade da ideia (P1 a P5) e aprove a proposta.
+   - Acesse a aba de Projetos e crie um novo projeto vinculado a essa ideia aprovada.
+   - Atualize a etapa, o progresso e registre os resultados financeiros/operacionais obtidos.
+   - Conclua o projeto.
+
+4. **Consolidação na Liderança e Ranking:**
+   - Retorne com o perfil da Liderança e acesse o Dashboard Executivo para visualizar os indicadores atualizados de ROI e lucro gerado.
+   - Acesse a tela de **Ranking de Inovação** no Perfil de qualquer usuário para visualizar o operador classificado no pódio por ter sua ideia transformada em projeto concluído.
 
 ---
 
-## Estrutura do Projeto
+## 📐 Arquitetura
+
+O projeto adota os princípios da **Clean Architecture** e do padrão **MVVM**:
 
 ```text
 app/src/main/java/br/com/inovagabv2/
 ├── core/
-│   ├── designsystem/             # Temas (AguiaColors, Typography) e Componentes (TopBar, BottomBar, Sparkline, Cards)
-│   ├── navigation/               # Definção de rotas (Screen) e AguiaNavHost
-│   ├── session/                  # SessionManager (DataStore)
-│   └── di/                       # Módulos de Injeção do Hilt
+│   ├── designsystem/             # Design System (Cores, Tipografia e Componentes Reutilizáveis)
+│   ├── di/                       # Módulos de Injeção de Dependências (Hilt)
+│   ├── navigation/               # Mapeamento de Rotas (Screen) e NavHost
+│   ├── session/                  # Gerenciador de Sessão (DataStore)
+│   └── util/                     # Utilitários de formatação e máscaras
 │
 ├── data/
-│   ├── local/                    # Configurações do Room Database
-│   ├── repository/               # Implementação dos repositórios de dados (Auth, Idea, Project, Strategy, Dashboard)
-│   └── model/                    # Modelos de transferência (DTOs)
+│   ├── mapper/                   # Mapeadores de DTOs para Modelos de Domínio
+│   ├── remote/                   # Interface Retrofit (InovaGabApi), Interceptadores e DTOs
+│   └── repository/               # Implementação dos Repositórios de Dados
 │
 ├── domain/
-│   ├── model/                    # Modelos de domínio (User, Idea, Project, Strategy, Role, Priority)
-│   └── repository/               # Interfaces dos repositórios
+│   ├── model/                    # Modelos de Domínio (User, Idea, Project, Strategy, Ranking, etc.)
+│   └── repository/               # Interfaces dos Repositórios
 │
-└── presentation/                 # Camada de Apresentação (UI e ViewModels)
-    ├── splash/                   # Tela de abertura
-    ├── onboarding/               # Carrossel de Boas-vindas (3 etapas)
-    ├── auth/                     # Login (Acesse sua conta) e Cadastro (Crie sua conta)
-    ├── operator/                 # Funcionalidades de Operador (Home, Nova Sugestão, Minhas Sugestões, Detalhes, Comunicações)
-    ├── manager/                  # Funcionalidades de Gestor (Home, Análise de Ideias, Projetos)
-    ├── leadership/               # Funcionalidades de Liderança (Dashboard, Estratégias, Portfólio, Resultados)
-    └── profile/                  # Perfil executivo/operacional e Logout
+└── presentation/                 # Camadas de Interface (Compose Views) e ViewModels
+    ├── auth/                     # Autenticação (Login e Cadastro)
+    ├── leadership/               # Telas da Liderança (Dashboard, Estratégias, Detalhes)
+    ├── manager/                  # Telas do Gestor (Avaliação, Projetos, Criação)
+    ├── onboarding/               # Onboarding de boas-vindas
+    ├── operator/                 # Telas do Operador (Home, Ideias, Estratégias, Detalhes)
+    ├── profile/                  # Perfil do Usuário e Suporte por E-mail
+    ├── ranking/                  # Ranking de Inovação
+    └── splash/                   # Tela de Abertura (Splash)
 ```
 
----
-
-## Como Executar
-
-### Requisitos
-* **Android Studio** Ladybug (2024.2.1) ou superior.
-* **JDK:** Java 17.
-* **Android SDK:** API Level 34 ou superior.
-
-### Configuração de Rede (Backend Spring Boot)
-O aplicativo se conecta ao servidor backend na porta 8080:
-* **Emulador Android:** Utiliza por padrão `http://10.0.2.2:8080/` (fallback automático se `API_BASE_URL` não for definida em `local.properties`).
-* **Dispositivo Físico:** Configure o endereço IPv4 da sua máquina local no arquivo `local.properties`:
-  ```properties
-  API_BASE_URL=http://192.168.1.7:8080/
-  ```
-* **Requisitos da Rede Local:** O smartphone e o computador devem estar conectados na **mesma rede Wi-Fi/local**.
-* **Validação de Conexão:** Antes de executar a aplicação, acesse no navegador do celular a URL do backend:
-  `http://<IPv4_DO_COMPUTADOR>:8080/actuator/health` (deve retornar `{"status":"UP"}`).
-
-### Passos
-1. **Clonar o repositório:**
-   ```bash
-   git clone https://github.com/LucasFerdev/inovagab-android.git
-   ```
-2. **Abrir no Android Studio:**
-   * Importe a pasta do projeto e aguarde a sincronização do Gradle (`Gradle Sync`).
-3. **Configurar a API Base URL:**
-   * Crie ou edite o arquivo `local.properties` na raiz do projeto com o IP da sua máquina.
-4. **Executar o aplicativo:**
-   * Selecione um emulador (API 30+) ou dispositivo físico com Depuração USB ativada e clique no botão **Run ('app')**.
+- **Data DTO & Mapper:** Isola o contrato de rede da lógica interna do aplicativo.
+- **Repository Pattern:** Centraliza as chamadas de rede e expõe reatividade via `Flow`.
+- **ViewModel & StateFlow:** Gerencia o estado da interface em um `StateFlow` único reativo (UDF).
+- **Compose Screens:** Telas declarativas desacopladas de lógica de negócios.
 
 ---
 
-## Boas Práticas e Padrões
-* **Design System Customizado:** Definições das cores institucionais (`PrimaryBlue #1677E8`, `NavyDark #06162F`, `SuccessGreen #20A66A`) centralizadas.
-* **Canvas Custom Graphics:** Desenhador de gráficos *Sparkline* usando Canvas Compose para indicar tendências financeiras.
-* **Clean Code & Typings:** Nomenclaturas claras e alinhadas ao domínio de **Transporte Rodoviário de Passageiros**.
+## 📊 Estados das Telas
+
+Todas as telas que consomem dados do backend possuem tratamento reativo para 4 estados principais:
+- **Loading:** Indicadores visuais de carregamento (*AguiaLoadingState* / *CircularProgressIndicator*).
+- **Success:** Exibição dos dados reais retornados pela API.
+- **Empty:** Mensagem amigável contextual quando a consulta retorna uma lista vazia do servidor.
+- **Error:** Mensagem de erro informativa com botão *"Tentar novamente"* em caso de falha de conexão ou erro HTTP.
 
 ---
 
-## Autor
+## 🤖 Inteligência Artificial (IA)
+
+- O aplicativo Android **não** possui integração direta nem armazena chaves de API do Google Gemini.
+- A requisição de análise é enviada para os endpoints protegidos do backend (`/api/ia/...`).
+- O servidor backend realiza a chamada segura à API da IA, calcula os indicadores e retorna a resposta formatada para o aplicativo.
+- A análise gerada pela IA possui caráter **estritamente consultivo**, permanecendo a decisão de aprovação ou rejeição sob responsabilidade do Gestor.
+
+---
+
+## 🧪 Testes Automatizados
+
+Para executar a suíte de testes unitários:
+```bash
+gradlew.bat testDebugUnitTest
+```
+
+- Os repositórios de dados são testados utilizando **MockWebServer** para validar a desserialização de JSONs e o tratamento de códigos de erro HTTP (400, 401, 403, 404, 500).
+- Os ViewModels e utilitários são cobertos por testes unitários com test dispatchers de Coroutines.
+
+---
+
+## 🛠️ Solução de Problemas
+
+| Problema | Causa Provável | Solução |
+| :--- | :--- | :--- |
+| **Botão Run desativado no Android Studio** | Módulo do projeto não selecionado ou Gradle Sync pendente. | Execute *Sync Project with Gradle Files* e selecione o módulo `:app` na barra superior. |
+| **Erro de conexão ao tentar logar ou carregar dados** | Backend Spring Boot desligado ou IP incorreto em `local.properties`. | Certifique-se de que o backend está rodando e valide o IP na URL `http://<IP>:8080/actuator/health`. |
+| **Dispositivo físico não conecta ao servidor** | Aparelho e computador em redes Wi-Fi diferentes ou porta bloqueada. | Conecte ambos na mesma rede e libere a porta `8080` no Firewall. |
+| **Sessão Expirada / Erro 401** | Token JWT expirou ou foi invalidado no servidor. | O app limpa o token automaticamente. Refaça o login na aplicação. |
+| **Corpo da requisição inválido na criação de projeto** | Data formatada incorretamente no formulário. | Informe uma data válida no formato `DD/MM/AAAA` (ex: `31/12/2026`). O app converterá para `AAAA-MM-DD`. |
+| **Falha na Análise da IA** | Chave da IA não configurada no backend ou indisponibilidade temporária. | Verifique se a variável de ambiente do Gemini está configurada no servidor Spring Boot. |
+
+---
+
+## 🔒 Segurança
+
+- O arquivo `local.properties` está contido no `.gitignore` e não é enviado ao repositório.
+- Nenhuma chave privada, secret ou chave de API do Gemini é armazenada no código-fonte do Android.
+- As comunicações protegidas exigem o cabeçalho HTTP `Authorization: Bearer <token>`.
+
+---
+
+## 📌 Estado do Projeto
+
+Este projeto consiste em um **MVP acadêmico/demonstrativo** de alta fidelidade desenvolvido como parte de projeto integrador.
+- **Limitações Atuais:** Não há suporte a modo offline prolongado sem conexão com o servidor nem sincronização em segundo plano por Push Notifications.
+
+---
+
+## 👤 Autor
 
 **Lucas Fernando da Silva**
-
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/lucasferdev/)
-[![GitHub](https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white)](https://github.com/LucasFerdev)
+Desenvolvedor Android Nativo
