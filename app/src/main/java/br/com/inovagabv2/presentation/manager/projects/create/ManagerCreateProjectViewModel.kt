@@ -2,6 +2,7 @@ package br.com.inovagabv2.presentation.manager.projects.create
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.parseDecimalBr
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.Project
@@ -31,7 +32,7 @@ data class ManagerCreateProjectState(
     val errorMessage: String? = null
 ) {
     val parsedDeadline: String? get() = parseDeadlineIso(deadline)
-    val parsedInvestment: BigDecimal? get() = investmentStr.replace(",", ".").toBigDecimalOrNull()
+    val parsedInvestment: BigDecimal? get() = parseDecimalBr(investmentStr)
     val isValid: Boolean
         get() = name.isNotBlank() &&
                 description.isNotBlank() &&

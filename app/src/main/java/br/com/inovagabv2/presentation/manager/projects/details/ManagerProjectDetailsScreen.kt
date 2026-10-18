@@ -5,9 +5,11 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,9 +19,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
+import br.com.inovagabv2.core.util.formatDecimalBr
+import br.com.inovagabv2.core.util.parseDecimalBr
 import br.com.inovagabv2.domain.model.ProjectStage
 import br.com.inovagabv2.domain.model.ProjectStatus
-import java.math.BigDecimal
 
 @Composable
 fun ManagerProjectDetailsScreen(
@@ -131,9 +134,26 @@ fun ManagerProjectDetailsScreen(
 
     // Results Dialog
     if (state.showResultsDialog) {
-        var returnValStr by remember { mutableStateOf("") }
-        var productivityStr by remember { mutableStateOf("") }
+        var returnValStr by remember {
+            mutableStateOf(state.project?.retornoFinanceiro?.let(::formatDecimalBr).orEmpty())
+        }
+        var productivityStr by remember {
+            mutableStateOf(state.project?.ganhoProdutividadePercentual?.let(::formatDecimalBr).orEmpty())
+        }
         var resultText by remember { mutableStateOf("") }
+
+        val parsedReturn = parseDecimalBr(returnValStr)
+        val parsedProductivity = parseDecimalBr(productivityStr)
+        val returnError = if (returnValStr.isNotBlank() && parsedReturn == null) {
+            "Informe um valor numérico válido."
+        } else {
+            null
+        }
+        val productivityError = if (productivityStr.isNotBlank() && parsedProductivity == null) {
+            "Informe um valor numérico válido."
+        } else {
+            null
+        }
 
         AlertDialog(
             onDismissRequest = viewModel::onDismissResultsDialog,
@@ -144,13 +164,19 @@ fun ManagerProjectDetailsScreen(
                         value = returnValStr,
                         onValueChange = { returnValStr = it },
                         label = { Text("Retorno Financeiro (R$)") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        isError = returnError != null,
+                        supportingText = returnError?.let { msg -> { Text(msg) } }
                     )
                     OutlinedTextField(
                         value = productivityStr,
                         onValueChange = { productivityStr = it },
                         label = { Text("Ganho de Produtividade (%)") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        isError = productivityError != null,
+                        supportingText = productivityError?.let { msg -> { Text(msg) } }
                     )
                     OutlinedTextField(
                         value = resultText,
@@ -164,11 +190,13 @@ fun ManagerProjectDetailsScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        val retVal = BigDecimal(returnValStr.replace(",", ".").toDoubleOrNull() ?: 0.0)
-                        val prodVal = BigDecimal(productivityStr.replace(",", ".").toDoubleOrNull() ?: 0.0)
+                        val retVal = parsedReturn ?: return@Button
+                        val prodVal = parsedProductivity ?: return@Button
                         viewModel.onRegisterResults(retVal, prodVal, resultText)
                     },
-                    enabled = resultText.isNotBlank(),
+                    enabled = parsedReturn != null &&
+                        parsedProductivity != null &&
+                        resultText.trim().length >= 3,
                     colors = ButtonDefaults.buttonColors(containerColor = AguiaColors.SuccessGreen)
                 ) {
                     Text("Salvar Resultados", fontWeight = FontWeight.Bold)
