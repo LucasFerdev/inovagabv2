@@ -26,7 +26,12 @@ class ProfileViewModel @Inject constructor(
     private val _logoutError = MutableStateFlow<String?>(null)
     val logoutError: StateFlow<String?> = _logoutError.asStateFlow()
 
+    private val _isLoggingOut = MutableStateFlow(false)
+    val isLoggingOut: StateFlow<Boolean> = _isLoggingOut.asStateFlow()
+
     fun logout(onLogoutSuccess: () -> Unit) {
+        if (_isLoggingOut.value) return
+        _isLoggingOut.value = true
         viewModelScope.launch {
             try {
                 authRepository.logout()
@@ -35,6 +40,8 @@ class ProfileViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 _logoutError.value = e.toUserMessage()
+            } finally {
+                _isLoggingOut.value = false
             }
         }
     }

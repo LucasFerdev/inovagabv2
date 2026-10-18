@@ -56,13 +56,40 @@ fun ProfileScreen(
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
     val logoutError by viewModel.logoutError.collectAsState()
+    val isLoggingOut by viewModel.isLoggingOut.collectAsState()
+    var showLogoutDialog by remember { mutableStateOf(false) }
     val supportEmail = stringResource(R.string.support_email)
 
     LaunchedEffect(logoutError) {
         logoutError?.let { message ->
+            showLogoutDialog = false
             snackbarHostState.showSnackbar(message)
             viewModel.clearLogoutError()
         }
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!isLoggingOut) showLogoutDialog = false },
+            title = { Text("Sair da conta?", fontWeight = FontWeight.Bold) },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.logout(onLogout) },
+                    enabled = !isLoggingOut,
+                    colors = ButtonDefaults.buttonColors(containerColor = AguiaColors.ErrorRed)
+                ) {
+                    Text("Sair", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showLogoutDialog = false },
+                    enabled = !isLoggingOut
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 
     fun openSupportEmail() {
@@ -436,7 +463,7 @@ fun ProfileScreen(
 
             // Logout Button
             OutlinedButton(
-                onClick = { viewModel.logout(onLogout) },
+                onClick = { if (!isLoggingOut) showLogoutDialog = true },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),

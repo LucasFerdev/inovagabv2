@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -19,12 +20,16 @@ import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -45,9 +50,9 @@ fun RegisterScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    var fullName by remember { mutableStateOf("") }
-    var email by remember { mutableStateOf("") }
-    var companyUnit by remember { mutableStateOf("") }
+    var fullName by rememberSaveable { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
+    var companyUnit by rememberSaveable { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -57,6 +62,25 @@ fun RegisterScreen(
     var showAccessCodeField by remember { mutableStateOf(false) }
     var accessCode by remember { mutableStateOf("") }
     var accessCodeVisible by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+
+    val submitRegistration = {
+        if (!uiState.isLoading) {
+            val finalAccessCode = if (showAccessCodeField && accessCode.isNotBlank()) accessCode else null
+            viewModel.register(
+                fullName = fullName,
+                email = email,
+                companyUnit = companyUnit,
+                password = password,
+                confirmPassword = confirmPassword,
+                acceptedTerms = acceptedTerms,
+                accessCode = finalAccessCode
+            )
+        }
+    }
+    val focusNext = KeyboardActions(
+        onNext = { focusManager.moveFocus(FocusDirection.Next) }
+    )
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
@@ -155,7 +179,9 @@ fun RegisterScreen(
                     focusedBorderColor = AguiaColors.PrimaryBlue,
                     unfocusedBorderColor = AguiaColors.TextSecondary.copy(alpha = 0.25f)
                 ),
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = focusNext
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -181,7 +207,11 @@ fun RegisterScreen(
                     unfocusedBorderColor = AguiaColors.TextSecondary.copy(alpha = 0.25f)
                 ),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = focusNext
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -206,7 +236,9 @@ fun RegisterScreen(
                     focusedBorderColor = AguiaColors.PrimaryBlue,
                     unfocusedBorderColor = AguiaColors.TextSecondary.copy(alpha = 0.25f)
                 ),
-                singleLine = true
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                keyboardActions = focusNext
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -242,7 +274,11 @@ fun RegisterScreen(
                     unfocusedBorderColor = AguiaColors.TextSecondary.copy(alpha = 0.25f)
                 ),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = focusNext
             )
 
             Spacer(modifier = Modifier.height(14.dp))
@@ -278,7 +314,14 @@ fun RegisterScreen(
                     unfocusedBorderColor = AguiaColors.TextSecondary.copy(alpha = 0.25f)
                 ),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = if (showAccessCodeField) ImeAction.Next else ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Next) },
+                    onDone = { submitRegistration() }
+                )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -344,7 +387,13 @@ fun RegisterScreen(
                         unfocusedBorderColor = AguiaColors.TextSecondary.copy(alpha = 0.25f)
                     ),
                     singleLine = true,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text)
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = { submitRegistration() }
+                    )
                 )
 
                 Spacer(modifier = Modifier.height(6.dp))
@@ -415,18 +464,7 @@ fun RegisterScreen(
 
             // Primary Button: Criar conta
             Button(
-                onClick = {
-                    val finalAccessCode = if (showAccessCodeField && accessCode.isNotBlank()) accessCode else null
-                    viewModel.register(
-                        fullName = fullName,
-                        email = email,
-                        companyUnit = companyUnit,
-                        password = password,
-                        confirmPassword = confirmPassword,
-                        acceptedTerms = acceptedTerms,
-                        accessCode = finalAccessCode
-                    )
-                },
+                onClick = submitRegistration,
                 enabled = !uiState.isLoading,
                 modifier = Modifier
                     .fillMaxWidth()

@@ -62,7 +62,7 @@ fun ManagerProjectsScreen(
                 containerColor = AguiaColors.ManagerPurple,
                 contentColor = Color.White,
                 shape = RoundedCornerShape(16.dp),
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                icon = { Icon(Icons.Default.Add, contentDescription = "Novo projeto") },
                 text = { Text("Novo projeto", fontWeight = FontWeight.Bold) }
             )
         },

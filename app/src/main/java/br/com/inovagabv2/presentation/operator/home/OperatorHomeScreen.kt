@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,6 +27,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -197,13 +201,7 @@ fun OperatorHomeScreen(
                         color = AguiaColors.NavyDark
                     )
 
-                    Text(
-                        text = "Ver minhas ideias",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AguiaColors.PrimaryBlue,
-                        modifier = Modifier.clickable { onNavigateToMyIdeas() }
-                    )
+                    MyIdeasLink(onClick = onNavigateToMyIdeas)
                 }
             }
 
@@ -399,6 +397,47 @@ private fun HomeIdeaCardItem(
                 tint = AguiaColors.TextSecondary,
                 modifier = Modifier.size(18.dp)
             )
+        }
+    }
+}
+
+@Composable
+private fun MyIdeasLink(onClick: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    Layout(
+        content = {
+            Box(
+                modifier = Modifier
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = onClick
+                    )
+                    .clearAndSetSemantics { }
+            )
+            Text(
+                text = "Ver minhas ideias",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = AguiaColors.PrimaryBlue,
+                modifier = Modifier.clickable(onClick = onClick)
+            )
+        }
+    ) { measurables, constraints ->
+        val textPlaceable = measurables[1].measure(constraints)
+        val minTouch = 48.dp.roundToPx()
+        val targetPlaceable = measurables[0].measure(
+            Constraints.fixed(
+                width = maxOf(textPlaceable.width, minTouch),
+                height = maxOf(textPlaceable.height, minTouch)
+            )
+        )
+        layout(textPlaceable.width, textPlaceable.height) {
+            targetPlaceable.place(
+                x = (textPlaceable.width - targetPlaceable.width) / 2,
+                y = (textPlaceable.height - targetPlaceable.height) / 2
+            )
+            textPlaceable.place(0, 0)
         }
     }
 }

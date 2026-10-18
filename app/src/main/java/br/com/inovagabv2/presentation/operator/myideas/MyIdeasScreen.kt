@@ -82,7 +82,7 @@ fun MyIdeasScreen(
                 containerColor = AguiaColors.PrimaryBlue,
                 contentColor = Color.White,
                 shape = RoundedCornerShape(16.dp),
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                icon = { Icon(Icons.Default.Add, contentDescription = "Criar ideia") },
                 text = { Text("Nova ideia", fontWeight = FontWeight.Bold) }
             )
         }
