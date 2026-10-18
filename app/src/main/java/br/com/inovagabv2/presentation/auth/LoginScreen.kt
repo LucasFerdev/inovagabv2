@@ -38,12 +38,15 @@ fun LoginScreen(
     viewModel: LoginViewModel,
     onLoginSuccess: (Role) -> Unit,
     onBackClick: (() -> Unit)? = null,
-    onNavigateToRegister: () -> Unit = {}
+    onNavigateToRegister: () -> Unit = {},
+    sessionExpiredMessage: String? = null,
+    onSessionExpiredMessageShown: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(uiState.successUser) {
         uiState.successUser?.let {
@@ -51,8 +54,15 @@ fun LoginScreen(
         }
     }
 
+    LaunchedEffect(sessionExpiredMessage) {
+        val message = sessionExpiredMessage ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(message)
+        onSessionExpiredMessageShown()
+    }
+
     Scaffold(
-        containerColor = Color.White
+        containerColor = Color.White,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
         Column(
             modifier = Modifier

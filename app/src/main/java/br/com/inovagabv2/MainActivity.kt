@@ -38,6 +38,7 @@ class MainActivity : ComponentActivity() {
                         navController = navController,
                         appInitState = appInitState,
                         startDestination = Screen.Splash.route,
+                        consumeManualLogout = sessionManager::consumeManualLogout,
                         modifier = Modifier.padding(innerPadding)
                     )
                 }

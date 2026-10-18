@@ -1,14 +1,20 @@
 package br.com.inovagabv2.core.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import br.com.inovagabv2.core.session.AppInitState
+import br.com.inovagabv2.core.session.SessionExpiryPolicy
 import br.com.inovagabv2.domain.model.Role
 import br.com.inovagabv2.presentation.auth.LoginScreen
 import br.com.inovagabv2.presentation.auth.LoginViewModel
@@ -45,8 +51,34 @@ fun AguiaNavHost(
     navController: NavHostController,
     appInitState: AppInitState = AppInitState.Loading,
     modifier: Modifier = Modifier,
-    startDestination: String = Screen.Splash.route
+    startDestination: String = Screen.Splash.route,
+    consumeManualLogout: () -> Boolean = { false },
 ) {
+    val sessionExpiryPolicy = remember { SessionExpiryPolicy() }
+    var sessionExpiredMessage by remember { mutableStateOf<String?>(null) }
+    val currentBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = currentBackStackEntry?.destination?.route
+
+    LaunchedEffect(appInitState, currentRoute) {
+        val manualLogoutMark = if (appInitState is AppInitState.Unauthenticated) {
+            consumeManualLogout()
+        } else {
+            false
+        }
+        val message = sessionExpiryPolicy.onAppInitState(
+            state = appInitState,
+            currentRoute = currentRoute,
+            manualLogoutMark = manualLogoutMark,
+        )
+        if (message != null) {
+            sessionExpiredMessage = message
+            navController.navigate(Screen.Login.route) {
+                popUpTo(0) { inclusive = true }
+                launchSingleTop = true
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -79,6 +111,8 @@ fun AguiaNavHost(
             val viewModel: LoginViewModel = hiltViewModel()
             LoginScreen(
                 viewModel = viewModel,
+                sessionExpiredMessage = sessionExpiredMessage,
+                onSessionExpiredMessageShown = { sessionExpiredMessage = null },
                 onBackClick = if (navController.previousBackStackEntry != null) {
                     { navController.popBackStack() }
                 } else {

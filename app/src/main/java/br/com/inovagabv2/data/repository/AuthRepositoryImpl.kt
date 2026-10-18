@@ -81,7 +81,13 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun logout() {
-        sessionManager.clearSession()
+        sessionManager.markManualLogout()
+        try {
+            sessionManager.clearSession()
+        } catch (e: Exception) {
+            sessionManager.clearManualLogout()
+            throw e
+        }
     }
 
     override fun getCurrentUser(): Flow<User?> {

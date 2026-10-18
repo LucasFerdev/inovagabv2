@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.json.Json
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,6 +28,7 @@ open class SessionManager @Inject constructor(
     private val TOKEN_KEY = stringPreferencesKey("jwt_token")
     private val EXPIRATION_KEY = longPreferencesKey("jwt_expiration_epoch")
     private val ONBOARDING_COMPLETED_KEY = booleanPreferencesKey("onboarding_concluido")
+    private val manualLogout = AtomicBoolean(false)
 
     protected open val dataStore: DataStore<Preferences> by lazy {
         context.sessionDataStore
@@ -87,7 +89,18 @@ open class SessionManager @Inject constructor(
         return jwtToken.firstOrNull()
     }
 
+    open fun markManualLogout() {
+        manualLogout.set(true)
+    }
+
+    open fun consumeManualLogout(): Boolean = manualLogout.getAndSet(false)
+
+    open fun clearManualLogout() {
+        manualLogout.set(false)
+    }
+
     open suspend fun saveSession(user: User, token: String, expiresInSeconds: Long? = null) {
+        clearManualLogout()
         val expirationEpoch = if (expiresInSeconds != null && expiresInSeconds > 0) {
             System.currentTimeMillis() + (expiresInSeconds * 1000L)
         } else {
