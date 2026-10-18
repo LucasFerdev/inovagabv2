@@ -31,7 +31,7 @@ fun LeadershipProjectDashboardScreen(
     Scaffold(
         topBar = {
             AguiaTopBar(
-                title = "Dashboard do Projeto",
+                title = "Painel do Projeto",
                 onBackClick = onBackClick
             )
         },

@@ -119,7 +119,7 @@ class Checkpoint41Test {
             repo.getDashboardData().first()
         } catch (e: Exception) {
             exceptionThrown = true
-            assertTrue(e.message?.contains("Serviço do Dashboard indisponível") == true)
+            assertTrue(e.message?.contains("Serviço do Painel indisponível") == true)
         }
 
         assertTrue(exceptionThrown)

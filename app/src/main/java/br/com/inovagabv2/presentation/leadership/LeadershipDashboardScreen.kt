@@ -90,7 +90,7 @@ fun LeadershipDashboardScreen(
             val data = state.data
             if (data == null) {
                 AguiaEmptyState(
-                    message = "Ainda não há dados suficientes para o Dashboard.",
+                    message = "Ainda não há dados suficientes para o Painel.",
                     modifier = Modifier.padding(padding)
                 )
             } else {

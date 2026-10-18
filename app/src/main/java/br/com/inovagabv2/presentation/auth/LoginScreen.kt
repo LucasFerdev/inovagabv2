@@ -204,24 +204,6 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Esqueci minha senha (Indisponível no backend atual)
-            Box(modifier = Modifier.fillMaxWidth()) {
-                TextButton(
-                    onClick = { /* Indisponível */ },
-                    enabled = false,
-                    modifier = Modifier.align(Alignment.CenterEnd)
-                ) {
-                    Text(
-                        text = "Esqueci minha senha",
-                        color = AguiaColors.TextSecondary.copy(alpha = 0.5f),
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 14.sp
-                    )
-                }
-            }
-
             Spacer(modifier = Modifier.height(16.dp))
 
             // Primary Button: Acessar

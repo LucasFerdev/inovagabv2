@@ -59,9 +59,9 @@ class DashboardRepositoryImpl @Inject constructor(
         }
         return when (response.code()) {
             401 -> "Sua sessão expirou. Faça login novamente."
-            403 -> "Acesso negado ao Dashboard."
-            404 -> "Dados do Dashboard não encontrados."
-            else -> "Serviço do Dashboard indisponível no momento."
+            403 -> "Acesso negado ao Painel."
+            404 -> "Dados do Painel não encontrados."
+            else -> "Serviço do Painel indisponível no momento."
         }
     }
 }

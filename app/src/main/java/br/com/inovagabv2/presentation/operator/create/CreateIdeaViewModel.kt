@@ -97,18 +97,21 @@ class CreateIdeaViewModel @Inject constructor(
         val currentState = _state.value
         if (currentState.isLoading || currentState.selectedStrategy == null) return
 
+        if (currentState.problem.isBlank() || currentState.expectedBenefits.isBlank()) {
+            _state.update {
+                it.copy(error = "Informe o problema e os benefícios esperados para enviar a ideia.")
+            }
+            return
+        }
+
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
             try {
-                val problemText = currentState.problem.ifBlank { currentState.proposedSolution }
-                val solutionText = currentState.proposedSolution.ifBlank { currentState.problem }
-                val benefitsText = currentState.expectedBenefits.ifBlank { "Benefícios operacionais esperados" }
-
                 val result = ideaRepository.createIdea(
                     titulo = currentState.title,
-                    problema = problemText,
-                    solucaoProposta = solutionText,
-                    beneficiosEsperados = benefitsText,
+                    problema = currentState.problem,
+                    solucaoProposta = currentState.proposedSolution,
+                    beneficiosEsperados = currentState.expectedBenefits,
                     categoria = currentState.category,
                     estrategiaId = currentState.selectedStrategy.id
                 )

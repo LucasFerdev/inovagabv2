@@ -53,8 +53,42 @@ class CreateIdeaViewModelTest {
         assertEquals(emptyList<Strategy>(), state.activeStrategies)
     }
 
+    @Test
+    fun `envio com problema ou beneficios em branco e recusado`() = runTest {
+        val ideas = FakeIdeaRepository()
+        val viewModel = CreateIdeaViewModel(
+            ideaRepository = ideas,
+            strategyRepository = FakeStrategyRepository(
+                strategies = listOf(
+                    Strategy("est-1", "Estrategia", "Desc", status = StrategyStatus.ATIVA)
+                )
+            )
+        )
+        val mensagem = "Informe o problema e os benefícios esperados para enviar a ideia."
+
+        viewModel.onTitleChange("Titulo")
+        viewModel.onProposedSolutionChange("Solucao preenchida")
+        viewModel.onExpectedBenefitsChange("Beneficio informado")
+        viewModel.onProblemChange("   ")
+        viewModel.submitIdea()
+
+        assertEquals(mensagem, viewModel.state.value.error)
+        assertFalse(viewModel.state.value.isSuccess)
+        assertFalse(viewModel.state.value.isLoading)
+        assertEquals(0, ideas.createCalls)
+
+        viewModel.onProblemChange("Problema informado")
+        viewModel.onExpectedBenefitsChange("")
+        viewModel.submitIdea()
+
+        assertEquals(mensagem, viewModel.state.value.error)
+        assertFalse(viewModel.state.value.isSuccess)
+        assertEquals(0, ideas.createCalls)
+    }
+
     private class FakeStrategyRepository(
-        private val error: Throwable? = null
+        private val error: Throwable? = null,
+        private val strategies: List<Strategy> = emptyList()
     ) : StrategyRepository {
         override fun getStrategies(): Flow<List<Strategy>> = flowOf(emptyList())
         override fun getStrategiesRemote(
@@ -67,7 +101,7 @@ class CreateIdeaViewModelTest {
 
         override fun getActiveStrategies(): Flow<List<Strategy>> = flow {
             error?.let { throw it }
-            emit(emptyList())
+            emit(strategies)
         }
 
         override fun getStrategyById(id: String): Flow<Strategy?> = flowOf(null)
@@ -102,6 +136,9 @@ class CreateIdeaViewModelTest {
     }
 
     private class FakeIdeaRepository : IdeaRepository {
+        var createCalls: Int = 0
+            private set
+
         override fun getIdeas(): Flow<List<Idea>> = flowOf(emptyList())
         override fun getIdeasByAuthor(authorId: String): Flow<List<Idea>> = flowOf(emptyList())
         override fun getIdeasRemote(
@@ -125,7 +162,10 @@ class CreateIdeaViewModelTest {
             beneficiosEsperados: String,
             categoria: String,
             estrategiaId: String
-        ): Result<Idea> = Result.success(Idea("1", titulo, category = categoria))
+        ): Result<Idea> {
+            createCalls++
+            return Result.success(Idea("1", titulo, category = categoria))
+        }
 
         override suspend fun createIdea(idea: Idea): Result<Unit> = Result.success(Unit)
         override suspend fun updateIdeaStatus(
