@@ -24,6 +24,7 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -70,20 +71,56 @@ fun LoginScreen(
         containerColor = Color.White,
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .imePadding()
         ) {
-            // Header: Back Arrow (left) & Logo + INOVAGAB (center)
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = 24.dp)
+                    .verticalScroll(rememberScrollState())
+                    .heightIn(min = maxHeight)
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+            // Header: Back Arrow (left) & Logo + INOVAGAB (center)
+            Box(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.aguia_logo),
+                        contentDescription = "Viação Águia Branca",
+                        modifier = Modifier
+                            .fillMaxWidth(0.75f)
+                            .widthIn(max = 280.dp)
+                            .layout { measurable, constraints ->
+                                val width = constraints.maxWidth.coerceAtMost(280.dp.roundToPx())
+                                val placeable = measurable.measure(
+                                    constraints.copy(minWidth = width, maxWidth = width)
+                                )
+                                layout(placeable.width, placeable.height) {
+                                    placeable.placeRelative(0, 0)
+                                }
+                            },
+                        contentScale = ContentScale.Fit
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "INOVAGAB",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AguiaColors.PrimaryBlue,
+                        letterSpacing = 0.5.sp
+                    )
+                }
+
                 if (onBackClick != null) {
                     IconButton(
                         onClick = onBackClick,
@@ -96,29 +133,9 @@ fun LoginScreen(
                         )
                     }
                 }
-
-                Column(
-                    modifier = Modifier.align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.aguia_logo),
-                        contentDescription = "Viação Águia Branca",
-                        modifier = Modifier.height(32.dp),
-                        contentScale = ContentScale.Fit
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "INOVAGAB",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AguiaColors.PrimaryBlue,
-                        letterSpacing = 0.5.sp
-                    )
-                }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Title Section
             Text(
@@ -138,7 +155,7 @@ fun LoginScreen(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             // E-mail corporativo field
             OutlinedTextField(
@@ -224,7 +241,7 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Primary Button: Acessar
             Button(
@@ -260,7 +277,7 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Sign Up link: Ainda não possui uma conta? Criar conta
             Row(
@@ -282,7 +299,7 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Security Badge: Seus dados estão protegidos
             Row(
@@ -301,6 +318,7 @@ fun LoginScreen(
                     fontSize = 12.sp,
                     color = AguiaColors.TextSecondary
                 )
+            }
             }
         }
     }
