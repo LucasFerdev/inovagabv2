@@ -51,6 +51,7 @@ fun ProjetoResponseDto.toDomain(): Project {
         percentualProgresso = percentualProgresso,
         investment = investimento,
         deadline = prazo,
+        isAtrasado = atrasado,
         retornoFinanceiro = retornoFinanceiro,
         ganhoProdutividadePercentual = ganhoProdutividadePercentual,
         resultado = resultado,

@@ -18,6 +18,7 @@ data class ProjetoResponseDto(
     @Serializable(with = BigDecimalSerializer::class)
     @SerialName("investimento") val investimento: BigDecimal,
     @SerialName("prazo") val prazo: String,
+    @SerialName("atrasado") val atrasado: Boolean = false,
     @Serializable(with = BigDecimalSerializer::class)
     @SerialName("retornoFinanceiro") val retornoFinanceiro: BigDecimal? = null,
     @Serializable(with = BigDecimalSerializer::class)
