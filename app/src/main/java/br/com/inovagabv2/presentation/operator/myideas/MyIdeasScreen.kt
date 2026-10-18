@@ -25,6 +25,7 @@ import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.Role
+import br.com.inovagabv2.presentation.components.OnResumeEffect
 
 @Composable
 fun MyIdeasScreen(
@@ -40,6 +41,7 @@ fun MyIdeasScreen(
     val ideas by viewModel.ideas.collectAsState()
     val strategiesMap by viewModel.strategiesMap.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
     var selectedStatus by remember { mutableStateOf<IdeaStatus?>(null) }
 
     val currentRole = user?.role ?: Role.OPERADOR
@@ -49,9 +51,7 @@ fun MyIdeasScreen(
         else ideas.filter { it.status == selectedStatus }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.loadData()
-    }
+    OnResumeEffect(onResume = viewModel::refresh)
 
     Scaffold(
         topBar = {
@@ -150,6 +150,13 @@ fun MyIdeasScreen(
                 if (isLoading) {
                     item {
                         AguiaLoadingState(message = "Carregando suas ideias...")
+                    }
+                } else if (error != null) {
+                    item {
+                        AguiaErrorState(
+                            message = error ?: "Não foi possível carregar suas ideias. Tente novamente.",
+                            onRetry = viewModel::refresh
+                        )
                     }
                 } else if (filteredIdeas.isEmpty()) {
                     item {

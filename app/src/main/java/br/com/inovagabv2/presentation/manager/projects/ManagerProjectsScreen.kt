@@ -18,6 +18,7 @@ import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Role
+import br.com.inovagabv2.presentation.components.OnResumeEffect
 
 @Composable
 fun ManagerProjectsScreen(
@@ -30,6 +31,8 @@ fun ManagerProjectsScreen(
     viewModel: ManagerProjectsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+
+    OnResumeEffect(onResume = viewModel::refresh)
 
     Scaffold(
         topBar = {
@@ -134,7 +137,7 @@ fun ManagerProjectsScreen(
                     item {
                         AguiaErrorState(
                             message = state.error ?: "Erro ao carregar projetos.",
-                            onRetry = viewModel::loadProjects
+                            onRetry = viewModel::refresh
                         )
                     }
                 } else if (state.projects.isEmpty()) {

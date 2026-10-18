@@ -30,6 +30,7 @@ import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Role
 import br.com.inovagabv2.domain.model.Strategy
+import br.com.inovagabv2.presentation.components.OnResumeEffect
 
 @Composable
 fun LeadershipStrategyScreen(
@@ -47,6 +48,9 @@ fun LeadershipStrategyScreen(
     val activeCount by viewModel.activeCount.collectAsState()
     val draftCount by viewModel.draftCount.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+
+    OnResumeEffect(onResume = viewModel::refresh)
 
     val filterTabs = listOf("Todas", "Ativas", "Rascunhos")
     var selectedFilterIndex by remember { mutableIntStateOf(0) }
@@ -221,6 +225,13 @@ fun LeadershipStrategyScreen(
                 if (isLoading) {
                     item {
                         AguiaLoadingState(message = "Carregando estratégias...")
+                    }
+                } else if (error != null) {
+                    item {
+                        AguiaErrorState(
+                            message = error ?: "Não foi possível carregar as estratégias. Tente novamente.",
+                            onRetry = viewModel::refresh
+                        )
                     }
                 } else if (strategies.isEmpty()) {
                     item {

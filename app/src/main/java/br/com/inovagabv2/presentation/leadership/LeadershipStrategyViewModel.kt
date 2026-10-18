@@ -7,6 +7,8 @@ import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.StrategyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,6 +28,9 @@ class LeadershipStrategyViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
     val filteredStrategies: StateFlow<List<Strategy>> = combine(_strategies, _selectedStatusFilter, _searchQuery) { list, statusFilter, query ->
         list.filter { strat ->
             val matchesStatus = when (statusFilter) {
@@ -44,18 +49,36 @@ class LeadershipStrategyViewModel @Inject constructor(
     val draftCount: StateFlow<Int> = _strategies.map { list -> list.count { !it.isPublished } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
+    private var loadJob: Job? = null
+
     init {
-        loadStrategies()
+        refresh()
+    }
+
+    fun refresh() {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            if (_strategies.value.isEmpty()) {
+                _isLoading.value = true
+            }
+            _error.value = null
+            try {
+                repository.getStrategies().collect { list ->
+                    _strategies.value = list
+                    _isLoading.value = false
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _isLoading.value = false
+                _error.value = e.message?.takeIf { it.isNotBlank() }
+                    ?: "Não foi possível carregar as estratégias. Tente novamente."
+            }
+        }
     }
 
     fun loadStrategies() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            repository.getStrategies().collect { list ->
-                _strategies.value = list
-                _isLoading.value = false
-            }
-        }
+        refresh()
     }
 
     fun onStatusFilterSelected(status: String?) {

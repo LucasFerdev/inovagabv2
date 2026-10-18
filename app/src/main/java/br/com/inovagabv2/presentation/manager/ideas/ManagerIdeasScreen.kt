@@ -18,6 +18,7 @@ import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Role
+import br.com.inovagabv2.presentation.components.OnResumeEffect
 
 @Composable
 fun ManagerIdeasScreen(
@@ -30,6 +31,8 @@ fun ManagerIdeasScreen(
     viewModel: ManagerIdeasViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+
+    OnResumeEffect(onResume = viewModel::refresh)
 
     Scaffold(
         topBar = {
@@ -86,6 +89,13 @@ fun ManagerIdeasScreen(
                 if (state.isLoading) {
                     item {
                         AguiaLoadingState(message = "Carregando ideias para avaliação...")
+                    }
+                } else if (state.error != null) {
+                    item {
+                        AguiaErrorState(
+                            message = state.error ?: "Não foi possível carregar as ideias. Tente novamente.",
+                            onRetry = viewModel::refresh
+                        )
                     }
                 } else if (state.ideas.isEmpty()) {
                     item {

@@ -37,6 +37,7 @@ import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.core.util.UserUtils
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.Role
+import br.com.inovagabv2.presentation.components.OnResumeEffect
 
 @Composable
 fun OperatorHomeScreen(
@@ -49,6 +50,8 @@ fun OperatorHomeScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val user by viewModel.user.collectAsState()
+
+    OnResumeEffect(onResume = viewModel::refresh)
 
     val currentRole = user?.role ?: Role.OPERADOR
     val firstName = UserUtils.getFirstName(user?.name)
