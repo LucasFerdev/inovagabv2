@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
+import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.domain.model.Role
 import br.com.inovagabv2.domain.model.Strategy
 
@@ -395,8 +396,8 @@ private fun StrategyCardItem(
                     }
                 }
 
-                val formattedDate = formatDatePtBr(strategy.publishedDate ?: strategy.date)
-                if (formattedDate.isNotBlank()) {
+                val rawDate = strategy.publishedDate ?: strategy.date
+                if (rawDate.isNotBlank()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
                             imageVector = Icons.Outlined.CalendarToday,
@@ -406,7 +407,7 @@ private fun StrategyCardItem(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = formattedDate,
+                            text = formatDate(rawDate),
                             fontSize = 12.sp,
                             color = AguiaColors.TextSecondary
                         )
@@ -414,18 +415,6 @@ private fun StrategyCardItem(
                 }
             }
         }
-    }
-}
-
-private fun formatDatePtBr(isoDate: String?): String {
-    if (isoDate.isNullOrBlank()) return ""
-    return try {
-        val parts = isoDate.split("-")
-        if (parts.size >= 3) {
-            "${parts[2].take(2)}/${parts[1]}/${parts[0]}"
-        } else isoDate
-    } catch (_: Exception) {
-        isoDate
     }
 }
 

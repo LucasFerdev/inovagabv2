@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.core.designsystem.components.*
 
 @Composable
@@ -166,7 +167,7 @@ fun LeadershipProjectDetailsScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Indicadores Financeiros", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = AguiaColors.NavyDark)
-                        Text("Prazo: $deadline", fontSize = 13.sp, color = AguiaColors.TextSecondary)
+                        Text("Prazo: ${formatDate(deadline)}", fontSize = 13.sp, color = AguiaColors.TextSecondary)
 
                         dash?.investimento?.let { inv ->
                             Text("Investimento: ${formatMonetaryVal(inv.toDouble())}", fontSize = 13.sp, color = AguiaColors.NavyDark, fontWeight = FontWeight.SemiBold)

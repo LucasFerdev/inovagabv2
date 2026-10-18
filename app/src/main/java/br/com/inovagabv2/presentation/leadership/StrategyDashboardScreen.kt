@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Idea
@@ -178,7 +179,7 @@ fun StrategyDashboardScreen(
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 Icon(Icons.Outlined.CalendarToday, contentDescription = null, tint = AguiaColors.TextSecondary, modifier = Modifier.size(12.dp))
                                                 Spacer(modifier = Modifier.width(4.dp))
-                                                Text(text = "Início: $date", fontSize = 11.sp, color = AguiaColors.TextSecondary)
+                                                Text(text = "Início: ${formatDate(date)}", fontSize = 11.sp, color = AguiaColors.TextSecondary)
                                             }
                                         }
                                     }

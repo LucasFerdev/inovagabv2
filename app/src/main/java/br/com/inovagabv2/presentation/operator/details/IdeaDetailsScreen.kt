@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.domain.model.Role
 
@@ -91,7 +92,7 @@ fun IdeaDetailsScreen(
                     // Date & Folder Category Row
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = if (!item.createdAt.isNullOrBlank()) "Enviada em ${item.createdAt}" else "",
+                            text = if (!item.createdAt.isNullOrBlank()) "Enviada em ${formatDate(item.createdAt)}" else "",
                             fontSize = 12.sp,
                             color = AguiaColors.TextSecondary
                         )

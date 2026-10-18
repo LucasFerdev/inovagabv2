@@ -35,6 +35,7 @@ import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.core.util.UserUtils
+import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.Role
 import br.com.inovagabv2.presentation.components.OnResumeEffect
@@ -376,8 +377,8 @@ private fun HomeIdeaCardItem(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 val dateText = when {
-                    !idea.updatedAt.isNullOrBlank() -> "Atualizada em ${idea.updatedAt}"
-                    else -> "Enviada em ${idea.createdAt}"
+                    !idea.updatedAt.isNullOrBlank() -> "Atualizada em ${formatDate(idea.updatedAt)}"
+                    else -> "Enviada em ${formatDate(idea.createdAt)}"
                 }
                 Text(
                     text = dateText,

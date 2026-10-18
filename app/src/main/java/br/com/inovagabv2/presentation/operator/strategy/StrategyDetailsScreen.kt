@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
+import br.com.inovagabv2.core.util.formatDate
 
 @Composable
 fun StrategyDetailsScreen(
@@ -101,10 +102,10 @@ fun StrategyDetailsScreen(
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text("Campanha: $camp", fontSize = 13.sp, color = AguiaColors.TextSecondary)
                             }
-                            val formattedDate = formatDatePtBr(strategy.publishedDate ?: strategy.date)
-                            if (formattedDate.isNotBlank()) {
+                            val rawDate = strategy.publishedDate ?: strategy.date
+                            if (rawDate.isNotBlank()) {
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text("Data: $formattedDate", fontSize = 13.sp, color = AguiaColors.TextSecondary)
+                                Text("Data: ${formatDate(rawDate)}", fontSize = 13.sp, color = AguiaColors.TextSecondary)
                             }
 
                             Spacer(modifier = Modifier.height(12.dp))
@@ -122,14 +123,3 @@ fun StrategyDetailsScreen(
     }
 }
 
-private fun formatDatePtBr(isoDate: String?): String {
-    if (isoDate.isNullOrBlank()) return ""
-    return try {
-        val parts = isoDate.split("-")
-        if (parts.size >= 3) {
-            "${parts[2].take(2)}/${parts[1]}/${parts[0]}"
-        } else isoDate
-    } catch (_: Exception) {
-        isoDate
-    }
-}

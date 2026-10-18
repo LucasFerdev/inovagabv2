@@ -41,6 +41,7 @@ import br.com.inovagabv2.core.designsystem.components.AguiaTopBar
 import br.com.inovagabv2.core.designsystem.components.AguiaUserAvatar
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.core.util.UserUtils
+import br.com.inovagabv2.core.util.formatDate
 
 @Composable
 fun ProfileScreen(
@@ -253,7 +254,7 @@ fun ProfileScreen(
                     ProfileInfoRow(
                         icon = Icons.Outlined.CalendarToday,
                         label = "Membro desde",
-                        value = user?.createdAt ?: "10 set 2026"
+                        value = formatDate(user?.createdAt)
                     )
 
                     HorizontalDivider(

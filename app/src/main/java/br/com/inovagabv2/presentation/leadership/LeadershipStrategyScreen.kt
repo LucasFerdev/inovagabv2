@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Role
@@ -364,7 +365,7 @@ private fun LeadershipStrategyCardItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = strategy.publishedDate ?: strategy.createdAt,
+                    text = formatDate(strategy.publishedDate ?: strategy.createdAt),
                     fontSize = 12.sp,
                     color = AguiaColors.TextSecondary
                 )

@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Idea
@@ -271,7 +272,7 @@ private fun MyIdeaCardItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (!idea.createdAt.isNullOrBlank()) "Enviada em ${idea.createdAt}" else "",
+                    text = if (!idea.createdAt.isNullOrBlank()) "Enviada em ${formatDate(idea.createdAt)}" else "",
                     fontSize = 12.sp,
                     color = AguiaColors.TextSecondary
                 )

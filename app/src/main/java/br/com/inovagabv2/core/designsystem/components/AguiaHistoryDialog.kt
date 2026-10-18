@@ -16,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.util.formatDateTime
 import br.com.inovagabv2.domain.model.HistoryItem
 
 @Composable
@@ -103,7 +104,7 @@ private fun HistoryRow(item: HistoryItem) {
                 if (!item.dateTime.isBlank()) {
                     Spacer(modifier = Modifier.height(2.dp))
                     Text(
-                        text = formatDatePtBr(item.dateTime),
+                        text = formatDateTime(item.dateTime),
                         fontSize = 11.sp,
                         color = AguiaColors.TextSecondary
                     )
@@ -132,17 +133,3 @@ private fun HistoryRow(item: HistoryItem) {
     }
 }
 
-private fun formatDatePtBr(isoDate: String): String {
-    return try {
-        val parts = isoDate.split("T")
-        if (parts.size >= 2) {
-            val dateParts = parts[0].split("-")
-            val timeParts = parts[1].take(5)
-            if (dateParts.size >= 3) {
-                "${dateParts[2]}/${dateParts[1]}/${dateParts[0]} às $timeParts"
-            } else isoDate
-        } else isoDate
-    } catch (_: Exception) {
-        isoDate
-    }
-}

@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
+import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.core.util.formatDecimalBr
 import br.com.inovagabv2.core.util.parseDecimalBr
 import br.com.inovagabv2.domain.model.ProjectStage
@@ -380,7 +381,7 @@ fun ManagerProjectDetailsScreen(
                 ) {
                     AguiaMetricCard(
                         label = "Prazo",
-                        value = project.deadline,
+                        value = formatDate(project.deadline),
                         color = AguiaColors.TextPrimary,
                         modifier = Modifier.weight(1f)
                     )

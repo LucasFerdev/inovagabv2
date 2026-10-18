@@ -17,6 +17,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.domain.model.Project
 
 @Composable
@@ -125,7 +126,7 @@ fun AguiaProjectCard(
                             color = AguiaColors.TextSecondary
                         )
                         Text(
-                            text = project.deadline,
+                            text = formatDate(project.deadline),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.SemiBold,
                             color = AguiaColors.NavyDark

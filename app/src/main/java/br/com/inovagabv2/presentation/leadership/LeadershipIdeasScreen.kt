@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Idea
@@ -325,7 +326,7 @@ private fun LeadershipIdeaConsultCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (!idea.updatedAt.isNullOrBlank()) "Atualizada em ${idea.updatedAt}" else "Enviada em ${idea.createdAt}",
+                    text = if (!idea.updatedAt.isNullOrBlank()) "Atualizada em ${formatDate(idea.updatedAt)}" else "Enviada em ${formatDate(idea.createdAt)}",
                     fontSize = 12.sp,
                     color = AguiaColors.TextSecondary
                 )
