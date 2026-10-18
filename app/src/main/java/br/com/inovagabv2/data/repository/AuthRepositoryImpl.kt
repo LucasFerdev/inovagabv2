@@ -2,6 +2,8 @@ package br.com.inovagabv2.data.repository
 
 import android.util.Log
 import br.com.inovagabv2.core.session.SessionManager
+import br.com.inovagabv2.core.util.SERVER_STARTING_MESSAGE
+import br.com.inovagabv2.core.util.isServerStartingTimeout
 import br.com.inovagabv2.data.remote.api.InovaGabApi
 import br.com.inovagabv2.data.remote.dto.ApiErrorDto
 import br.com.inovagabv2.data.remote.dto.LoginRequestDto
@@ -15,7 +17,6 @@ import kotlinx.serialization.json.Json
 import retrofit2.Response
 import java.io.IOException
 import java.net.ConnectException
-import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -117,11 +118,10 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     private fun parseExceptionMessage(e: Exception): String {
+        if (e.isServerStartingTimeout()) return SERVER_STARTING_MESSAGE
         return when (e) {
             is ConnectException, is UnknownHostException ->
                 "Falha ao conectar com o servidor. Verifique se o backend está ligado e se a API_BASE_URL está correta."
-            is SocketTimeoutException ->
-                "O tempo de resposta do servidor expirou. Verifique se o backend está ligado e se a API_BASE_URL está correta."
             is SerializationException ->
                 "Erro ao processar a resposta do servidor: ${e.message}"
             is IOException ->

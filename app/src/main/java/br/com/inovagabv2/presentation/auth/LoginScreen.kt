@@ -238,6 +238,16 @@ fun LoginScreen(
                 }
             }
 
+            if (uiState.showConnectingHint) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Conectando ao servidor… isso pode levar até 1 minuto no primeiro acesso.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AguiaColors.TextSecondary,
+                    textAlign = TextAlign.Center
+                )
+            }
+
             Spacer(modifier = Modifier.height(28.dp))
 
             // Sign Up link: Ainda não possui uma conta? Criar conta

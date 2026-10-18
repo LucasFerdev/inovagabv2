@@ -2,15 +2,38 @@ package br.com.inovagabv2.core.util
 
 import retrofit2.HttpException
 import java.io.IOException
+import java.io.InterruptedIOException
+import java.net.SocketTimeoutException
 
 const val NO_CONNECTION_MESSAGE = "Sem conexão. Verifique sua internet e tente novamente."
 const val NO_PERMISSION_MESSAGE = "Você não tem permissão para esta ação."
 const val SERVER_UNAVAILABLE_MESSAGE = "O servidor está indisponível no momento. Tente novamente em instantes."
+const val SERVER_STARTING_MESSAGE = "O servidor está iniciando. Aguarde alguns segundos e tente novamente."
 const val GENERIC_ERROR_MESSAGE = "Algo deu errado. Tente novamente."
 const val LOAD_FAILED_MESSAGE = "Não foi possível carregar"
 
 private val statusInParentheses = Regex("""\((403|5\d{2})\)""")
 private val httpStatus = Regex("""\bHTTP\s+(403|5\d{2})\b""", RegexOption.IGNORE_CASE)
+
+fun Throwable.toAuthUserMessage(): String {
+    if (isServerStartingTimeout()) return SERVER_STARTING_MESSAGE
+    return toUserMessage()
+}
+
+internal fun Throwable.isServerStartingTimeout(): Boolean {
+    var current: Throwable? = this
+    while (current != null) {
+        when (current) {
+            is SocketTimeoutException -> return true
+            is InterruptedIOException -> {
+                val text = current.message?.lowercase().orEmpty()
+                if (text.contains("timeout") || text.contains("timed out")) return true
+            }
+        }
+        current = current.cause
+    }
+    return false
+}
 
 fun Throwable.toUserMessage(): String {
     var current: Throwable? = this

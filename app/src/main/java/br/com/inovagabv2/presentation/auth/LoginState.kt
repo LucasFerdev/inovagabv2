@@ -4,6 +4,7 @@ import br.com.inovagabv2.domain.model.User
 
 data class LoginState(
     val isLoading: Boolean = false,
+    val showConnectingHint: Boolean = false,
     val error: String? = null,
     val successUser: User? = null
 )

@@ -6,6 +6,7 @@ import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.Response
 import java.io.IOException
+import java.io.InterruptedIOException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 
@@ -20,6 +21,18 @@ class ErrorMessagesTest {
             NO_CONNECTION_MESSAGE,
             Exception("falha", IOException("rede")).toUserMessage()
         )
+    }
+
+    @Test
+    fun `SocketTimeoutException no auth indica servidor iniciando`() {
+        assertEquals(SERVER_STARTING_MESSAGE, SocketTimeoutException("timeout").toAuthUserMessage())
+        assertEquals(SERVER_STARTING_MESSAGE, InterruptedIOException("timeout").toAuthUserMessage())
+        assertEquals(
+            SERVER_STARTING_MESSAGE,
+            Exception("falha", SocketTimeoutException("timeout")).toAuthUserMessage()
+        )
+        assertEquals(NO_CONNECTION_MESSAGE, InterruptedIOException("interrupted").toAuthUserMessage())
+        assertEquals(NO_CONNECTION_MESSAGE, SocketTimeoutException("timeout").toUserMessage())
     }
 
     @Test
