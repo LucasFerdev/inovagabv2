@@ -40,6 +40,7 @@ import br.com.inovagabv2.core.designsystem.components.AguiaBottomBar
 import br.com.inovagabv2.core.designsystem.components.AguiaTopBar
 import br.com.inovagabv2.core.designsystem.components.AguiaUserAvatar
 import br.com.inovagabv2.core.navigation.Screen
+import br.com.inovagabv2.core.navigation.tabHomeRoute
 import br.com.inovagabv2.core.util.UserUtils
 import br.com.inovagabv2.core.util.formatDate
 
@@ -47,7 +48,7 @@ import br.com.inovagabv2.core.util.formatDate
 fun ProfileScreen(
     viewModel: ProfileViewModel,
     onLogout: () -> Unit,
-    onBottomNavigate: (String) -> Unit = {},
+    onBottomNavigate: (targetRoute: String, startRoute: String) -> Unit = { _, _ -> },
     onNavigateToRanking: () -> Unit = {}
 ) {
     val user by viewModel.user.collectAsState()
@@ -105,7 +106,7 @@ fun ProfileScreen(
                     role = sessionUser.role,
                     onNavigate = { route ->
                         if (route != Screen.Profile.route) {
-                            onBottomNavigate(route)
+                            onBottomNavigate(route, tabHomeRoute(sessionUser.role))
                         }
                     }
                 )

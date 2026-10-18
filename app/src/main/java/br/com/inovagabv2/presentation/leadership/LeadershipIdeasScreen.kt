@@ -61,7 +61,7 @@ fun LeadershipIdeasScreen(
         },
         bottomBar = {
             AguiaBottomBar(
-                currentRoute = Screen.LeadershipDashboard.route,
+                currentRoute = Screen.LeadershipIdeas.route,
                 role = currentRole,
                 onNavigate = { route ->
                     when (route) {
