@@ -2,11 +2,13 @@ package br.com.inovagabv2.core.session
 
 import android.content.ContextWrapper
 import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.emptyPreferences
 import br.com.inovagabv2.domain.model.Role
 import br.com.inovagabv2.domain.model.User
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -15,19 +17,26 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SessionManagerTest {
 
-    @get:Rule
-    val tmpFolder = TemporaryFolder()
-
     private val testDispatcher = UnconfinedTestDispatcher()
     private val testScope = TestScope(testDispatcher)
     private lateinit var dataStore: DataStore<Preferences>
+
+    private class InMemoryPreferencesDataStore : DataStore<Preferences> {
+        private val preferencesFlow = MutableStateFlow(emptyPreferences())
+
+        override val data: Flow<Preferences> = preferencesFlow
+
+        override suspend fun updateData(transform: suspend (t: Preferences) -> Preferences): Preferences {
+            val updated = transform(preferencesFlow.value)
+            preferencesFlow.value = updated
+            return updated
+        }
+    }
 
     private class TestableSessionManager(
         private val customDataStore: DataStore<Preferences>
@@ -38,10 +47,7 @@ class SessionManagerTest {
 
     @Before
     fun setUp() {
-        dataStore = PreferenceDataStoreFactory.create(
-            scope = testScope,
-            produceFile = { tmpFolder.newFile("test_session.preferences_pb") }
-        )
+        dataStore = InMemoryPreferencesDataStore()
     }
 
     @Test
