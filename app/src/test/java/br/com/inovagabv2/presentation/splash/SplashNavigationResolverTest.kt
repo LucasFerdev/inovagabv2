@@ -17,17 +17,17 @@ class SplashNavigationResolverTest {
     }
 
     @Test
-    fun `first opening without session directs to onboarding`() {
+    fun `opening without session directs to onboarding when never seen`() {
         val state = AppInitState.Unauthenticated(onboardingCompleted = false)
         val destination = SplashNavigationResolver.resolveDestination(state)
         assertEquals(Screen.Onboarding.route, destination)
     }
 
     @Test
-    fun `subsequent opening without session directs to login`() {
+    fun `opening without session directs to onboarding even if already seen`() {
         val state = AppInitState.Unauthenticated(onboardingCompleted = true)
         val destination = SplashNavigationResolver.resolveDestination(state)
-        assertEquals(Screen.Login.route, destination)
+        assertEquals(Screen.Onboarding.route, destination)
     }
 
     @Test

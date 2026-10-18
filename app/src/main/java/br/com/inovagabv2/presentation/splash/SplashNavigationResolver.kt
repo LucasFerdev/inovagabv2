@@ -15,13 +15,7 @@ object SplashNavigationResolver {
                     Role.LIDERANCA -> Screen.LeadershipDashboard.route
                 }
             }
-            is AppInitState.Unauthenticated -> {
-                if (state.onboardingCompleted) {
-                    Screen.Login.route
-                } else {
-                    Screen.Onboarding.route
-                }
-            }
+            is AppInitState.Unauthenticated -> Screen.Onboarding.route
         }
     }
 }
