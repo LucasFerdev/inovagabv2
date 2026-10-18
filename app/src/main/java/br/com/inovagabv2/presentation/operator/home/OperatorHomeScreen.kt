@@ -208,6 +208,14 @@ fun OperatorHomeScreen(
                 item {
                     AguiaLoadingState(message = "Carregando suas ideias...")
                 }
+            } else if (state.error != null) {
+                item {
+                    AguiaErrorState(
+                        message = state.error
+                            ?: "Não foi possível carregar suas ideias. Tente novamente.",
+                        onRetry = { viewModel.refresh() }
+                    )
+                }
             } else if (state.recentIdeas.isEmpty()) {
                 item {
                     Card(
