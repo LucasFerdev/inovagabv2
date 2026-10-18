@@ -2,6 +2,7 @@ package br.com.inovagabv2.presentation.leadership
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.Strategy
 import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
@@ -30,6 +31,9 @@ class LeadershipStrategyViewModel @Inject constructor(
 
     private val _error = MutableStateFlow<String?>(null)
     val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _actionError = MutableStateFlow<String?>(null)
+    val actionError: StateFlow<String?> = _actionError.asStateFlow()
 
     val filteredStrategies: StateFlow<List<Strategy>> = combine(_strategies, _selectedStatusFilter, _searchQuery) { list, statusFilter, query ->
         list.filter { strat ->
@@ -91,7 +95,20 @@ class LeadershipStrategyViewModel @Inject constructor(
 
     fun deleteStrategy(id: String) {
         viewModelScope.launch {
-            repository.deleteStrategy(id)
+            try {
+                val result = repository.deleteStrategy(id)
+                if (result.isFailure) {
+                    _actionError.value = result.exceptionOrNull()?.toUserMessage()
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _actionError.value = e.toUserMessage()
+            }
         }
+    }
+
+    fun clearActionError() {
+        _actionError.value = null
     }
 }

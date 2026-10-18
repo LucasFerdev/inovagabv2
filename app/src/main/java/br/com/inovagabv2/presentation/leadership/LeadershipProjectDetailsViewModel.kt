@@ -3,14 +3,18 @@ package br.com.inovagabv2.presentation.leadership
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.LOAD_FAILED_MESSAGE
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.DashboardProjectDetails
 import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Project
 import br.com.inovagabv2.domain.repository.DashboardRepository
 import br.com.inovagabv2.domain.repository.ProjectRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.supervisorScope
 import javax.inject.Inject
 
 data class LeadershipProjectDetailsState(
@@ -42,17 +46,53 @@ class LeadershipProjectDetailsViewModel @Inject constructor(
     fun loadDetails() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
-
-            launch {
-                projectRepository.getProjectById(projectId).collect { proj ->
-                    _state.update { it.copy(project = proj) }
+            var failure: String? = null
+            supervisorScope {
+                val projectJob = launch {
+                    try {
+                        projectRepository.getProjectById(projectId)
+                            .catch { e ->
+                                if (e is CancellationException) throw e
+                                failure = e.toUserMessage()
+                            }
+                            .collect { proj ->
+                                _state.update { it.copy(project = proj) }
+                            }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        failure = e.toUserMessage()
+                    }
                 }
+                val dashboardJob = launch {
+                    try {
+                        dashboardRepository.getDashboardProjectDetails(projectId)
+                            .catch { e ->
+                                if (e is CancellationException) throw e
+                                failure = e.toUserMessage()
+                            }
+                            .collect { details ->
+                                _state.update { it.copy(dashboardDetails = details) }
+                            }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (e: Exception) {
+                        failure = e.toUserMessage()
+                    }
+                }
+                projectJob.join()
+                dashboardJob.join()
             }
-
-            launch {
-                dashboardRepository.getDashboardProjectDetails(projectId).collect { details ->
-                    _state.update { it.copy(dashboardDetails = details, isLoading = false) }
-                }
+            _state.update { current ->
+                val nothing = current.project == null && current.dashboardDetails == null
+                current.copy(
+                    isLoading = false,
+                    error = when {
+                        failure != null -> failure
+                        nothing -> LOAD_FAILED_MESSAGE
+                        else -> null
+                    }
+                )
             }
         }
     }
@@ -60,8 +100,19 @@ class LeadershipProjectDetailsViewModel @Inject constructor(
     fun onShowHistoryDialog() {
         _state.update { it.copy(showHistoryDialog = true, isLoadingHistory = true) }
         viewModelScope.launch {
-            projectRepository.consultarHistorico(projectId).collect { history ->
-                _state.update { it.copy(historyItems = history, isLoadingHistory = false) }
+            try {
+                projectRepository.consultarHistorico(projectId)
+                    .catch { e ->
+                        if (e is CancellationException) throw e
+                        _state.update { it.copy(isLoadingHistory = false, error = e.toUserMessage()) }
+                    }
+                    .collect { history ->
+                        _state.update { it.copy(historyItems = history, isLoadingHistory = false) }
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoadingHistory = false, error = e.toUserMessage()) }
             }
         }
     }

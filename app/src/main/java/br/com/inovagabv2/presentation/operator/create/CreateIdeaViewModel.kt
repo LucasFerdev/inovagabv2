@@ -2,10 +2,12 @@ package br.com.inovagabv2.presentation.operator.create
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.Strategy
 import br.com.inovagabv2.domain.repository.IdeaRepository
 import br.com.inovagabv2.domain.repository.StrategyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -25,15 +27,31 @@ class CreateIdeaViewModel @Inject constructor(
 
     fun loadActiveStrategies() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoadingStrategies = true) }
-            strategyRepository.getActiveStrategies().collect { strategies ->
-                val activeOnly = strategies.filter { it.isPublished }
+            _state.update { it.copy(isLoadingStrategies = true, strategiesError = null) }
+            try {
+                strategyRepository.getActiveStrategies()
+                    .catch { e ->
+                        if (e is CancellationException) throw e
+                        _state.update {
+                            it.copy(isLoadingStrategies = false, strategiesError = e.toUserMessage())
+                        }
+                    }
+                    .collect { strategies ->
+                        val activeOnly = strategies.filter { it.isPublished }
+                        _state.update {
+                            it.copy(
+                                activeStrategies = activeOnly,
+                                selectedStrategy = activeOnly.firstOrNull(),
+                                isLoadingStrategies = false,
+                                strategiesError = null
+                            )
+                        }
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
                 _state.update {
-                    it.copy(
-                        activeStrategies = activeOnly,
-                        selectedStrategy = activeOnly.firstOrNull(),
-                        isLoadingStrategies = false
-                    )
+                    it.copy(isLoadingStrategies = false, strategiesError = e.toUserMessage())
                 }
             }
         }
@@ -81,29 +99,34 @@ class CreateIdeaViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
+            try {
+                val problemText = currentState.problem.ifBlank { currentState.proposedSolution }
+                val solutionText = currentState.proposedSolution.ifBlank { currentState.problem }
+                val benefitsText = currentState.expectedBenefits.ifBlank { "Benefícios operacionais esperados" }
 
-            val problemText = currentState.problem.ifBlank { currentState.proposedSolution }
-            val solutionText = currentState.proposedSolution.ifBlank { currentState.problem }
-            val benefitsText = currentState.expectedBenefits.ifBlank { "Benefícios operacionais esperados" }
+                val result = ideaRepository.createIdea(
+                    titulo = currentState.title,
+                    problema = problemText,
+                    solucaoProposta = solutionText,
+                    beneficiosEsperados = benefitsText,
+                    categoria = currentState.category,
+                    estrategiaId = currentState.selectedStrategy.id
+                )
 
-            val result = ideaRepository.createIdea(
-                titulo = currentState.title,
-                problema = problemText,
-                solucaoProposta = solutionText,
-                beneficiosEsperados = benefitsText,
-                categoria = currentState.category,
-                estrategiaId = currentState.selectedStrategy.id
-            )
-
-            if (result.isSuccess) {
-                _state.update { it.copy(isLoading = false, isSuccess = true) }
-            } else {
-                _state.update {
-                    it.copy(
-                        isLoading = false,
-                        error = result.exceptionOrNull()?.message ?: "Erro ao criar ideia"
-                    )
+                if (result.isSuccess) {
+                    _state.update { it.copy(isLoading = false, isSuccess = true) }
+                } else {
+                    _state.update {
+                        it.copy(
+                            isLoading = false,
+                            error = result.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoading = false, error = e.toUserMessage()) }
             }
         }
     }

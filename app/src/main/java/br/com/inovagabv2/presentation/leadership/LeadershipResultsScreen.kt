@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -46,6 +47,21 @@ fun LeadershipResultsScreen(
         },
         containerColor = AguiaColors.Background
     ) { padding ->
+        if (state.isLoading) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                AguiaLoadingState(message = "Carregando resultados...")
+            }
+            return@Scaffold
+        }
+        if (state.error != null) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                AguiaErrorState(
+                    message = state.error ?: "Algo deu errado. Tente novamente.",
+                    onRetry = viewModel::loadResults
+                )
+            }
+            return@Scaffold
+        }
         LazyColumn(
             modifier = Modifier
                 .padding(padding)

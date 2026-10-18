@@ -41,7 +41,10 @@ fun LeadershipProjectDashboardScreen(
             }
         } else if (state.projectDetails == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                AguiaEmptyState(message = state.error ?: "Indicadores não encontrados.")
+                AguiaErrorState(
+                    message = state.error ?: "Não foi possível carregar",
+                    onRetry = viewModel::loadData
+                )
             }
         } else {
             val dash = state.projectDetails!!

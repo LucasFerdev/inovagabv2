@@ -2,8 +2,10 @@ package br.com.inovagabv2.presentation.leadership
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.repository.StrategyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -44,40 +46,45 @@ class CreateStrategyViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true, error = null) }
+            try {
+                val result = repository.createStrategy(
+                    titulo = current.title,
+                    descricao = current.description,
+                    data = current.date,
+                    categoria = current.category,
+                    campanha = current.campaign
+                )
 
-            val result = repository.createStrategy(
-                titulo = current.title,
-                descricao = current.description,
-                data = current.date,
-                categoria = current.category,
-                campanha = current.campaign
-            )
-
-            if (result.isSuccess) {
-                val created = result.getOrNull()
-                if (activateNow && created != null) {
-                    val activateRes = repository.activateStrategy(created.id)
-                    if (activateRes.isSuccess) {
-                        _state.update { it.copy(isSaving = false, isSuccess = true, feedbackMessage = "Estratégia criada e ativada com sucesso.") }
-                    } else {
-                        _state.update {
-                            it.copy(
-                                isSaving = false,
-                                isSuccess = true,
-                                feedbackMessage = "Estratégia criada como rascunho. Não foi possível ativar automaticamente."
-                            )
+                if (result.isSuccess) {
+                    val created = result.getOrNull()
+                    if (activateNow && created != null) {
+                        val activateRes = repository.activateStrategy(created.id)
+                        if (activateRes.isSuccess) {
+                            _state.update { it.copy(isSaving = false, isSuccess = true, feedbackMessage = "Estratégia criada e ativada com sucesso.") }
+                        } else {
+                            _state.update {
+                                it.copy(
+                                    isSaving = false,
+                                    isSuccess = true,
+                                    feedbackMessage = "Estratégia criada como rascunho. Não foi possível ativar automaticamente."
+                                )
+                            }
                         }
+                    } else {
+                        _state.update { it.copy(isSaving = false, isSuccess = true, feedbackMessage = "Estratégia salva como rascunho.") }
                     }
                 } else {
-                    _state.update { it.copy(isSaving = false, isSuccess = true, feedbackMessage = "Estratégia salva como rascunho.") }
+                    _state.update {
+                        it.copy(
+                            isSaving = false,
+                            error = result.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
-            } else {
-                _state.update {
-                    it.copy(
-                        isSaving = false,
-                        error = result.exceptionOrNull()?.message ?: "Erro ao criar estratégia"
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isSaving = false, error = e.toUserMessage()) }
             }
         }
     }

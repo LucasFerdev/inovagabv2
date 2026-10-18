@@ -52,6 +52,7 @@ fun OperatorStrategyScreen(
     val categories by viewModel.categories.collectAsState()
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     val currentRole = user?.role ?: userRole
 
@@ -201,6 +202,13 @@ fun OperatorStrategyScreen(
                 if (isLoading) {
                     item {
                         AguiaLoadingState(message = "Carregando estratégias...")
+                    }
+                } else if (error != null) {
+                    item {
+                        AguiaErrorState(
+                            message = error ?: "Algo deu errado. Tente novamente.",
+                            onRetry = viewModel::loadStrategies
+                        )
                     }
                 } else if (strategies.isEmpty()) {
                     item {

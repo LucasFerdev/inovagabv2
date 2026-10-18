@@ -3,12 +3,15 @@ package br.com.inovagabv2.presentation.manager.ideas.details
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.LOAD_FAILED_MESSAGE
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.AiAnalysis
 import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.repository.AiRepository
 import br.com.inovagabv2.domain.repository.IdeaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -18,6 +21,7 @@ data class ManagerIdeaDetailsState(
     val aiAnalysis: AiAnalysis? = null,
     val historyItems: List<HistoryItem> = emptyList(),
     val isLoading: Boolean = true,
+    val loadError: String? = null,
     val isLoadingAi: Boolean = false,
     val isLoadingHistory: Boolean = false,
     val isSubmitting: Boolean = false,
@@ -52,31 +56,51 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
 
     fun loadIdea() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
-            ideaRepository.getIdeaById(ideaId)
-                .catch { e ->
-                    _state.update { it.copy(isLoading = false, errorMessage = e.message ?: "Erro ao carregar ideia.") }
-                }
-                .collect { idea ->
-                    _state.update {
-                        it.copy(
-                            idea = idea,
-                            isLoading = false,
-                            selectedPriority = idea?.priority ?: 3
-                        )
+            _state.update { it.copy(isLoading = true, loadError = null) }
+            try {
+                ideaRepository.getIdeaById(ideaId)
+                    .catch { e ->
+                        if (e is CancellationException) throw e
+                        _state.update { it.copy(isLoading = false, loadError = e.toUserMessage()) }
                     }
-                }
+                    .collect { idea ->
+                        if (idea != null) {
+                            _state.update {
+                                it.copy(
+                                    idea = idea,
+                                    isLoading = false,
+                                    loadError = null,
+                                    selectedPriority = idea.priority ?: 3
+                                )
+                            }
+                        } else {
+                            _state.update {
+                                it.copy(idea = null, isLoading = false, loadError = LOAD_FAILED_MESSAGE)
+                            }
+                        }
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoading = false, loadError = e.toUserMessage()) }
+            }
         }
     }
 
     fun loadAiAnalysis() {
         viewModelScope.launch {
             _state.update { it.copy(isLoadingAi = true) }
-            val result = aiRepository.getIdeaAnalysis(ideaId)
-            if (result.isSuccess) {
-                _state.update { it.copy(aiAnalysis = result.getOrNull(), isLoadingAi = false) }
-            } else {
-                _state.update { it.copy(isLoadingAi = false) }
+            try {
+                val result = aiRepository.getIdeaAnalysis(ideaId)
+                if (result.isSuccess) {
+                    _state.update { it.copy(aiAnalysis = result.getOrNull(), isLoadingAi = false) }
+                } else {
+                    _state.update { it.copy(isLoadingAi = false) }
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoadingAi = false, errorMessage = e.toUserMessage()) }
             }
         }
     }
@@ -87,21 +111,24 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
             try {
                 ideaRepository.consultarHistorico(ideaId)
                     .catch { e ->
+                        if (e is CancellationException) throw e
                         _state.update {
                             it.copy(
                                 isLoadingHistory = false,
-                                errorMessage = e.message ?: "Erro ao carregar histórico."
+                                errorMessage = e.toUserMessage()
                             )
                         }
                     }
                     .collect { history ->
                         _state.update { it.copy(historyItems = history, isLoadingHistory = false) }
                     }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _state.update {
                     it.copy(
                         isLoadingHistory = false,
-                        errorMessage = e.message ?: "Erro ao carregar histórico."
+                        errorMessage = e.toUserMessage()
                     )
                 }
             }
@@ -117,22 +144,28 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.update { it.copy(isSubmittingAi = true, errorMessage = null) }
-            val result = aiRepository.analyzeIdea(ideaId, recalculate = false)
-            if (result.isSuccess) {
-                _state.update {
-                    it.copy(
-                        aiAnalysis = result.getOrNull(),
-                        isSubmittingAi = false,
-                        feedbackMessage = "Análise realizada com sucesso."
-                    )
+            try {
+                val result = aiRepository.analyzeIdea(ideaId, recalculate = false)
+                if (result.isSuccess) {
+                    _state.update {
+                        it.copy(
+                            aiAnalysis = result.getOrNull(),
+                            isSubmittingAi = false,
+                            feedbackMessage = "Análise realizada com sucesso."
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            isSubmittingAi = false,
+                            errorMessage = result.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
-            } else {
-                _state.update {
-                    it.copy(
-                        isSubmittingAi = false,
-                        errorMessage = result.exceptionOrNull()?.message ?: "Erro ao gerar análise da IA"
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isSubmittingAi = false, errorMessage = e.toUserMessage()) }
             }
         }
     }
@@ -151,22 +184,28 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.update { it.copy(isSubmittingAi = true, showRecalculateDialog = false, errorMessage = null) }
-            val result = aiRepository.analyzeIdea(ideaId, recalculate = true)
-            if (result.isSuccess) {
-                _state.update {
-                    it.copy(
-                        aiAnalysis = result.getOrNull(),
-                        isSubmittingAi = false,
-                        feedbackMessage = "Análise recalculada com sucesso."
-                    )
+            try {
+                val result = aiRepository.analyzeIdea(ideaId, recalculate = true)
+                if (result.isSuccess) {
+                    _state.update {
+                        it.copy(
+                            aiAnalysis = result.getOrNull(),
+                            isSubmittingAi = false,
+                            feedbackMessage = "Análise recalculada com sucesso."
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            isSubmittingAi = false,
+                            errorMessage = result.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
-            } else {
-                _state.update {
-                    it.copy(
-                        isSubmittingAi = false,
-                        errorMessage = result.exceptionOrNull()?.message ?: "Erro ao recalcular análise da IA"
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isSubmittingAi = false, errorMessage = e.toUserMessage()) }
             }
         }
     }
@@ -176,14 +215,22 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
         _state.update { it.copy(selectedPriority = priority) }
         
         viewModelScope.launch {
-            val res = ideaRepository.priorizar(ideaId, priority)
-            if (res.isSuccess) {
-                _state.update {
-                    it.copy(
-                        idea = res.getOrNull(),
-                        feedbackMessage = "Prioridade atualizada com sucesso."
-                    )
+            try {
+                val res = ideaRepository.priorizar(ideaId, priority)
+                if (res.isSuccess) {
+                    _state.update {
+                        it.copy(
+                            idea = res.getOrNull(),
+                            feedbackMessage = "Prioridade atualizada com sucesso."
+                        )
+                    }
+                } else {
+                    _state.update { it.copy(errorMessage = res.exceptionOrNull()?.toUserMessage()) }
                 }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(errorMessage = e.toUserMessage()) }
             }
         }
     }
@@ -211,28 +258,32 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true, showApprovalDialog = false, errorMessage = null) }
+            try {
+                val priorizarRes = ideaRepository.priorizar(ideaId, priority)
+                val aprovarRes = ideaRepository.aprovar(ideaId)
 
-            val priorizarRes = ideaRepository.priorizar(ideaId, priority)
-            val aprovarRes = ideaRepository.aprovar(ideaId)
-
-            if (aprovarRes.isSuccess) {
-                val updatedIdea = aprovarRes.getOrNull() ?: priorizarRes.getOrNull()
-                _state.update {
-                    it.copy(
-                        idea = updatedIdea,
-                        isSubmitting = false,
-                        feedbackMessage = "Ideia aprovada com sucesso.",
-                        shouldNavigateBack = true
-                    )
+                if (aprovarRes.isSuccess) {
+                    val updatedIdea = aprovarRes.getOrNull() ?: priorizarRes.getOrNull()
+                    _state.update {
+                        it.copy(
+                            idea = updatedIdea,
+                            isSubmitting = false,
+                            feedbackMessage = "Ideia aprovada com sucesso.",
+                            shouldNavigateBack = true
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            isSubmitting = false,
+                            errorMessage = aprovarRes.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
-            } else {
-                val errorMsg = aprovarRes.exceptionOrNull()?.message ?: "Erro ao aprovar ideia"
-                _state.update {
-                    it.copy(
-                        isSubmitting = false,
-                        errorMessage = errorMsg
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isSubmitting = false, errorMessage = e.toUserMessage()) }
             }
         }
     }
@@ -256,25 +307,29 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true, showRejectionDialog = false, errorMessage = null) }
-
-            val result = ideaRepository.rejeitar(ideaId, reason)
-            if (result.isSuccess) {
-                _state.update {
-                    it.copy(
-                        idea = result.getOrNull(),
-                        isSubmitting = false,
-                        feedbackMessage = "Ideia rejeitada com sucesso.",
-                        shouldNavigateBack = true
-                    )
+            try {
+                val result = ideaRepository.rejeitar(ideaId, reason)
+                if (result.isSuccess) {
+                    _state.update {
+                        it.copy(
+                            idea = result.getOrNull(),
+                            isSubmitting = false,
+                            feedbackMessage = "Ideia rejeitada com sucesso.",
+                            shouldNavigateBack = true
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            isSubmitting = false,
+                            errorMessage = result.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
-            } else {
-                val errorMsg = result.exceptionOrNull()?.message ?: "Erro ao rejeitar ideia"
-                _state.update {
-                    it.copy(
-                        isSubmitting = false,
-                        errorMessage = errorMsg
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isSubmitting = false, errorMessage = e.toUserMessage()) }
             }
         }
     }
@@ -284,23 +339,28 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true, errorMessage = null) }
-
-            val result = ideaRepository.analisar(ideaId)
-            if (result.isSuccess) {
-                _state.update {
-                    it.copy(
-                        idea = result.getOrNull(),
-                        isSubmitting = false,
-                        feedbackMessage = "Ideia enviada para análise."
-                    )
+            try {
+                val result = ideaRepository.analisar(ideaId)
+                if (result.isSuccess) {
+                    _state.update {
+                        it.copy(
+                            idea = result.getOrNull(),
+                            isSubmitting = false,
+                            feedbackMessage = "Ideia enviada para análise."
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            isSubmitting = false,
+                            errorMessage = result.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
-            } else {
-                _state.update {
-                    it.copy(
-                        isSubmitting = false,
-                        errorMessage = result.exceptionOrNull()?.message ?: "Erro ao colocar ideia em análise"
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isSubmitting = false, errorMessage = e.toUserMessage()) }
             }
         }
     }

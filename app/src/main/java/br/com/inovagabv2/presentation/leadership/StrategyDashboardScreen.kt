@@ -80,7 +80,10 @@ fun StrategyDashboardScreen(
             }
         } else if (state.strategy == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                AguiaEmptyState(message = state.error ?: "Estratégia não encontrada.")
+                AguiaErrorState(
+                    message = state.error ?: "Não foi possível carregar",
+                    onRetry = viewModel::loadData
+                )
             }
         } else {
             val currentStrategy = state.strategy!!
@@ -95,6 +98,15 @@ fun StrategyDashboardScreen(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                if (state.error != null) {
+                    item {
+                        Text(
+                            text = state.error ?: "",
+                            color = AguiaColors.ErrorRed,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
                 // Strategy Header Title & Status
                 item {
                     Column {

@@ -3,12 +3,15 @@ package br.com.inovagabv2.presentation.manager.projects.details
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.LOAD_FAILED_MESSAGE
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Project
 import br.com.inovagabv2.domain.model.ProjectStage
 import br.com.inovagabv2.domain.model.ProjectStatus
 import br.com.inovagabv2.domain.repository.ProjectRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
@@ -18,6 +21,7 @@ data class ManagerProjectDetailsState(
     val project: Project? = null,
     val historyItems: List<HistoryItem> = emptyList(),
     val isLoading: Boolean = true,
+    val loadError: String? = null,
     val isLoadingHistory: Boolean = false,
     val isSubmitting: Boolean = false,
     val feedbackMessage: String? = null,
@@ -47,9 +51,24 @@ class ManagerProjectDetailsViewModel @Inject constructor(
 
     fun loadProject() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, errorMessage = null) }
-            projectRepository.getProjectById(projectId).collect { project ->
-                _state.update { it.copy(project = project, isLoading = false) }
+            _state.update { it.copy(isLoading = true, loadError = null) }
+            try {
+                projectRepository.getProjectById(projectId)
+                    .catch { e ->
+                        if (e is CancellationException) throw e
+                        _state.update { it.copy(isLoading = false, loadError = e.toUserMessage()) }
+                    }
+                    .collect { project ->
+                        if (project != null) {
+                            _state.update { it.copy(project = project, isLoading = false, loadError = null) }
+                        } else {
+                            _state.update { it.copy(project = null, isLoading = false, loadError = LOAD_FAILED_MESSAGE) }
+                        }
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoading = false, loadError = e.toUserMessage()) }
             }
         }
     }
@@ -57,8 +76,19 @@ class ManagerProjectDetailsViewModel @Inject constructor(
     fun onShowHistoryDialog() {
         _state.update { it.copy(showHistoryDialog = true, isLoadingHistory = true) }
         viewModelScope.launch {
-            projectRepository.consultarHistorico(projectId).collect { history ->
-                _state.update { it.copy(historyItems = history, isLoadingHistory = false) }
+            try {
+                projectRepository.consultarHistorico(projectId)
+                    .catch { e ->
+                        if (e is CancellationException) throw e
+                        _state.update { it.copy(isLoadingHistory = false, errorMessage = e.toUserMessage()) }
+                    }
+                    .collect { history ->
+                        _state.update { it.copy(historyItems = history, isLoadingHistory = false) }
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoadingHistory = false, errorMessage = e.toUserMessage()) }
             }
         }
     }
@@ -86,28 +116,34 @@ class ManagerProjectDetailsViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true, showProgressDialog = false, errorMessage = null) }
-            val result = projectRepository.updateProgress(
-                id = projectId,
-                etapa = etapa,
-                status = status,
-                percentualProgresso = percentualProgresso,
-                justificativa = justificativa
-            )
-            if (result.isSuccess) {
-                _state.update {
-                    it.copy(
-                        project = result.getOrNull(),
-                        isSubmitting = false,
-                        feedbackMessage = "Progresso do projeto atualizado com sucesso."
-                    )
+            try {
+                val result = projectRepository.updateProgress(
+                    id = projectId,
+                    etapa = etapa,
+                    status = status,
+                    percentualProgresso = percentualProgresso,
+                    justificativa = justificativa
+                )
+                if (result.isSuccess) {
+                    _state.update {
+                        it.copy(
+                            project = result.getOrNull(),
+                            isSubmitting = false,
+                            feedbackMessage = "Progresso do projeto atualizado com sucesso."
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            isSubmitting = false,
+                            errorMessage = result.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
-            } else {
-                _state.update {
-                    it.copy(
-                        isSubmitting = false,
-                        errorMessage = result.exceptionOrNull()?.message ?: "Erro ao atualizar progresso"
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isSubmitting = false, errorMessage = e.toUserMessage()) }
             }
         }
     }
@@ -123,27 +159,33 @@ class ManagerProjectDetailsViewModel @Inject constructor(
         if (_state.value.isSubmitting) return
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true, showResultsDialog = false, errorMessage = null) }
-            val res = projectRepository.registerResults(
-                id = projectId,
-                retornoFinanceiro = retornoFinanceiro,
-                ganhoProdutividadePercentual = ganhoProdutividadePercentual,
-                resultado = resultado
-            )
-            if (res.isSuccess) {
-                _state.update {
-                    it.copy(
-                        project = res.getOrNull(),
-                        isSubmitting = false,
-                        feedbackMessage = "Resultados registrados com sucesso."
-                    )
+            try {
+                val res = projectRepository.registerResults(
+                    id = projectId,
+                    retornoFinanceiro = retornoFinanceiro,
+                    ganhoProdutividadePercentual = ganhoProdutividadePercentual,
+                    resultado = resultado
+                )
+                if (res.isSuccess) {
+                    _state.update {
+                        it.copy(
+                            project = res.getOrNull(),
+                            isSubmitting = false,
+                            feedbackMessage = "Resultados registrados com sucesso."
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            isSubmitting = false,
+                            errorMessage = res.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
-            } else {
-                _state.update {
-                    it.copy(
-                        isSubmitting = false,
-                        errorMessage = res.exceptionOrNull()?.message ?: "Erro ao registrar resultados"
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isSubmitting = false, errorMessage = e.toUserMessage()) }
             }
         }
     }
@@ -155,22 +197,28 @@ class ManagerProjectDetailsViewModel @Inject constructor(
         if (_state.value.isSubmitting) return
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true, showConcludeDialog = false, errorMessage = null) }
-            val res = projectRepository.concludeProject(projectId)
-            if (res.isSuccess) {
-                _state.update {
-                    it.copy(
-                        project = res.getOrNull(),
-                        isSubmitting = false,
-                        feedbackMessage = "Projeto concluído com sucesso."
-                    )
+            try {
+                val res = projectRepository.concludeProject(projectId)
+                if (res.isSuccess) {
+                    _state.update {
+                        it.copy(
+                            project = res.getOrNull(),
+                            isSubmitting = false,
+                            feedbackMessage = "Projeto concluído com sucesso."
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            isSubmitting = false,
+                            errorMessage = res.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
-            } else {
-                _state.update {
-                    it.copy(
-                        isSubmitting = false,
-                        errorMessage = res.exceptionOrNull()?.message ?: "Erro ao concluir projeto"
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isSubmitting = false, errorMessage = e.toUserMessage()) }
             }
         }
     }
@@ -182,22 +230,28 @@ class ManagerProjectDetailsViewModel @Inject constructor(
         if (_state.value.isSubmitting) return
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true, showCancelDialog = false, errorMessage = null) }
-            val res = projectRepository.cancelProject(projectId)
-            if (res.isSuccess) {
-                _state.update {
-                    it.copy(
-                        isSubmitting = false,
-                        feedbackMessage = "Projeto cancelado com sucesso.",
-                        shouldNavigateBack = true
-                    )
+            try {
+                val res = projectRepository.cancelProject(projectId)
+                if (res.isSuccess) {
+                    _state.update {
+                        it.copy(
+                            isSubmitting = false,
+                            feedbackMessage = "Projeto cancelado com sucesso.",
+                            shouldNavigateBack = true
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            isSubmitting = false,
+                            errorMessage = res.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
-            } else {
-                _state.update {
-                    it.copy(
-                        isSubmitting = false,
-                        errorMessage = res.exceptionOrNull()?.message ?: "Erro ao cancelar projeto"
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isSubmitting = false, errorMessage = e.toUserMessage()) }
             }
         }
     }

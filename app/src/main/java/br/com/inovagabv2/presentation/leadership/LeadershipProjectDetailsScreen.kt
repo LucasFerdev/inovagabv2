@@ -48,7 +48,10 @@ fun LeadershipProjectDetailsScreen(
             }
         } else if (state.project == null && state.dashboardDetails == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                AguiaEmptyState(message = state.error ?: "Projeto não encontrado.")
+                AguiaErrorState(
+                    message = state.error ?: "Não foi possível carregar",
+                    onRetry = viewModel::loadDetails
+                )
             }
         } else {
             val proj = state.project
@@ -69,6 +72,13 @@ fun LeadershipProjectDetailsScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                if (state.error != null) {
+                    Text(
+                        text = state.error ?: "",
+                        color = AguiaColors.ErrorRed,
+                        fontSize = 14.sp
+                    )
+                }
                 // Header Info Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),

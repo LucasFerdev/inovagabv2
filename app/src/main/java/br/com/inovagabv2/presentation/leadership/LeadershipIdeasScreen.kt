@@ -43,6 +43,7 @@ fun LeadershipIdeasScreen(
     val approvedCount by viewModel.approvedCount.collectAsState()
     val rejectedCount by viewModel.rejectedCount.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
 
     val filterTabs = listOf("Todas", "Em análise", "Aprovadas", "Rejeitadas")
     var selectedFilterIndex by remember { mutableIntStateOf(0) }
@@ -204,6 +205,13 @@ fun LeadershipIdeasScreen(
                 if (isLoading) {
                     item {
                         AguiaLoadingState(message = "Carregando ideias...")
+                    }
+                } else if (error != null) {
+                    item {
+                        AguiaErrorState(
+                            message = error ?: "Algo deu errado. Tente novamente.",
+                            onRetry = viewModel::loadIdeas
+                        )
                     }
                 } else if (ideas.isEmpty()) {
                     item {

@@ -94,6 +94,11 @@ fun ManagerCreateProjectScreen(
 
             if (state.isLoadingStrategies) {
                 CircularProgressIndicator(modifier = Modifier.size(24.dp), color = AguiaColors.PrimaryBlue)
+            } else if (state.loadError != null && state.activeStrategies.isEmpty()) {
+                AguiaErrorState(
+                    message = state.loadError ?: "Algo deu errado. Tente novamente.",
+                    onRetry = viewModel::loadData
+                )
             } else if (state.activeStrategies.isEmpty()) {
                 Text(
                     text = "Nenhuma estratégia ativa encontrada.",

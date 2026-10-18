@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -22,6 +24,13 @@ fun StrategyDetailsScreen(
     viewModel: StrategyDetailsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.error, state.strategy) {
+        if (state.strategy != null) {
+            state.error?.let { snackbarHostState.showSnackbar(it) }
+        }
+    }
 
     if (state.showHistoryDialog) {
         AguiaHistoryDialog(
@@ -39,6 +48,7 @@ fun StrategyDetailsScreen(
                 onBackClick = onBackClick
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = AguiaColors.Background
     ) { padding ->
         if (state.isLoading) {
@@ -47,7 +57,10 @@ fun StrategyDetailsScreen(
             }
         } else if (state.strategy == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                AguiaEmptyState(message = state.error ?: "Diretriz não encontrada.")
+                AguiaErrorState(
+                    message = state.error ?: "Não foi possível carregar",
+                    onRetry = viewModel::loadStrategyDetails
+                )
             }
         } else {
             val strategy = state.strategy!!

@@ -39,10 +39,12 @@ fun EditStrategyScreen(
         }
     }
 
-    LaunchedEffect(state.errorMessage) {
-        state.errorMessage?.let { msg ->
-            snackbarHostState.showSnackbar(msg)
-            viewModel.clearErrorMessage()
+    LaunchedEffect(state.errorMessage, state.strategy, state.isLoading) {
+        if (!state.isLoading && state.strategy != null) {
+            state.errorMessage?.let { msg ->
+                snackbarHostState.showSnackbar(msg)
+                viewModel.clearErrorMessage()
+            }
         }
     }
 
@@ -93,7 +95,10 @@ fun EditStrategyScreen(
             }
         } else if (state.strategy == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                AguiaEmptyState(message = state.errorMessage ?: "Estratégia não encontrada.")
+                AguiaErrorState(
+                    message = state.errorMessage ?: "Não foi possível carregar",
+                    onRetry = viewModel::loadStrategy
+                )
             }
         } else {
             Column(

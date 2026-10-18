@@ -3,6 +3,7 @@ package br.com.inovagabv2.presentation.manager.projects.create
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.inovagabv2.core.util.parseDecimalBr
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.Project
@@ -11,6 +12,7 @@ import br.com.inovagabv2.domain.repository.IdeaRepository
 import br.com.inovagabv2.domain.repository.ProjectRepository
 import br.com.inovagabv2.domain.repository.StrategyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.math.BigDecimal
@@ -26,6 +28,7 @@ data class ManagerCreateProjectState(
     val investmentStr: String = "",
     val deadline: String = "",
     val isLoadingStrategies: Boolean = true,
+    val loadError: String? = null,
     val isSaving: Boolean = false,
     val createdProject: Project? = null,
     val isSuccess: Boolean = false,
@@ -90,24 +93,47 @@ class ManagerCreateProjectViewModel @Inject constructor(
 
     fun loadData() {
         viewModelScope.launch {
-            _state.update { it.copy(isLoadingStrategies = true) }
-            
+            _state.update { it.copy(isLoadingStrategies = true, loadError = null) }
+
             launch {
-                strategyRepository.getActiveStrategies().collect { strats ->
-                    val active = strats.filter { it.isPublished }
-                    _state.update {
-                        it.copy(
-                            activeStrategies = active,
-                            selectedStrategy = active.firstOrNull(),
-                            isLoadingStrategies = false
-                        )
-                    }
+                try {
+                    strategyRepository.getActiveStrategies()
+                        .catch { e ->
+                            if (e is CancellationException) throw e
+                            _state.update { it.copy(isLoadingStrategies = false, loadError = e.toUserMessage()) }
+                        }
+                        .collect { strats ->
+                            val active = strats.filter { it.isPublished }
+                            _state.update {
+                                it.copy(
+                                    activeStrategies = active,
+                                    selectedStrategy = active.firstOrNull(),
+                                    isLoadingStrategies = false,
+                                    loadError = null
+                                )
+                            }
+                        }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    _state.update { it.copy(isLoadingStrategies = false, loadError = e.toUserMessage()) }
                 }
             }
 
             launch {
-                ideaRepository.getIdeasRemote(status = IdeaStatus.APROVADA).collect { page ->
-                    _state.update { it.copy(approvedIdeas = page.conteudo) }
+                try {
+                    ideaRepository.getIdeasRemote(status = IdeaStatus.APROVADA)
+                        .catch { e ->
+                            if (e is CancellationException) throw e
+                            _state.update { it.copy(errorMessage = e.toUserMessage()) }
+                        }
+                        .collect { page ->
+                            _state.update { it.copy(approvedIdeas = page.conteudo) }
+                        }
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    _state.update { it.copy(errorMessage = e.toUserMessage()) }
                 }
             }
         }
@@ -145,31 +171,36 @@ class ManagerCreateProjectViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true, errorMessage = null) }
+            try {
+                val result = projectRepository.createProject(
+                    nome = cur.name,
+                    descricao = cur.description,
+                    estrategiaId = cur.selectedStrategy.id,
+                    ideiaOrigemId = cur.selectedIdea?.id,
+                    investimento = investBd,
+                    prazo = deadlineIso
+                )
 
-            val result = projectRepository.createProject(
-                nome = cur.name,
-                descricao = cur.description,
-                estrategiaId = cur.selectedStrategy.id,
-                ideiaOrigemId = cur.selectedIdea?.id,
-                investimento = investBd,
-                prazo = deadlineIso
-            )
-
-            if (result.isSuccess) {
-                _state.update {
-                    it.copy(
-                        createdProject = result.getOrNull(),
-                        isSaving = false,
-                        isSuccess = true
-                    )
+                if (result.isSuccess) {
+                    _state.update {
+                        it.copy(
+                            createdProject = result.getOrNull(),
+                            isSaving = false,
+                            isSuccess = true
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            isSaving = false,
+                            errorMessage = result.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
-            } else {
-                _state.update {
-                    it.copy(
-                        isSaving = false,
-                        errorMessage = result.exceptionOrNull()?.message ?: "Erro ao criar projeto"
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isSaving = false, errorMessage = e.toUserMessage()) }
             }
         }
     }

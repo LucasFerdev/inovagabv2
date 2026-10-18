@@ -50,6 +50,15 @@ fun LeadershipStrategyScreen(
     val draftCount by viewModel.draftCount.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+    val actionError by viewModel.actionError.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(actionError) {
+        actionError?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearActionError()
+        }
+    }
 
     OnResumeEffect(onResume = viewModel::refresh)
 
@@ -60,6 +69,7 @@ fun LeadershipStrategyScreen(
     val currentRole = user?.role ?: Role.LIDERANCA
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             AguiaTopBar(
                 userName = user?.name,

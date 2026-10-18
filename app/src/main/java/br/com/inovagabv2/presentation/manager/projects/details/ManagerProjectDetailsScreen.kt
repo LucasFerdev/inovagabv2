@@ -454,6 +454,13 @@ fun ManagerProjectDetailsScreen(
                     }
                 }
             }
+        } else {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                AguiaErrorState(
+                    message = state.loadError ?: "Não foi possível carregar",
+                    onRetry = viewModel::loadProject
+                )
+            }
         }
     }
 }

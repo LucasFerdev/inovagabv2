@@ -3,11 +3,14 @@ package br.com.inovagabv2.presentation.leadership
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.LOAD_FAILED_MESSAGE
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Strategy
 import br.com.inovagabv2.domain.model.StrategyStatus
 import br.com.inovagabv2.domain.repository.StrategyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -51,23 +54,35 @@ class EditStrategyViewModel @Inject constructor(
     fun loadStrategy() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, errorMessage = null) }
-            repository.getStrategyById(strategyId).collect { strategy ->
-                if (strategy != null) {
-                    _state.update {
-                        it.copy(
-                            strategy = strategy,
-                            title = strategy.title,
-                            description = strategy.description,
-                            date = strategy.date,
-                            category = strategy.category ?: "",
-                            campaign = strategy.campaign ?: "",
-                            status = strategy.status,
-                            isLoading = false
-                        )
+            try {
+                repository.getStrategyById(strategyId)
+                    .catch { e ->
+                        if (e is CancellationException) throw e
+                        _state.update { it.copy(isLoading = false, errorMessage = e.toUserMessage()) }
                     }
-                } else {
-                    _state.update { it.copy(isLoading = false, errorMessage = "Estratégia não encontrada.") }
-                }
+                    .collect { strategy ->
+                        if (strategy != null) {
+                            _state.update {
+                                it.copy(
+                                    strategy = strategy,
+                                    title = strategy.title,
+                                    description = strategy.description,
+                                    date = strategy.date,
+                                    category = strategy.category ?: "",
+                                    campaign = strategy.campaign ?: "",
+                                    status = strategy.status,
+                                    isLoading = false,
+                                    errorMessage = null
+                                )
+                            }
+                        } else {
+                            _state.update { it.copy(isLoading = false, errorMessage = LOAD_FAILED_MESSAGE) }
+                        }
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoading = false, errorMessage = e.toUserMessage()) }
             }
         }
     }
@@ -75,8 +90,19 @@ class EditStrategyViewModel @Inject constructor(
     fun onShowHistoryDialog() {
         _state.update { it.copy(showHistoryDialog = true, isLoadingHistory = true) }
         viewModelScope.launch {
-            repository.consultarHistorico(strategyId).collect { history ->
-                _state.update { it.copy(historyItems = history, isLoadingHistory = false) }
+            try {
+                repository.consultarHistorico(strategyId)
+                    .catch { e ->
+                        if (e is CancellationException) throw e
+                        _state.update { it.copy(isLoadingHistory = false, errorMessage = e.toUserMessage()) }
+                    }
+                    .collect { history ->
+                        _state.update { it.copy(historyItems = history, isLoadingHistory = false) }
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoadingHistory = false, errorMessage = e.toUserMessage()) }
             }
         }
     }
@@ -97,30 +123,36 @@ class EditStrategyViewModel @Inject constructor(
 
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true, errorMessage = null) }
-            val res = repository.updateStrategy(
-                id = strategyId,
-                titulo = cur.title,
-                descricao = cur.description,
-                data = cur.date,
-                categoria = cur.category,
-                campanha = cur.campaign
-            )
-            if (res.isSuccess) {
-                _state.update {
-                    it.copy(
-                        strategy = res.getOrNull(),
-                        status = res.getOrNull()?.status ?: cur.status,
-                        isSaving = false,
-                        feedbackMessage = "Estratégia atualizada com sucesso."
-                    )
+            try {
+                val res = repository.updateStrategy(
+                    id = strategyId,
+                    titulo = cur.title,
+                    descricao = cur.description,
+                    data = cur.date,
+                    categoria = cur.category,
+                    campanha = cur.campaign
+                )
+                if (res.isSuccess) {
+                    _state.update {
+                        it.copy(
+                            strategy = res.getOrNull(),
+                            status = res.getOrNull()?.status ?: cur.status,
+                            isSaving = false,
+                            feedbackMessage = "Estratégia atualizada com sucesso."
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            isSaving = false,
+                            errorMessage = res.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
-            } else {
-                _state.update {
-                    it.copy(
-                        isSaving = false,
-                        errorMessage = res.exceptionOrNull()?.message ?: "Erro ao atualizar estratégia"
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isSaving = false, errorMessage = e.toUserMessage()) }
             }
         }
     }
@@ -129,23 +161,29 @@ class EditStrategyViewModel @Inject constructor(
         if (_state.value.isSaving) return
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true, errorMessage = null) }
-            val res = repository.activateStrategy(strategyId)
-            if (res.isSuccess) {
-                _state.update {
-                    it.copy(
-                        strategy = res.getOrNull(),
-                        status = StrategyStatus.ATIVA,
-                        isSaving = false,
-                        feedbackMessage = "Estratégia ativada com sucesso."
-                    )
+            try {
+                val res = repository.activateStrategy(strategyId)
+                if (res.isSuccess) {
+                    _state.update {
+                        it.copy(
+                            strategy = res.getOrNull(),
+                            status = StrategyStatus.ATIVA,
+                            isSaving = false,
+                            feedbackMessage = "Estratégia ativada com sucesso."
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            isSaving = false,
+                            errorMessage = res.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
-            } else {
-                _state.update {
-                    it.copy(
-                        isSaving = false,
-                        errorMessage = res.exceptionOrNull()?.message ?: "Erro ao ativar estratégia"
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isSaving = false, errorMessage = e.toUserMessage()) }
             }
         }
     }
@@ -154,23 +192,29 @@ class EditStrategyViewModel @Inject constructor(
         if (_state.value.isSaving) return
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true, errorMessage = null) }
-            val res = repository.deactivateStrategy(strategyId)
-            if (res.isSuccess) {
-                _state.update {
-                    it.copy(
-                        strategy = res.getOrNull(),
-                        status = StrategyStatus.INATIVA,
-                        isSaving = false,
-                        feedbackMessage = "Estratégia desativada com sucesso."
-                    )
+            try {
+                val res = repository.deactivateStrategy(strategyId)
+                if (res.isSuccess) {
+                    _state.update {
+                        it.copy(
+                            strategy = res.getOrNull(),
+                            status = StrategyStatus.INATIVA,
+                            isSaving = false,
+                            feedbackMessage = "Estratégia desativada com sucesso."
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            isSaving = false,
+                            errorMessage = res.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
-            } else {
-                _state.update {
-                    it.copy(
-                        isSaving = false,
-                        errorMessage = res.exceptionOrNull()?.message ?: "Erro ao desativar estratégia"
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isSaving = false, errorMessage = e.toUserMessage()) }
             }
         }
     }
@@ -182,22 +226,28 @@ class EditStrategyViewModel @Inject constructor(
         if (_state.value.isSaving) return
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true, showArchiveDialog = false, errorMessage = null) }
-            val res = repository.archiveStrategy(strategyId)
-            if (res.isSuccess) {
-                _state.update {
-                    it.copy(
-                        isSaving = false,
-                        feedbackMessage = "Estratégia arquivada com sucesso.",
-                        shouldNavigateBack = true
-                    )
+            try {
+                val res = repository.archiveStrategy(strategyId)
+                if (res.isSuccess) {
+                    _state.update {
+                        it.copy(
+                            isSaving = false,
+                            feedbackMessage = "Estratégia arquivada com sucesso.",
+                            shouldNavigateBack = true
+                        )
+                    }
+                } else {
+                    _state.update {
+                        it.copy(
+                            isSaving = false,
+                            errorMessage = res.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
-            } else {
-                _state.update {
-                    it.copy(
-                        isSaving = false,
-                        errorMessage = res.exceptionOrNull()?.message ?: "Erro ao arquivar estratégia"
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isSaving = false, errorMessage = e.toUserMessage()) }
             }
         }
     }

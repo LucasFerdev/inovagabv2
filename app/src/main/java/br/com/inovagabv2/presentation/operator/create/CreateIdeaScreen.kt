@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.AguiaButton
+import br.com.inovagabv2.core.designsystem.components.AguiaErrorState
 import br.com.inovagabv2.core.designsystem.components.AguiaTextField
 import br.com.inovagabv2.core.designsystem.components.AguiaTopBar
 import br.com.inovagabv2.domain.model.Strategy
@@ -71,7 +72,8 @@ fun CreateIdeaScreen(
                         state = state,
                         onStrategySelected = viewModel::onStrategySelected,
                         selectedCategory = state.category,
-                        onCategorySelected = viewModel::onCategoryChange
+                        onCategorySelected = viewModel::onCategoryChange,
+                        onRetryLoadStrategies = viewModel::loadActiveStrategies
                     )
                     2 -> DetailsStep(
                         title = state.title,
@@ -200,7 +202,8 @@ private fun CategoryStep(
     state: CreateIdeaState,
     onStrategySelected: (Strategy) -> Unit,
     selectedCategory: String,
-    onCategorySelected: (String) -> Unit
+    onCategorySelected: (String) -> Unit,
+    onRetryLoadStrategies: () -> Unit
 ) {
     val categories = listOf(
         CategoryItem("Atendimento", Icons.Default.Person),
@@ -225,6 +228,11 @@ private fun CategoryStep(
 
         if (state.isLoadingStrategies) {
             CircularProgressIndicator(modifier = Modifier.size(24.dp), color = AguiaColors.PrimaryBlue)
+        } else if (state.strategiesError != null) {
+            AguiaErrorState(
+                message = state.strategiesError ?: "Algo deu errado. Tente novamente.",
+                onRetry = onRetryLoadStrategies
+            )
         } else if (state.activeStrategies.isEmpty()) {
             Text(
                 text = "Nenhuma estratégia ativa disponível. Aguarde a definição de uma estratégia pela Liderança.",

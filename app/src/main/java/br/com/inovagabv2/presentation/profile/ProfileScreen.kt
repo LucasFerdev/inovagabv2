@@ -54,7 +54,15 @@ fun ProfileScreen(
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val logoutError by viewModel.logoutError.collectAsState()
     val supportEmail = stringResource(R.string.support_email)
+
+    LaunchedEffect(logoutError) {
+        logoutError?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearLogoutError()
+        }
+    }
 
     fun openSupportEmail() {
         try {

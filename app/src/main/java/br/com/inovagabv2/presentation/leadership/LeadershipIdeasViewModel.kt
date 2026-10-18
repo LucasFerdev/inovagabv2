@@ -2,12 +2,14 @@ package br.com.inovagabv2.presentation.leadership
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.IdeaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,6 +28,9 @@ class LeadershipIdeasViewModel @Inject constructor(
     private val _selectedStatus = MutableStateFlow<IdeaStatus?>(null)
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
 
     val filteredIdeas: StateFlow<List<Idea>> = combine(_allIdeas, _searchQuery, _selectedStatus) { ideas, query, status ->
         ideas.filter { idea ->
@@ -50,9 +55,24 @@ class LeadershipIdeasViewModel @Inject constructor(
     fun loadIdeas() {
         viewModelScope.launch {
             _isLoading.value = true
-            ideaRepository.getIdeas().collect { ideas ->
-                _allIdeas.value = ideas
+            _error.value = null
+            try {
+                ideaRepository.getIdeas()
+                    .catch { e ->
+                        if (e is CancellationException) throw e
+                        _isLoading.value = false
+                        _error.value = e.toUserMessage()
+                    }
+                    .collect { ideas ->
+                        _allIdeas.value = ideas
+                        _isLoading.value = false
+                        _error.value = null
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
                 _isLoading.value = false
+                _error.value = e.toUserMessage()
             }
         }
     }
