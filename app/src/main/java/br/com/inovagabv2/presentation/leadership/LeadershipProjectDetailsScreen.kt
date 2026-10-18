@@ -14,7 +14,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.util.formatCurrency
 import br.com.inovagabv2.core.util.formatDate
+import br.com.inovagabv2.core.util.formatPercent
 import br.com.inovagabv2.core.designsystem.components.*
 
 @Composable
@@ -180,28 +182,20 @@ fun LeadershipProjectDetailsScreen(
                         Text("Prazo: ${formatDate(deadline)}", fontSize = 13.sp, color = AguiaColors.TextSecondary)
 
                         dash?.investimento?.let { inv ->
-                            Text("Investimento: ${formatMonetaryVal(inv.toDouble())}", fontSize = 13.sp, color = AguiaColors.NavyDark, fontWeight = FontWeight.SemiBold)
+                            Text("Investimento: ${formatCurrency(inv)}", fontSize = 13.sp, color = AguiaColors.NavyDark, fontWeight = FontWeight.SemiBold)
                         }
                         dash?.retornoFinanceiro?.let { ret ->
-                            Text("Retorno Financeiro: ${formatMonetaryVal(ret.toDouble())}", fontSize = 13.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
+                            Text("Retorno Financeiro: ${formatCurrency(ret)}", fontSize = 13.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
                         }
                         dash?.lucro?.let { luc ->
-                            Text("Lucro: ${formatMonetaryVal(luc.toDouble())}", fontSize = 13.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
+                            Text("Lucro: ${formatCurrency(luc)}", fontSize = 13.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
                         }
                         dash?.roiPercentual?.let { roi ->
-                            Text("ROI: ${String.format(java.util.Locale.US, "%.1f%%", roi.toDouble()).replace(".", ",")}", fontSize = 13.sp, color = AguiaColors.PrimaryBlue, fontWeight = FontWeight.Bold)
+                            Text("ROI: ${formatPercent(roi)}", fontSize = 13.sp, color = AguiaColors.PrimaryBlue, fontWeight = FontWeight.Bold)
                         }
                     }
                 }
             }
         }
-    }
-}
-
-private fun formatMonetaryVal(value: Double): String {
-    return when {
-        value >= 1_000_000 -> String.format(java.util.Locale.US, "R$ %.2f mi", value / 1_000_000).replace(".", ",")
-        value >= 1_000 -> String.format(java.util.Locale.US, "R$ %.0f mil", value / 1_000)
-        else -> String.format(java.util.Locale.US, "R$ %.2f", value).replace(".", ",")
     }
 }

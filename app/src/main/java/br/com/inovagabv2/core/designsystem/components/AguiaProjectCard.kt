@@ -17,6 +17,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.util.formatCurrencyCompact
 import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.domain.model.Project
 
@@ -149,7 +150,7 @@ fun AguiaProjectCard(
                             color = AguiaColors.TextSecondary
                         )
                         Text(
-                            text = formatMonetary(project.investment.toDouble()),
+                            text = formatCurrencyCompact(project.investment),
                             style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.SemiBold,
                             color = AguiaColors.NavyDark
@@ -158,13 +159,5 @@ fun AguiaProjectCard(
                 }
             }
         }
-    }
-}
-
-private fun formatMonetary(value: Double): String {
-    return when {
-        value >= 1_000_000 -> String.format(java.util.Locale.US, "R$ %.2f mi", value / 1_000_000).replace(".", ",")
-        value >= 1_000 -> String.format(java.util.Locale.US, "R$ %.0f mil", value / 1_000)
-        else -> String.format(java.util.Locale.US, "R$ %.2f", value).replace(".", ",")
     }
 }

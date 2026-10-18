@@ -1,5 +1,7 @@
 package br.com.inovagabv2.domain.model
 
+import br.com.inovagabv2.core.util.formatCurrencyCompact
+import br.com.inovagabv2.core.util.formatPercent
 import java.math.BigDecimal
 
 data class DashboardData(
@@ -24,23 +26,14 @@ data class DashboardData(
     val ideiasPorStatus: Map<IdeaStatus, Long> = emptyMap(),
     val resultsByProject: List<ProjectResult> = emptyList()
 ) {
-    val roi: String get() = String.format(java.util.Locale.US, "%.1f%%", roiPercentual.toDouble()).replace(".", ",")
-    val profit: String get() = formatMonetary(lucroObtido)
+    val roi: String get() = formatPercent(roiPercentual)
+    val profit: String get() = formatCurrencyCompact(lucroObtido)
     val investment: Double get() = investimentoTotal.toDouble()
     val financialReturn: Double get() = retornoFinanceiroTotal.toDouble()
     val activeProjectsCount: Int get() = (totalEmAndamento + totalPlanejado).toInt()
     val delayedProjectsCount: Int get() = projetosAtrasados.toInt()
     val approvedIdeasCount: Int get() = ideiasAprovadas.toInt()
     val inAnalysisIdeasCount: Int get() = ideiasEmAnalise.toInt()
-
-    private fun formatMonetary(value: BigDecimal): String {
-        val d = value.toDouble()
-        return when {
-            d >= 1_000_000 -> String.format(java.util.Locale.US, "R$ %.2f mi", d / 1_000_000).replace(".", ",")
-            d >= 1_000 -> String.format(java.util.Locale.US, "R$ %.0f mil", d / 1_000)
-            else -> String.format(java.util.Locale.US, "R$ %.2f", d).replace(".", ",")
-        }
-    }
 }
 
 data class ProjectResult(

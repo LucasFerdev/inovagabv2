@@ -27,7 +27,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.util.formatCurrencyCompact
 import br.com.inovagabv2.core.util.formatDate
+import br.com.inovagabv2.core.util.formatPercent
+import java.math.BigDecimal
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Idea
@@ -241,7 +244,7 @@ fun StrategyDashboardScreen(
                                     color = Color(0xFFDCFCE7)
                                 ) {
                                     Text(
-                                        text = String.format(java.util.Locale.US, "ROI %.1f%%", roiVal).replace(".", ","),
+                                        text = "ROI ${formatPercent(BigDecimal.valueOf(roiVal))}",
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Bold,
                                         color = Color(0xFF16A34A),
@@ -256,9 +259,9 @@ fun StrategyDashboardScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                ConsolidatedMetricCol("Investimento", formatMonetaryVal(totalInvest), AguiaColors.PrimaryBlue)
-                                ConsolidatedMetricCol("Retorno", formatMonetaryVal(totalReturn), Color(0xFF0284C7))
-                                ConsolidatedMetricCol("Lucro", formatMonetaryVal(profit), Color(0xFF16A34A))
+                                ConsolidatedMetricCol("Investimento", formatCurrencyCompact(BigDecimal.valueOf(totalInvest)), AguiaColors.PrimaryBlue)
+                                ConsolidatedMetricCol("Retorno", formatCurrencyCompact(BigDecimal.valueOf(totalReturn)), Color(0xFF0284C7))
+                                ConsolidatedMetricCol("Lucro", formatCurrencyCompact(BigDecimal.valueOf(profit)), Color(0xFF16A34A))
                             }
                         }
                     }
@@ -514,13 +517,5 @@ private fun LinkedIdeaCardItem(
                 }
             }
         }
-    }
-}
-
-private fun formatMonetaryVal(value: Double): String {
-    return when {
-        value >= 1_000_000 -> String.format(java.util.Locale.US, "R$ %.2f mi", value / 1_000_000).replace(".", ",")
-        value >= 1_000 -> String.format(java.util.Locale.US, "R$ %.0f mil", value / 1_000)
-        else -> String.format(java.util.Locale.US, "R$ %.2f", value).replace(".", ",")
     }
 }

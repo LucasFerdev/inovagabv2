@@ -19,8 +19,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
+import br.com.inovagabv2.core.util.formatCurrency
 import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.core.util.formatDecimalBr
+import br.com.inovagabv2.core.util.formatPercent
 import br.com.inovagabv2.core.util.parseDecimalBr
 import br.com.inovagabv2.domain.model.ProjectStage
 import br.com.inovagabv2.domain.model.ProjectStatus
@@ -387,7 +389,7 @@ fun ManagerProjectDetailsScreen(
                     )
                     AguiaMetricCard(
                         label = "Investimento",
-                        value = formatMonetaryVal(project.investment.toDouble()),
+                        value = formatCurrency(project.investment),
                         color = AguiaColors.TextPrimary,
                         modifier = Modifier.weight(1f)
                     )
@@ -409,10 +411,10 @@ fun ManagerProjectDetailsScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             project.retornoFinanceiro?.let { ret ->
-                                Text("Retorno Financeiro: ${formatMonetaryVal(ret.toDouble())}", fontSize = 13.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
+                                Text("Retorno Financeiro: ${formatCurrency(ret)}", fontSize = 13.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
                             }
                             project.ganhoProdutividadePercentual?.let { prod ->
-                                Text("Ganho de Produtividade: ${prod.toDouble()}%", fontSize = 13.sp, color = AguiaColors.PrimaryBlue)
+                                Text("Ganho de Produtividade: ${formatPercent(prod)}", fontSize = 13.sp, color = AguiaColors.PrimaryBlue)
                             }
                             project.resultado?.let { res ->
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -462,13 +464,5 @@ fun ManagerProjectDetailsScreen(
                 )
             }
         }
-    }
-}
-
-private fun formatMonetaryVal(value: Double): String {
-    return when {
-        value >= 1_000_000 -> String.format(java.util.Locale.US, "R$ %.2f mi", value / 1_000_000).replace(".", ",")
-        value >= 1_000 -> String.format(java.util.Locale.US, "R$ %.0f mil", value / 1_000)
-        else -> String.format(java.util.Locale.US, "R$ %.2f", value).replace(".", ",")
     }
 }
