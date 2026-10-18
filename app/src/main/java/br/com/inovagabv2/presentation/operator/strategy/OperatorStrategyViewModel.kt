@@ -9,6 +9,7 @@ import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.StrategyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -58,13 +59,18 @@ class OperatorStrategyViewModel @Inject constructor(
         filtered
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    private var loadJob: Job? = null
+
     init {
-        loadStrategies()
+        refresh()
     }
 
-    fun loadStrategies() {
-        viewModelScope.launch {
-            _isLoading.value = true
+    fun refresh() {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            if (_strategies.value.isEmpty()) {
+                _isLoading.value = true
+            }
             _error.value = null
             try {
                 strategyRepository.getActiveStrategies()
@@ -85,6 +91,10 @@ class OperatorStrategyViewModel @Inject constructor(
                 _error.value = e.toUserMessage()
             }
         }
+    }
+
+    fun loadStrategies() {
+        refresh()
     }
 
     fun onSearchQueryChange(query: String) {

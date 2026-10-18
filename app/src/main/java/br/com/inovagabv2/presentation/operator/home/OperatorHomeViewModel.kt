@@ -2,6 +2,7 @@ package br.com.inovagabv2.presentation.operator.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
@@ -88,8 +89,7 @@ class OperatorHomeViewModel @Inject constructor(
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        error = e.message?.takeIf { message -> message.isNotBlank() }
-                            ?: "Não foi possível carregar os dados. Tente novamente."
+                        error = e.toUserMessage()
                     )
                 }
             }

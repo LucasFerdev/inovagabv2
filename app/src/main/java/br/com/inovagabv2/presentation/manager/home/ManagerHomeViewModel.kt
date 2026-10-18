@@ -2,6 +2,7 @@ package br.com.inovagabv2.presentation.manager.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.IdeaRepository
@@ -62,7 +63,7 @@ class ManagerHomeViewModel @Inject constructor(
                     _state.update {
                         it.copy(
                             isLoading = false,
-                            error = e.message ?: "Não foi possível carregar os dados. Tente novamente."
+                            error = e.toUserMessage()
                         )
                     }
                 }.collect()
@@ -72,7 +73,7 @@ class ManagerHomeViewModel @Inject constructor(
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        error = e.message ?: "Não foi possível carregar os dados. Tente novamente."
+                        error = e.toUserMessage()
                     )
                 }
             }

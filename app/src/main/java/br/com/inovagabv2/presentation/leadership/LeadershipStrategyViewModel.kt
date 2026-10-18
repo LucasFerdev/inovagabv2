@@ -75,8 +75,7 @@ class LeadershipStrategyViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 _isLoading.value = false
-                _error.value = e.message?.takeIf { it.isNotBlank() }
-                    ?: "Não foi possível carregar as estratégias. Tente novamente."
+                _error.value = e.toUserMessage()
             }
         }
     }

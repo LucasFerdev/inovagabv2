@@ -2,6 +2,7 @@ package br.com.inovagabv2.presentation.manager.ideas
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.repository.IdeaRepository
@@ -65,8 +66,7 @@ class ManagerIdeasViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 _isLoading.value = false
-                _error.value = e.message?.takeIf { it.isNotBlank() }
-                    ?: "Não foi possível carregar as ideias. Tente novamente."
+                _error.value = e.toUserMessage()
             }
         }
     }

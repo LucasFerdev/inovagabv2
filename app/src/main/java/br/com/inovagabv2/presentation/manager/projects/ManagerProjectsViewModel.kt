@@ -2,6 +2,7 @@ package br.com.inovagabv2.presentation.manager.projects
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.Project
 import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.ProjectRepository
@@ -56,7 +57,7 @@ class ManagerProjectsViewModel @Inject constructor(
                         _state.update {
                             it.copy(
                                 isLoading = false,
-                                error = e.message ?: "Erro ao carregar projetos."
+                                error = e.toUserMessage()
                             )
                         }
                     }
@@ -76,7 +77,7 @@ class ManagerProjectsViewModel @Inject constructor(
                 _state.update {
                     it.copy(
                         isLoading = false,
-                        error = e.message ?: "Erro ao carregar projetos."
+                        error = e.toUserMessage()
                     )
                 }
             }

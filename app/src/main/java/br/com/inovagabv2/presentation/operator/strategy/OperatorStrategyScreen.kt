@@ -35,6 +35,7 @@ import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.domain.model.Role
 import br.com.inovagabv2.domain.model.Strategy
+import br.com.inovagabv2.presentation.components.OnResumeEffect
 
 @Composable
 fun OperatorStrategyScreen(
@@ -53,6 +54,8 @@ fun OperatorStrategyScreen(
     val selectedCategory by viewModel.selectedCategory.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+
+    OnResumeEffect(onResume = viewModel::refresh)
 
     val currentRole = user?.role ?: userRole
 

@@ -1,5 +1,6 @@
 package br.com.inovagabv2.presentation.manager.ideas
 
+import br.com.inovagabv2.core.util.NO_CONNECTION_MESSAGE
 import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.IdeaStatus
@@ -17,9 +18,11 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ManagerIdeasViewModelTest {
@@ -59,12 +62,14 @@ class ManagerIdeasViewModelTest {
     @Test
     fun `falha ao carregar ideias preenche o erro sem derrubar`() = runTest {
         val repository = FakeIdeaRepository()
-        repository.failure = IllegalStateException("falha de rede")
+        val detalheOriginal = "detalhe interno da rede"
+        repository.failure = IOException(detalheOriginal)
 
         val viewModel = ManagerIdeasViewModel(repository)
         val state = viewModel.state.first { !it.isLoading }
 
-        assertEquals("falha de rede", state.error)
+        assertEquals(NO_CONNECTION_MESSAGE, state.error)
+        assertFalse(state.error!!.contains(detalheOriginal))
         assertEquals(true, state.ideas.isEmpty())
     }
 

@@ -10,6 +10,7 @@ import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.IdeaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -48,13 +49,18 @@ class LeadershipIdeasViewModel @Inject constructor(
     val rejectedCount: StateFlow<Int> = _allIdeas.map { list -> list.count { it.status == IdeaStatus.REJEITADA } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
+    private var loadJob: Job? = null
+
     init {
-        loadIdeas()
+        refresh()
     }
 
-    fun loadIdeas() {
-        viewModelScope.launch {
-            _isLoading.value = true
+    fun refresh() {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            if (_allIdeas.value.isEmpty()) {
+                _isLoading.value = true
+            }
             _error.value = null
             try {
                 ideaRepository.getIdeas()
@@ -75,6 +81,10 @@ class LeadershipIdeasViewModel @Inject constructor(
                 _error.value = e.toUserMessage()
             }
         }
+    }
+
+    fun loadIdeas() {
+        refresh()
     }
 
     fun onSearchQueryChange(query: String) {

@@ -10,6 +10,7 @@ import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.ProjectRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -50,13 +51,18 @@ class LeadershipProjectsViewModel @Inject constructor(
         else kotlin.math.round(list.sumOf { it.percentualProgresso }.toDouble() / list.size).toInt()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
+    private var loadJob: Job? = null
+
     init {
-        loadProjects()
+        refresh()
     }
 
-    fun loadProjects() {
-        viewModelScope.launch {
-            _isLoading.value = true
+    fun refresh() {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            if (_allProjects.value.isEmpty()) {
+                _isLoading.value = true
+            }
             _error.value = null
             try {
                 repository.getProjects()
@@ -77,6 +83,10 @@ class LeadershipProjectsViewModel @Inject constructor(
                 _error.value = e.toUserMessage()
             }
         }
+    }
+
+    fun loadProjects() {
+        refresh()
     }
 
     fun onStatusFilterChange(status: ProjectStatus?) {

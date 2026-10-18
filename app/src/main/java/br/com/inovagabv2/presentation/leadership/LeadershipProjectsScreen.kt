@@ -30,6 +30,7 @@ import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.ProjectStatus
 import br.com.inovagabv2.domain.model.Role
+import br.com.inovagabv2.presentation.components.OnResumeEffect
 
 @Composable
 fun LeadershipProjectsScreen(
@@ -47,6 +48,8 @@ fun LeadershipProjectsScreen(
     val averageProgress by viewModel.averageProgress.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+
+    OnResumeEffect(onResume = viewModel::refresh)
 
     val filterTabs = listOf("Todos", "Em andamento", "Planejados", "Concluídos")
     var selectedFilterIndex by remember { mutableIntStateOf(0) }

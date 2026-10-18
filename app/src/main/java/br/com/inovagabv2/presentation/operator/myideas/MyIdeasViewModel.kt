@@ -3,6 +3,7 @@ package br.com.inovagabv2.presentation.operator.myideas
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.inovagabv2.core.session.SessionManager
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
@@ -73,8 +74,7 @@ class MyIdeasViewModel @Inject constructor(
                 throw e
             } catch (e: Exception) {
                 _isLoading.value = false
-                _error.value = e.message?.takeIf { it.isNotBlank() }
-                    ?: "Não foi possível carregar suas ideias. Tente novamente."
+                _error.value = e.toUserMessage()
             }
         }
     }

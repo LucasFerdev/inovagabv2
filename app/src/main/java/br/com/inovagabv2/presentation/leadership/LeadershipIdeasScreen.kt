@@ -27,6 +27,7 @@ import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.Role
+import br.com.inovagabv2.presentation.components.OnResumeEffect
 
 @Composable
 fun LeadershipIdeasScreen(
@@ -44,6 +45,8 @@ fun LeadershipIdeasScreen(
     val rejectedCount by viewModel.rejectedCount.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
+
+    OnResumeEffect(onResume = viewModel::refresh)
 
     val filterTabs = listOf("Todas", "Em análise", "Aprovadas", "Rejeitadas")
     var selectedFilterIndex by remember { mutableIntStateOf(0) }

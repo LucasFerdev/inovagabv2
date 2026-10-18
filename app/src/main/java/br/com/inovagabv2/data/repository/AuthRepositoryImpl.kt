@@ -1,6 +1,7 @@
 package br.com.inovagabv2.data.repository
 
 import android.util.Log
+import br.com.inovagabv2.BuildConfig
 import br.com.inovagabv2.core.session.SessionManager
 import br.com.inovagabv2.core.util.SERVER_STARTING_MESSAGE
 import br.com.inovagabv2.core.util.isServerStartingTimeout
@@ -16,8 +17,6 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import retrofit2.Response
 import java.io.IOException
-import java.net.ConnectException
-import java.net.UnknownHostException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -95,10 +94,11 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     private fun logError(tag: String, message: String, throwable: Throwable) {
+        if (!BuildConfig.DEBUG) return
         try {
             Log.e(tag, message, throwable)
         } catch (_: Throwable) {
-            println("$tag: $message - ${throwable.message}")
+            // android.util.Log não existe nos testes unitários da JVM.
         }
     }
 
@@ -126,14 +126,12 @@ class AuthRepositoryImpl @Inject constructor(
     private fun parseExceptionMessage(e: Exception): String {
         if (e.isServerStartingTimeout()) return SERVER_STARTING_MESSAGE
         return when (e) {
-            is ConnectException, is UnknownHostException ->
-                "Falha ao conectar com o servidor. Verifique se o backend está ligado e se a API_BASE_URL está correta."
             is SerializationException ->
-                "Erro ao processar a resposta do servidor: ${e.message}"
+                "Não foi possível processar a resposta do servidor. Tente novamente."
             is IOException ->
-                "Erro de rede ao se comunicar com o servidor: ${e.localizedMessage ?: e.message}"
+                "Não foi possível conectar ao servidor. Verifique sua internet e tente novamente."
             else ->
-                e.message ?: "Ocorreu um erro inesperado."
+                "Ocorreu um erro inesperado."
         }
     }
 }
