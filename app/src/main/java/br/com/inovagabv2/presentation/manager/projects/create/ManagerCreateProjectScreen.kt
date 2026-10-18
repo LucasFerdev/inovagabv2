@@ -185,7 +185,9 @@ fun ManagerCreateProjectScreen(
             AguiaTextField(
                 value = state.deadline,
                 onValueChange = viewModel::onDeadlineChange,
-                label = "Prazo Estimado (AAAA-MM-DD)"
+                label = "Prazo Estimado (DD/MM/AAAA)",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                error = state.deadlineError
             )
 
             Spacer(modifier = Modifier.height(16.dp))

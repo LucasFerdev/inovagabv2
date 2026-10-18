@@ -2,11 +2,13 @@ package br.com.inovagabv2.presentation.leadership
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
@@ -70,7 +72,9 @@ fun CreateStrategyScreen(
             AguiaTextField(
                 value = state.date,
                 onValueChange = { viewModel.onDateChange(it) },
-                label = "Data de Início (AAAA-MM-DD)"
+                label = "Data de Início (DD/MM/AAAA)",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                error = state.dateError
             )
 
             AguiaTextField(

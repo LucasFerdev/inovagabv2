@@ -2,6 +2,9 @@ package br.com.inovagabv2.presentation.leadership
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.dateFieldError
+import br.com.inovagabv2.core.util.maskDateInput
+import br.com.inovagabv2.core.util.parseDateBr
 import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.repository.StrategyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -23,7 +26,13 @@ data class CreateStrategyState(
     val feedbackMessage: String? = null,
     val error: String? = null
 ) {
-    val isValid: Boolean get() = title.isNotBlank() && description.isNotBlank() && category.isNotBlank() && campaign.isNotBlank() && date.isNotBlank()
+    val dateError: String? get() = dateFieldError(date)
+    val isValid: Boolean
+        get() = title.isNotBlank() &&
+            description.isNotBlank() &&
+            category.isNotBlank() &&
+            campaign.isNotBlank() &&
+            parseDateBr(date) != null
 }
 
 @HiltViewModel
@@ -36,12 +45,13 @@ class CreateStrategyViewModel @Inject constructor(
 
     fun onTitleChange(title: String) = _state.update { it.copy(title = title) }
     fun onDescriptionChange(desc: String) = _state.update { it.copy(description = desc) }
-    fun onDateChange(date: String) = _state.update { it.copy(date = date) }
+    fun onDateChange(date: String) = _state.update { it.copy(date = maskDateInput(date)) }
     fun onCategoryChange(cat: String) = _state.update { it.copy(category = cat) }
     fun onCampaignChange(camp: String) = _state.update { it.copy(campaign = camp) }
 
     fun saveStrategy(activateNow: Boolean = false) {
         val current = _state.value
+        val isoDate = parseDateBr(current.date)?.toString() ?: return
         if (!current.isValid || current.isSaving) return
 
         viewModelScope.launch {
@@ -50,7 +60,7 @@ class CreateStrategyViewModel @Inject constructor(
                 val result = repository.createStrategy(
                     titulo = current.title,
                     descricao = current.description,
-                    data = current.date,
+                    data = isoDate,
                     categoria = current.category,
                     campanha = current.campaign
                 )

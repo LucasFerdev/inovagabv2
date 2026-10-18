@@ -8,10 +8,45 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
+import java.time.format.ResolverStyle
 
 private val DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+private val DATE_INPUT_BR = DateTimeFormatter.ofPattern("dd/MM/uuuu")
+    .withResolverStyle(ResolverStyle.STRICT)
 private val DATE_TIME_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH:mm")
 private const val EMPTY_DATE = "—"
+const val DATE_INPUT_ERROR = "Informe uma data válida (DD/MM/AAAA)."
+
+fun parseDateBr(input: String): LocalDate? {
+    val value = input.trim()
+    if (value.isEmpty()) return null
+    return try {
+        if ('/' in value) {
+            LocalDate.parse(value, DATE_INPUT_BR)
+        } else {
+            LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE)
+        }
+    } catch (_: DateTimeParseException) {
+        null
+    }
+}
+
+fun formatDateInput(date: LocalDate?): String = date?.format(DATE_FORMAT).orEmpty()
+
+fun maskDateInput(input: String): String {
+    val digits = input.filter { it.isDigit() }.take(8)
+    return buildString {
+        for (index in digits.indices) {
+            if (index == 2 || index == 4) append('/')
+            append(digits[index])
+        }
+    }
+}
+
+fun dateFieldError(input: String): String? {
+    if (input.count { it.isDigit() } != 8) return null
+    return if (parseDateBr(input) == null) DATE_INPUT_ERROR else null
+}
 
 fun formatDate(iso: String?, zone: ZoneId = ZoneId.systemDefault()): String {
     return try {

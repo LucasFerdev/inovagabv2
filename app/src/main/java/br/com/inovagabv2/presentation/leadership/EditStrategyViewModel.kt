@@ -4,6 +4,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.inovagabv2.core.util.LOAD_FAILED_MESSAGE
+import br.com.inovagabv2.core.util.dateFieldError
+import br.com.inovagabv2.core.util.formatDateInput
+import br.com.inovagabv2.core.util.maskDateInput
+import br.com.inovagabv2.core.util.parseDateBr
 import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Strategy
@@ -33,7 +37,13 @@ data class EditStrategyState(
     val errorMessage: String? = null,
     val shouldNavigateBack: Boolean = false
 ) {
-    val isValid: Boolean get() = title.isNotBlank() && description.isNotBlank() && category.isNotBlank() && campaign.isNotBlank()
+    val dateError: String? get() = dateFieldError(date)
+    val isValid: Boolean
+        get() = title.isNotBlank() &&
+            description.isNotBlank() &&
+            category.isNotBlank() &&
+            campaign.isNotBlank() &&
+            parseDateBr(date) != null
 }
 
 @HiltViewModel
@@ -67,7 +77,7 @@ class EditStrategyViewModel @Inject constructor(
                                     strategy = strategy,
                                     title = strategy.title,
                                     description = strategy.description,
-                                    date = strategy.date,
+                                    date = formatDateInput(parseDateBr(strategy.date)).ifEmpty { strategy.date },
                                     category = strategy.category ?: "",
                                     campaign = strategy.campaign ?: "",
                                     status = strategy.status,
@@ -113,12 +123,13 @@ class EditStrategyViewModel @Inject constructor(
 
     fun onTitleChange(v: String) = _state.update { it.copy(title = v) }
     fun onDescriptionChange(v: String) = _state.update { it.copy(description = v) }
-    fun onDateChange(v: String) = _state.update { it.copy(date = v) }
+    fun onDateChange(v: String) = _state.update { it.copy(date = maskDateInput(v)) }
     fun onCategoryChange(v: String) = _state.update { it.copy(category = v) }
     fun onCampaignChange(v: String) = _state.update { it.copy(campaign = v) }
 
     fun onUpdateStrategy() {
         val cur = _state.value
+        val isoDate = parseDateBr(cur.date)?.toString() ?: return
         if (!cur.isValid || cur.isSaving) return
 
         viewModelScope.launch {
@@ -128,7 +139,7 @@ class EditStrategyViewModel @Inject constructor(
                     id = strategyId,
                     titulo = cur.title,
                     descricao = cur.description,
-                    data = cur.date,
+                    data = isoDate,
                     categoria = cur.category,
                     campanha = cur.campaign
                 )

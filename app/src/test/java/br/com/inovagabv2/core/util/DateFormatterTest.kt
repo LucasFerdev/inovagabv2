@@ -1,7 +1,9 @@
 package br.com.inovagabv2.core.util
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
+import java.time.LocalDate
 import java.time.ZoneId
 
 class DateFormatterTest {
@@ -39,5 +41,40 @@ class DateFormatterTest {
         assertEquals("—", formatDateTime(null, zone))
         assertEquals("—", formatDateTime("", zone))
         assertEquals("—", formatDateTime("abc", zone))
+    }
+
+    @Test
+    fun `parseDateBr accepts brazilian and iso dates`() {
+        assertEquals(LocalDate.of(2026, 10, 18), parseDateBr("18/10/2026"))
+        assertEquals(LocalDate.of(2026, 10, 18), parseDateBr("2026-10-18"))
+    }
+
+    @Test
+    fun `parseDateBr rejects invalid calendar dates blank and junk`() {
+        assertNull(parseDateBr("31/02/2026"))
+        assertNull(parseDateBr(""))
+        assertNull(parseDateBr("abc"))
+    }
+
+    @Test
+    fun `formatDateInput and parseDateBr round trip`() {
+        val date = LocalDate.of(2026, 10, 18)
+        assertEquals("18/10/2026", formatDateInput(date))
+        assertEquals("", formatDateInput(null))
+        assertEquals(date, parseDateBr(formatDateInput(date)))
+        assertEquals("18/10/2026", formatDateInput(parseDateBr("18/10/2026")))
+        assertEquals("18/10/2026", formatDateInput(parseDateBr("2026-10-18")))
+    }
+
+    @Test
+    fun `maskDateInput inserts slashes and keeps at most eight digits`() {
+        assertEquals("1", maskDateInput("1"))
+        assertEquals("18", maskDateInput("18"))
+        assertEquals("18/1", maskDateInput("181"))
+        assertEquals("18/10", maskDateInput("1810"))
+        assertEquals("18/10/2026", maskDateInput("18102026"))
+        assertEquals("18/10/2026", maskDateInput("18/10/2026"))
+        assertEquals("18/10/2026", maskDateInput("18a10b2026"))
+        assertEquals("", maskDateInput("abc"))
     }
 }

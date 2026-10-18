@@ -2,6 +2,9 @@ package br.com.inovagabv2.presentation.manager.projects.create
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.dateFieldError
+import br.com.inovagabv2.core.util.maskDateInput
+import br.com.inovagabv2.core.util.parseDateBr
 import br.com.inovagabv2.core.util.parseDecimalBr
 import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.Idea
@@ -35,6 +38,7 @@ data class ManagerCreateProjectState(
     val errorMessage: String? = null
 ) {
     val parsedDeadline: String? get() = parseDeadlineIso(deadline)
+    val deadlineError: String? get() = dateFieldError(deadline)
     val parsedInvestment: BigDecimal? get() = parseDecimalBr(investmentStr)
     val isValid: Boolean
         get() = name.isNotBlank() &&
@@ -44,38 +48,7 @@ data class ManagerCreateProjectState(
                 parsedInvestment != null
 }
 
-fun parseDeadlineIso(input: String): String? {
-    val clean = input.trim()
-    if (clean.isBlank()) return null
-
-    val ddmmyyyyRegex = "^(\\d{2})/(\\d{2})/(\\d{4})$".toRegex()
-    val ddmmyyyyMatch = ddmmyyyyRegex.matchEntire(clean)
-    if (ddmmyyyyMatch != null) {
-        val (day, month, year) = ddmmyyyyMatch.destructured
-        val dayInt = day.toIntOrNull() ?: return null
-        val monthInt = month.toIntOrNull() ?: return null
-        val yearInt = year.toIntOrNull() ?: return null
-        if (dayInt in 1..31 && monthInt in 1..12 && yearInt in 2020..2100) {
-            return String.format(java.util.Locale.US, "%04d-%02d-%02d", yearInt, monthInt, dayInt)
-        }
-        return null
-    }
-
-    val yyyymmddRegex = "^(\\d{4})-(\\d{2})-(\\d{2})$".toRegex()
-    val yyyymmddMatch = yyyymmddRegex.matchEntire(clean)
-    if (yyyymmddMatch != null) {
-        val (year, month, day) = yyyymmddMatch.destructured
-        val dayInt = day.toIntOrNull() ?: return null
-        val monthInt = month.toIntOrNull() ?: return null
-        val yearInt = year.toIntOrNull() ?: return null
-        if (dayInt in 1..31 && monthInt in 1..12 && yearInt in 2020..2100) {
-            return String.format(java.util.Locale.US, "%04d-%02d-%02d", yearInt, monthInt, dayInt)
-        }
-        return null
-    }
-
-    return null
-}
+fun parseDeadlineIso(input: String): String? = parseDateBr(input)?.toString()
 
 @HiltViewModel
 class ManagerCreateProjectViewModel @Inject constructor(
@@ -151,15 +124,11 @@ class ManagerCreateProjectViewModel @Inject constructor(
     }
     fun onIdeaSelected(idea: Idea?) = _state.update { it.copy(selectedIdea = idea) }
     fun onInvestmentChange(v: String) = _state.update { it.copy(investmentStr = v) }
-    fun onDeadlineChange(v: String) = _state.update { it.copy(deadline = v) }
+    fun onDeadlineChange(v: String) = _state.update { it.copy(deadline = maskDateInput(v)) }
 
     fun submitProject() {
         val cur = _state.value
-        val deadlineIso = cur.parsedDeadline
-        if (deadlineIso == null) {
-            _state.update { it.copy(errorMessage = "Informe uma data válida no formato DD/MM/AAAA ou AAAA-MM-DD (ex: 31/12/2026).") }
-            return
-        }
+        val deadlineIso = cur.parsedDeadline ?: return
 
         val investBd = cur.parsedInvestment
         if (investBd == null) {
