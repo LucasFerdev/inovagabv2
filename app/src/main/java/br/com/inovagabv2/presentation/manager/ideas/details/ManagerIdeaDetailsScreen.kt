@@ -85,14 +85,19 @@ fun ManagerIdeaDetailsScreen(
             onDismissRequest = viewModel::onDismissRejectionDialog,
             title = { Text("Confirmar Rejeição", fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text("Por favor, informe a justificativa da rejeição:")
                     OutlinedTextField(
                         value = state.rejectionReason,
                         onValueChange = viewModel::onRejectionReasonChange,
                         placeholder = { Text("Motivo da rejeição...") },
                         modifier = Modifier.fillMaxWidth(),
-                        minLines = 3
+                        singleLine = false,
+                        minLines = 3,
+                        maxLines = 6
                     )
                 }
             },
@@ -160,6 +165,7 @@ fun ManagerIdeaDetailsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
+                    .imePadding()
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)

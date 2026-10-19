@@ -24,6 +24,8 @@ fun AguiaTextField(
     leadingIcon: @Composable (() -> Unit)? = null,
     trailingIcon: @Composable (() -> Unit)? = null,
     singleLine: Boolean = true,
+    minLines: Int = 1,
+    maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default
 ) {
     OutlinedTextField(
@@ -39,6 +41,8 @@ fun AguiaTextField(
         leadingIcon = leadingIcon,
         trailingIcon = trailingIcon,
         singleLine = singleLine,
+        minLines = minLines,
+        maxLines = maxLines,
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = AguiaColors.PrimaryBlue,
             unfocusedBorderColor = AguiaColors.TextSecondary,

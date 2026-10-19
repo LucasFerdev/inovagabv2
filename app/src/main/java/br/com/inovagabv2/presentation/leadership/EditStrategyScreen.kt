@@ -108,9 +108,10 @@ fun EditStrategyScreen(
             Column(
                 modifier = Modifier
                     .padding(padding)
-                    .padding(20.dp)
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState()),
+                    .imePadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Row(
@@ -129,20 +130,26 @@ fun EditStrategyScreen(
 
                 AguiaTextField(
                     value = state.title,
-                    onValueChange = viewModel::onTitleChange,
-                    label = "Título da estratégia"
+                    onValueChange = { viewModel.onTitleChange(it.replace("\n", " ")) },
+                    label = "Título da estratégia",
+                    singleLine = false,
+                    maxLines = 3
                 )
 
                 AguiaTextField(
                     value = state.category,
-                    onValueChange = viewModel::onCategoryChange,
-                    label = "Categoria"
+                    onValueChange = { viewModel.onCategoryChange(it.replace("\n", " ")) },
+                    label = "Categoria",
+                    singleLine = false,
+                    maxLines = 3
                 )
 
                 AguiaTextField(
                     value = state.campaign,
-                    onValueChange = viewModel::onCampaignChange,
-                    label = "Campanha"
+                    onValueChange = { viewModel.onCampaignChange(it.replace("\n", " ")) },
+                    label = "Campanha",
+                    singleLine = false,
+                    maxLines = 3
                 )
 
                 AguiaTextField(
@@ -158,6 +165,7 @@ fun EditStrategyScreen(
                     onValueChange = viewModel::onDescriptionChange,
                     label = "Descrição detalhada",
                     singleLine = false,
+                    minLines = 3,
                     modifier = Modifier.heightIn(min = 100.dp)
                 )
 

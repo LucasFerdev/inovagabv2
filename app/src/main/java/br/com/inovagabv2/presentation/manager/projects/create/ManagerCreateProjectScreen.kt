@@ -58,9 +58,10 @@ fun ManagerCreateProjectScreen(
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(20.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
@@ -72,8 +73,10 @@ fun ManagerCreateProjectScreen(
 
             AguiaTextField(
                 value = state.name,
-                onValueChange = viewModel::onNameChange,
-                label = "Nome do projeto"
+                onValueChange = { viewModel.onNameChange(it.replace("\n", " ")) },
+                label = "Nome do projeto",
+                singleLine = false,
+                maxLines = 3
             )
 
             AguiaTextField(
@@ -81,6 +84,7 @@ fun ManagerCreateProjectScreen(
                 onValueChange = viewModel::onDescriptionChange,
                 label = "Descrição detalhada",
                 singleLine = false,
+                minLines = 3,
                 modifier = Modifier.heightIn(min = 90.dp)
             )
 

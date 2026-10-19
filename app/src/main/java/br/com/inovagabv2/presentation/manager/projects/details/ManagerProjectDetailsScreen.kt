@@ -69,7 +69,10 @@ fun ManagerProjectDetailsScreen(
             onDismissRequest = viewModel::onDismissProgressDialog,
             title = { Text("Atualizar Progresso", fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     Text("Etapa do Projeto:", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     Row(
                         modifier = Modifier
@@ -114,7 +117,9 @@ fun ManagerProjectDetailsScreen(
                             onValueChange = { justification = it },
                             placeholder = { Text("Justificativa da redução de progresso...") },
                             modifier = Modifier.fillMaxWidth(),
-                            minLines = 2
+                            singleLine = false,
+                            minLines = 3,
+                            maxLines = 6
                         )
                     }
                 }
@@ -164,12 +169,16 @@ fun ManagerProjectDetailsScreen(
             onDismissRequest = viewModel::onDismissResultsDialog,
             title = { Text("Registrar Resultados", fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     OutlinedTextField(
                         value = returnValStr,
                         onValueChange = { returnValStr = it },
                         label = { Text("Retorno Financeiro (R$)") },
                         modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         isError = returnError != null,
                         supportingText = returnError?.let { msg -> { Text(msg) } }
@@ -179,6 +188,7 @@ fun ManagerProjectDetailsScreen(
                         onValueChange = { productivityStr = it },
                         label = { Text("Ganho de Produtividade (%)") },
                         modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         isError = productivityError != null,
                         supportingText = productivityError?.let { msg -> { Text(msg) } }
@@ -188,7 +198,9 @@ fun ManagerProjectDetailsScreen(
                         onValueChange = { resultText = it },
                         label = { Text("Resumo do Resultado") },
                         modifier = Modifier.fillMaxWidth(),
-                        minLines = 2
+                        singleLine = false,
+                        minLines = 3,
+                        maxLines = 6
                     )
                 }
             },
@@ -282,6 +294,7 @@ fun ManagerProjectDetailsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
+                    .imePadding()
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)

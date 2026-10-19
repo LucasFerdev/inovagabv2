@@ -1,7 +1,9 @@
 package br.com.inovagabv2.presentation.leadership
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -43,9 +45,14 @@ fun CreateStrategyScreen(
             modifier = Modifier
                 .padding(padding)
                 .padding(20.dp)
-                .fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .fillMaxSize()
         ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
             Text(
                 text = "Cadastrar nova diretriz",
                 fontSize = 20.sp,
@@ -55,20 +62,26 @@ fun CreateStrategyScreen(
 
             AguiaTextField(
                 value = state.title,
-                onValueChange = { viewModel.onTitleChange(it) },
-                label = "Título da estratégia"
+                onValueChange = { viewModel.onTitleChange(it.replace("\n", " ")) },
+                label = "Título da estratégia",
+                singleLine = false,
+                maxLines = 3
             )
 
             AguiaTextField(
                 value = state.category,
-                onValueChange = { viewModel.onCategoryChange(it) },
-                label = "Categoria (ex: Operação, Sustentabilidade)"
+                onValueChange = { viewModel.onCategoryChange(it.replace("\n", " ")) },
+                label = "Categoria (ex: Operação, Sustentabilidade)",
+                singleLine = false,
+                maxLines = 3
             )
 
             AguiaTextField(
                 value = state.campaign,
-                onValueChange = { viewModel.onCampaignChange(it) },
-                label = "Campanha"
+                onValueChange = { viewModel.onCampaignChange(it.replace("\n", " ")) },
+                label = "Campanha",
+                singleLine = false,
+                maxLines = 3
             )
 
             AguiaTextField(
@@ -84,6 +97,7 @@ fun CreateStrategyScreen(
                 onValueChange = { viewModel.onDescriptionChange(it) },
                 label = "Descrição detalhada",
                 singleLine = false,
+                minLines = 3,
                 modifier = Modifier.heightIn(min = 100.dp)
             )
 
@@ -94,12 +108,15 @@ fun CreateStrategyScreen(
                     fontSize = 12.sp
                 )
             }
-
-            Spacer(modifier = Modifier.weight(1f))
+            }
 
             Row(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp)
+                    .imePadding()
+                    .navigationBarsPadding()
             ) {
                 OutlinedButton(
                     onClick = { viewModel.saveStrategy(activateNow = false) },

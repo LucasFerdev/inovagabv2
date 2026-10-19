@@ -5,10 +5,9 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -64,11 +63,15 @@ fun CreateIdeaScreen(
                 .padding(padding)
                 .padding(horizontal = 16.dp, vertical = 12.dp)
         ) {
-            StepIndicator(currentStep = state.currentStep)
-            
-            Spacer(modifier = Modifier.height(20.dp))
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                StepIndicator(currentStep = state.currentStep)
 
-            Box(modifier = Modifier.weight(1f)) {
+                Spacer(modifier = Modifier.height(20.dp))
+
                 when (state.currentStep) {
                     1 -> CategoryStep(
                         state = state,
@@ -103,6 +106,8 @@ fun CreateIdeaScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .imePadding()
+                    .navigationBarsPadding()
                     .padding(vertical = 12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -275,57 +280,61 @@ private fun CategoryStep(
             color = AguiaColors.NavyDark
         )
         Spacer(modifier = Modifier.height(12.dp))
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(categories) { category ->
-                val isSelected = selectedCategory == category.name
-                Card(
-                    modifier = Modifier
-                        .height(56.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .border(
-                            width = if (isSelected) 2.dp else 0.dp,
-                            color = if (isSelected) AguiaColors.PrimaryBlue else Color.Transparent,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .clickable { onCategorySelected(category.name) },
-                    colors = CardDefaults.cardColors(
-                        containerColor = if (isSelected) AguiaColors.PrimaryBlue.copy(alpha = 0.08f) else AguiaColors.CardWhite
-                    ),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            categories.chunked(2).forEach { rowItems ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
+                    rowItems.forEach { category ->
+                        val isSelected = selectedCategory == category.name
+                        Card(
                             modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(if (isSelected) AguiaColors.PrimaryBlue else AguiaColors.PrimaryBlue.copy(alpha = 0.1f)),
-                            contentAlignment = Alignment.Center
+                                .weight(1f)
+                                .height(56.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .border(
+                                    width = if (isSelected) 2.dp else 0.dp,
+                                    color = if (isSelected) AguiaColors.PrimaryBlue else Color.Transparent,
+                                    shape = RoundedCornerShape(12.dp)
+                                )
+                                .clickable { onCategorySelected(category.name) },
+                            colors = CardDefaults.cardColors(
+                                containerColor = if (isSelected) AguiaColors.PrimaryBlue.copy(alpha = 0.08f) else AguiaColors.CardWhite
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                         ) {
-                            Icon(
-                                imageVector = category.icon,
-                                contentDescription = null,
-                                tint = if (isSelected) Color.White else AguiaColors.PrimaryBlue,
-                                modifier = Modifier.size(16.dp)
-                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(32.dp)
+                                        .clip(CircleShape)
+                                        .background(if (isSelected) AguiaColors.PrimaryBlue else AguiaColors.PrimaryBlue.copy(alpha = 0.1f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = category.icon,
+                                        contentDescription = null,
+                                        tint = if (isSelected) Color.White else AguiaColors.PrimaryBlue,
+                                        modifier = Modifier.size(16.dp)
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Text(
+                                    text = category.name,
+                                    fontSize = 12.sp,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                    color = if (isSelected) AguiaColors.PrimaryBlue else AguiaColors.NavyDark
+                                )
+                            }
                         }
-
-                        Spacer(modifier = Modifier.width(8.dp))
-
-                        Text(
-                            text = category.name,
-                            fontSize = 12.sp,
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            color = if (isSelected) AguiaColors.PrimaryBlue else AguiaColors.NavyDark
-                        )
                     }
                 }
             }
@@ -353,14 +362,17 @@ private fun DetailsStep(
         )
         AguiaTextField(
             value = title,
-            onValueChange = onTitleChange,
-            label = "Título da sugestão"
+            onValueChange = { onTitleChange(it.replace("\n", " ")) },
+            label = "Título da sugestão",
+            singleLine = false,
+            maxLines = 3
         )
         AguiaTextField(
             value = problem,
             onValueChange = onProblemChange,
             label = "Problema identificado",
             singleLine = false,
+            minLines = 3,
             modifier = Modifier.heightIn(min = 70.dp)
         )
         AguiaTextField(
@@ -368,6 +380,7 @@ private fun DetailsStep(
             onValueChange = onSolutionChange,
             label = "Solução proposta",
             singleLine = false,
+            minLines = 3,
             modifier = Modifier.heightIn(min = 70.dp)
         )
         AguiaTextField(
@@ -375,6 +388,7 @@ private fun DetailsStep(
             onValueChange = onBenefitsChange,
             label = "Benefícios esperados",
             singleLine = false,
+            minLines = 3,
             modifier = Modifier.heightIn(min = 70.dp)
         )
     }

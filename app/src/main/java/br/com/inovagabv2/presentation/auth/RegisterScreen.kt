@@ -95,6 +95,7 @@ fun RegisterScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -162,7 +163,7 @@ fun RegisterScreen(
             // 1. Nome completo
             OutlinedTextField(
                 value = fullName,
-                onValueChange = { fullName = it },
+                onValueChange = { fullName = it.replace("\n", " ") },
                 placeholder = { Text("Nome completo", color = AguiaColors.TextSecondary, fontSize = 15.sp) },
                 leadingIcon = {
                     Icon(
@@ -179,7 +180,8 @@ fun RegisterScreen(
                     focusedBorderColor = AguiaColors.PrimaryBlue,
                     unfocusedBorderColor = AguiaColors.TextSecondary.copy(alpha = 0.25f)
                 ),
-                singleLine = true,
+                singleLine = false,
+                maxLines = 2,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = focusNext
             )
@@ -219,7 +221,7 @@ fun RegisterScreen(
             // 3. Empresa ou unidade
             OutlinedTextField(
                 value = companyUnit,
-                onValueChange = { companyUnit = it },
+                onValueChange = { companyUnit = it.replace("\n", " ") },
                 placeholder = { Text("Empresa ou unidade", color = AguiaColors.TextSecondary, fontSize = 15.sp) },
                 leadingIcon = {
                     Icon(
@@ -236,7 +238,8 @@ fun RegisterScreen(
                     focusedBorderColor = AguiaColors.PrimaryBlue,
                     unfocusedBorderColor = AguiaColors.TextSecondary.copy(alpha = 0.25f)
                 ),
-                singleLine = true,
+                singleLine = false,
+                maxLines = 2,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                 keyboardActions = focusNext
             )
