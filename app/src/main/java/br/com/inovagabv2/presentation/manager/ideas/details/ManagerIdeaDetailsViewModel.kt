@@ -240,7 +240,9 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
     fun onPrioritySelected(priority: Int) {
         if (_state.value.isSubmitting) return
         _state.update { it.copy(selectedPriority = priority) }
-        
+        // A API só aceita priorizar ideias EM_ANALISE; para ENVIADA a prioridade é aplicada na aprovação.
+        if (_state.value.idea?.status != IdeaStatus.EM_ANALISE) return
+
         viewModelScope.launch {
             try {
                 val res = ideaRepository.priorizar(ideaId, priority)
@@ -286,7 +288,20 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true, showApprovalDialog = false, errorMessage = null) }
             try {
+                val transition = ensureInAnalysis()
+                if (transition.isFailure) {
+                    _state.update {
+                        it.copy(isSubmitting = false, errorMessage = transition.exceptionOrNull()?.toUserMessage())
+                    }
+                    return@launch
+                }
                 val priorizarRes = ideaRepository.priorizar(ideaId, priority)
+                if (priorizarRes.isFailure) {
+                    _state.update {
+                        it.copy(isSubmitting = false, errorMessage = priorizarRes.exceptionOrNull()?.toUserMessage())
+                    }
+                    return@launch
+                }
                 val aprovarRes = ideaRepository.aprovar(ideaId)
 
                 if (aprovarRes.isSuccess) {
@@ -315,6 +330,18 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
         }
     }
 
+    /** A API exige EM_ANALISE para priorizar, aprovar e rejeitar: move ENVIADA para EM_ANALISE antes. */
+    private suspend fun ensureInAnalysis(): Result<Unit> {
+        if (_state.value.idea?.status != IdeaStatus.ENVIADA) return Result.success(Unit)
+        val transition = ideaRepository.analisar(ideaId)
+        if (transition.isFailure) return Result.failure(transition.exceptionOrNull() ?: Exception())
+        _state.update { st ->
+            st.copy(idea = transition.getOrNull()?.copy(status = IdeaStatus.EM_ANALISE)
+                ?: st.idea?.copy(status = IdeaStatus.EM_ANALISE))
+        }
+        return Result.success(Unit)
+    }
+
     fun onShowRejectionDialog() {
         if (_state.value.isSubmitting) return
         _state.update { it.copy(showRejectionDialog = true) }
@@ -335,6 +362,13 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(isSubmitting = true, showRejectionDialog = false, errorMessage = null) }
             try {
+                val transition = ensureInAnalysis()
+                if (transition.isFailure) {
+                    _state.update {
+                        it.copy(isSubmitting = false, errorMessage = transition.exceptionOrNull()?.toUserMessage())
+                    }
+                    return@launch
+                }
                 val result = ideaRepository.rejeitar(ideaId, reason)
                 if (result.isSuccess) {
                     _state.update {

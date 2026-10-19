@@ -101,7 +101,7 @@ class ManagerIdeaDetailsViewModelTest {
         val state = viewModel.state.value
 
         assertEquals(IdeaStatus.ENVIADA, state.idea?.status)
-        assertEquals("Erro na API de aprovação", state.errorMessage)
+        assertEquals("Erro na API de análise", state.errorMessage)
         assertFalse(state.isSubmitting)
         assertFalse(state.shouldNavigateBack)
     }
