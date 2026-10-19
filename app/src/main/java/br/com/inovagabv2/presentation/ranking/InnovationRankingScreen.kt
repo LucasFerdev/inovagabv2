@@ -123,57 +123,61 @@ fun InnovationRankingScreen(
                     }
                 }
 
-                // Banner Podium Card
+                // Banner Podium Card: avatares posicionados sobre os círculos da própria imagem
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(containerColor = Color.White),
                         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(220.dp)
-                        ) {
-                            // Background Image
-                            Image(
-                                painter = painterResource(id = R.drawable.banner_rank),
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
-
-                            // Podium Content Overlay
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 12.dp, vertical = 10.dp),
-                                horizontalArrangement = Arrangement.SpaceAround,
-                                verticalAlignment = Alignment.Bottom
-                            ) {
-                                // 2nd Place (Left)
-                                PodiumSpot(
-                                    colaborador = state.top2,
-                                    defaultPos = "2º",
-                                    badgeColor = Color(0xFF94A3B8),
-                                    modifier = Modifier.weight(1f)
-                                )
-
-                                // 1st Place (Center - Highest)
-                                PodiumSpot(
-                                    colaborador = state.top1,
-                                    defaultPos = "1º",
-                                    badgeColor = Color(0xFFEAB308),
-                                    modifier = Modifier.weight(1f)
-                                )
-
-                                // 3rd Place (Right)
-                                PodiumSpot(
-                                    colaborador = state.top3,
-                                    defaultPos = "3º",
-                                    badgeColor = Color(0xFFD97706),
-                                    modifier = Modifier.weight(1f)
-                                )
+                        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                            val bannerWidth = maxWidth
+                            val bannerHeight = bannerWidth / BANNER_ASPECT_RATIO
+                            Column {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(bannerHeight)
+                                ) {
+                                    Image(
+                                        painter = painterResource(id = R.drawable.banner_rank),
+                                        contentDescription = null,
+                                        contentScale = ContentScale.FillBounds,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+                                    PODIUM_SPOTS.forEach { spot ->
+                                        val colaborador = state.podiumAt(spot.position)
+                                        if (colaborador != null) {
+                                            val size = bannerHeight * spot.diameter * 0.86f
+                                            PodiumAvatar(
+                                                nome = colaborador.nome,
+                                                modifier = Modifier
+                                                    .offset(
+                                                        x = bannerWidth * spot.centerX - size / 2,
+                                                        y = bannerHeight * spot.centerY - size / 2
+                                                    )
+                                                    .size(size)
+                                            )
+                                        }
+                                    }
+                                }
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(60.dp)
+                                ) {
+                                    PODIUM_SPOTS.forEach { spot ->
+                                        val labelWidth = bannerWidth * 0.3f
+                                        PodiumLabel(
+                                            colaborador = state.podiumAt(spot.position),
+                                            position = spot.position,
+                                            modifier = Modifier
+                                                .offset(x = bannerWidth * spot.centerX - labelWidth / 2, y = 4.dp)
+                                                .width(labelWidth)
+                                        )
+                                    }
+                                }
                             }
                         }
                     }
@@ -213,78 +217,69 @@ fun InnovationRankingScreen(
                     }
                 }
 
-                // General Classification List (4th onwards)
-                if (state.restOfRanking.isEmpty()) {
-                    item {
-                        Text(
-                            text = "Todos os participantes classificados estão nos destaques do topo.",
-                            fontSize = 13.sp,
-                            color = AguiaColors.TextSecondary,
-                            modifier = Modifier.padding(vertical = 8.dp)
-                        )
-                    }
-                } else {
-                    items(state.restOfRanking, key = { it.posicao }) { colab ->
-                        RankingItemRow(colaborador = colab)
-                    }
+                // Classificação geral: todos os participantes, em ordem
+                items(state.ranking, key = { it.posicao }) { colab ->
+                    RankingItemRow(colaborador = colab)
                 }
             }
         }
     }
 }
 
+private const val BANNER_ASPECT_RATIO = 3f
+
+/** Posição de cada círculo do banner_rank, em fração da largura/altura da imagem. */
+private data class PodiumSpotPosition(
+    val position: Int,
+    val centerX: Float,
+    val centerY: Float,
+    val diameter: Float
+)
+
+private val PODIUM_SPOTS = listOf(
+    PodiumSpotPosition(position = 2, centerX = 0.275f, centerY = 0.527f, diameter = 0.29f),
+    PodiumSpotPosition(position = 1, centerX = 0.5f, centerY = 0.407f, diameter = 0.365f),
+    PodiumSpotPosition(position = 3, centerX = 0.725f, centerY = 0.577f, diameter = 0.28f)
+)
+
+private fun InnovationRankingState.podiumAt(position: Int): RankingColaborador? = when (position) {
+    1 -> top1
+    2 -> top2
+    3 -> top3
+    else -> null
+}
+
 @Composable
-private fun PodiumSpot(
+private fun PodiumAvatar(nome: String, modifier: Modifier = Modifier) {
+    Surface(
+        shape = CircleShape,
+        color = Color.White,
+        shadowElevation = 2.dp,
+        modifier = modifier
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = UserUtils.calculateInitials(nome),
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = AguiaColors.NavyDark
+            )
+        }
+    }
+}
+
+@Composable
+private fun PodiumLabel(
     colaborador: RankingColaborador?,
-    defaultPos: String,
-    badgeColor: Color,
+    position: Int,
     modifier: Modifier = Modifier
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.padding(bottom = 6.dp)
+        modifier = modifier
     ) {
         if (colaborador != null) {
-            val initials = UserUtils.calculateInitials(colaborador.nome)
             val implText = if (colaborador.ideiasImplementadas == 1L) "1 implementada" else "${colaborador.ideiasImplementadas} implementadas"
-
-            Box(contentAlignment = Alignment.BottomCenter) {
-                Surface(
-                    shape = CircleShape,
-                    color = Color.White,
-                    shadowElevation = 2.dp,
-                    modifier = Modifier.size(46.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = initials,
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = AguiaColors.NavyDark
-                        )
-                    }
-                }
-
-                Surface(
-                    shape = CircleShape,
-                    color = badgeColor,
-                    modifier = Modifier
-                        .offset(y = 8.dp)
-                        .size(18.dp)
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Text(
-                            text = "${colaborador.posicao}º",
-                            fontSize = 10.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color.White
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
             Text(
                 text = colaborador.nome,
                 fontSize = 12.sp,
@@ -294,7 +289,6 @@ private fun PodiumSpot(
                 overflow = TextOverflow.Ellipsis,
                 textAlign = TextAlign.Center
             )
-
             Text(
                 text = implText,
                 fontSize = 10.sp,
@@ -303,20 +297,13 @@ private fun PodiumSpot(
                 textAlign = TextAlign.Center
             )
         } else {
-            // Empty Base
-            Surface(
-                shape = CircleShape,
-                color = Color.White.copy(alpha = 0.5f),
-                modifier = Modifier.size(36.dp)
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        text = defaultPos,
-                        fontSize = 12.sp,
-                        color = Color.Gray
-                    )
-                }
-            }
+            Text(
+                text = "${position}º lugar",
+                fontSize = 11.sp,
+                color = AguiaColors.TextSecondary,
+                maxLines = 1,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -324,7 +311,7 @@ private fun PodiumSpot(
 @Composable
 private fun RankingItemRow(colaborador: RankingColaborador) {
     val initials = UserUtils.calculateInitials(colaborador.nome)
-    val ideasText = if (colaborador.ideiasImplementadas == 1L) "1 ideia" else "${colaborador.ideiasImplementadas} ideias"
+    val ideasText = if (colaborador.ideiasImplementadas == 1L) "1 implementada" else "${colaborador.ideiasImplementadas} implementadas"
 
     Card(
         modifier = Modifier.fillMaxWidth(),
