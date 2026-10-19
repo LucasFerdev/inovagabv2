@@ -35,4 +35,15 @@ interface IdeaRepository {
     suspend fun aprovar(id: String): Result<Idea>
     suspend fun rejeitar(id: String, justificativa: String): Result<Idea>
     suspend fun arquivar(id: String): Result<Unit>
+
+    /** Edita uma ideia ENVIADA do próprio operador (PUT /api/ideias/{id}). */
+    suspend fun updateIdea(
+        id: String,
+        titulo: String,
+        problema: String,
+        solucaoProposta: String,
+        beneficiosEsperados: String,
+        categoria: String,
+        estrategiaId: String
+    ): Result<Idea> = Result.failure(UnsupportedOperationException())
 }

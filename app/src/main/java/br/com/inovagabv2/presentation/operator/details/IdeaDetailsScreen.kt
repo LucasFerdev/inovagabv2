@@ -41,6 +41,16 @@ fun IdeaDetailsScreen(
     val historyItems by viewModel.historyItems.collectAsState()
     val isLoadingHistory by viewModel.isLoadingHistory.collectAsState()
     val showHistoryDialog by viewModel.showHistoryDialog.collectAsState()
+    val canManage by viewModel.canManage.collectAsState()
+    val isEditing by viewModel.isEditing.collectAsState()
+    val editTitle by viewModel.editTitle.collectAsState()
+    val editProblem by viewModel.editProblem.collectAsState()
+    val editSolution by viewModel.editSolution.collectAsState()
+    val editBenefits by viewModel.editBenefits.collectAsState()
+    val isSubmitting by viewModel.isSubmitting.collectAsState()
+    val actionMessage by viewModel.actionMessage.collectAsState()
+    val showArchiveDialog by viewModel.showArchiveDialog.collectAsState()
+    val archived by viewModel.archived.collectAsState()
 
     val currentRole = user?.role ?: Role.OPERADOR
     val snackbarHostState = remember { SnackbarHostState() }
@@ -50,6 +60,36 @@ fun IdeaDetailsScreen(
             snackbarHostState.showSnackbar(message)
             viewModel.clearHistoryError()
         }
+    }
+
+    LaunchedEffect(actionMessage) {
+        actionMessage?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearActionMessage()
+        }
+    }
+
+    LaunchedEffect(archived) {
+        if (archived) onBackClick()
+    }
+
+    if (showArchiveDialog) {
+        AlertDialog(
+            onDismissRequest = viewModel::onDismissArchiveDialog,
+            title = { Text("Arquivar ideia", fontWeight = FontWeight.Bold) },
+            text = { Text("Deseja arquivar esta ideia? Ela sai da avaliação do gestor e não poderá mais ser editada.") },
+            confirmButton = {
+                Button(
+                    onClick = viewModel::onConfirmArchive,
+                    colors = ButtonDefaults.buttonColors(containerColor = AguiaColors.ErrorRed)
+                ) {
+                    Text("Arquivar", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::onDismissArchiveDialog) { Text("Cancelar") }
+            }
+        )
     }
 
     if (showHistoryDialog) {
@@ -141,33 +181,117 @@ fun IdeaDetailsScreen(
 
                 HorizontalDivider(color = AguiaColors.TextSecondary.copy(alpha = 0.15f))
 
-                // Description
-                Section(title = "Problema identificado") {
-                    Text(
-                        text = item.problem.ifBlank { item.description },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = AguiaColors.NavyDark,
-                        lineHeight = 22.sp
-                    )
-                }
+                if (isEditing) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        AguiaTextField(
+                            value = editTitle,
+                            onValueChange = viewModel::onEditTitleChange,
+                            label = "Título da sugestão",
+                            singleLine = false,
+                            maxLines = 3
+                        )
+                        AguiaTextField(
+                            value = editProblem,
+                            onValueChange = viewModel::onEditProblemChange,
+                            label = "Problema identificado",
+                            singleLine = false,
+                            minLines = 3
+                        )
+                        AguiaTextField(
+                            value = editSolution,
+                            onValueChange = viewModel::onEditSolutionChange,
+                            label = "Solução proposta",
+                            singleLine = false,
+                            minLines = 3
+                        )
+                        AguiaTextField(
+                            value = editBenefits,
+                            onValueChange = viewModel::onEditBenefitsChange,
+                            label = "Benefícios esperados",
+                            singleLine = false,
+                            minLines = 3
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = viewModel::onCancelEdit,
+                                modifier = Modifier.weight(1f).height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                enabled = !isSubmitting
+                            ) {
+                                Text("Cancelar", fontWeight = FontWeight.Bold)
+                            }
+                            AguiaButton(
+                                text = "Salvar",
+                                onClick = viewModel::onSaveEdit,
+                                modifier = Modifier.weight(1f),
+                                isLoading = isSubmitting,
+                                enabled = !isSubmitting
+                            )
+                        }
+                    }
+                } else {
+                    // Description
+                    Section(title = "Problema identificado") {
+                        Text(
+                            text = item.problem.ifBlank { item.description },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AguiaColors.NavyDark,
+                            lineHeight = 22.sp
+                        )
+                    }
 
-                Section(title = "Solução proposta") {
-                    Text(
-                        text = item.proposedSolution.ifBlank { item.description },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = AguiaColors.NavyDark,
-                        lineHeight = 22.sp
-                    )
-                }
+                    Section(title = "Solução proposta") {
+                        Text(
+                            text = item.proposedSolution.ifBlank { item.description },
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AguiaColors.NavyDark,
+                            lineHeight = 22.sp
+                        )
+                    }
 
-                // Benefits
-                Section(title = "Benefícios esperados") {
-                    Text(
-                        text = item.benefits,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = AguiaColors.NavyDark,
-                        lineHeight = 22.sp
-                    )
+                    // Benefits
+                    Section(title = "Benefícios esperados") {
+                        Text(
+                            text = item.benefits,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = AguiaColors.NavyDark,
+                            lineHeight = 22.sp
+                        )
+                    }
+
+                    if (canManage) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            OutlinedButton(
+                                onClick = viewModel::onStartEdit,
+                                modifier = Modifier.weight(1f).height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                enabled = !isSubmitting
+                            ) {
+                                Text("Editar ideia", fontWeight = FontWeight.Bold)
+                            }
+                            OutlinedButton(
+                                onClick = viewModel::onShowArchiveDialog,
+                                modifier = Modifier.weight(1f).height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, AguiaColors.ErrorRed),
+                                colors = ButtonDefaults.outlinedButtonColors(contentColor = AguiaColors.ErrorRed),
+                                enabled = !isSubmitting
+                            ) {
+                                Text("Arquivar", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                        Text(
+                            text = "Você pode editar ou arquivar enquanto a ideia não entra em análise.",
+                            fontSize = 12.sp,
+                            color = AguiaColors.TextSecondary
+                        )
+                    }
                 }
 
                 // Read-only AI Section for Leadership / Gestor
