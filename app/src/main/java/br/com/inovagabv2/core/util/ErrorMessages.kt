@@ -53,6 +53,7 @@ fun Throwable.toUserMessage(): String {
             else -> http.message().toFriendlyOrGeneric()
         }
     }
+    if (isServerStartingTimeout()) return SERVER_STARTING_MESSAGE
     if (network) return NO_CONNECTION_MESSAGE
     return message.toFriendlyOrGeneric()
 }

@@ -16,7 +16,7 @@ class ErrorMessagesTest {
     fun `IOException vira mensagem de conexao`() {
         assertEquals(NO_CONNECTION_MESSAGE, IOException("failed to connect").toUserMessage())
         assertEquals(NO_CONNECTION_MESSAGE, UnknownHostException("api.example").toUserMessage())
-        assertEquals(NO_CONNECTION_MESSAGE, SocketTimeoutException("timeout").toUserMessage())
+        assertEquals(NO_CONNECTION_MESSAGE, InterruptedIOException("interrupted").toUserMessage())
         assertEquals(
             NO_CONNECTION_MESSAGE,
             Exception("falha", IOException("rede")).toUserMessage()
@@ -32,7 +32,13 @@ class ErrorMessagesTest {
             Exception("falha", SocketTimeoutException("timeout")).toAuthUserMessage()
         )
         assertEquals(NO_CONNECTION_MESSAGE, InterruptedIOException("interrupted").toAuthUserMessage())
-        assertEquals(NO_CONNECTION_MESSAGE, SocketTimeoutException("timeout").toUserMessage())
+        assertEquals(SERVER_STARTING_MESSAGE, SocketTimeoutException("timeout").toUserMessage())
+        assertEquals(SERVER_STARTING_MESSAGE, InterruptedIOException("timeout").toUserMessage())
+        assertEquals(SERVER_STARTING_MESSAGE, InterruptedIOException("read timed out").toUserMessage())
+        assertEquals(
+            SERVER_STARTING_MESSAGE,
+            Exception("falha", SocketTimeoutException("timeout")).toUserMessage()
+        )
     }
 
     @Test

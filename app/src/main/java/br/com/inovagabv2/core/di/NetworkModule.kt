@@ -53,6 +53,7 @@ object NetworkModule {
             val timeoutSeconds = when {
                 path.endsWith("/api/auth/login") || path.endsWith("/api/auth/cadastro") -> 90
                 path.contains("/api/ia/") -> 60
+                request.method == "POST" && path.endsWith("/api/ideias") -> 60
                 else -> null
             }
             if (timeoutSeconds == null) {

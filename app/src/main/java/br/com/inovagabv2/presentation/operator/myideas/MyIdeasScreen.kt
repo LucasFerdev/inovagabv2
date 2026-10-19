@@ -120,7 +120,8 @@ fun MyIdeasScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
+                            .horizontalScroll(rememberScrollState())
+                            .padding(end = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {

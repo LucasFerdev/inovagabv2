@@ -7,7 +7,7 @@ import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.Pagina
 import br.com.inovagabv2.domain.repository.AiRepository
 import br.com.inovagabv2.domain.repository.IdeaRepository
-import br.com.inovagabv2.core.util.NO_CONNECTION_MESSAGE
+import br.com.inovagabv2.core.util.SERVER_STARTING_MESSAGE
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -106,7 +106,7 @@ class ManagerIdeaDetailsViewModelAiTest {
         assertEquals(IdeaStatus.EM_ANALISE, state.idea?.status)
         assertNull(state.aiAnalysis)
         assertFalse(state.isSubmittingAi)
-        assertEquals(NO_CONNECTION_MESSAGE, state.errorMessage)
+        assertEquals(SERVER_STARTING_MESSAGE, state.errorMessage)
         assertTrue(showAnalyzeWithAi(state.idea!!.status, hasAnalysis = false))
         assertFalse(showRecalculateAi(state.idea!!.status, hasAnalysis = false))
     }
