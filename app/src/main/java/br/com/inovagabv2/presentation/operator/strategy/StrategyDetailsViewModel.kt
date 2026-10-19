@@ -3,10 +3,13 @@ package br.com.inovagabv2.presentation.operator.strategy
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.LOAD_FAILED_MESSAGE
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Strategy
 import br.com.inovagabv2.domain.repository.StrategyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -38,21 +41,43 @@ class StrategyDetailsViewModel @Inject constructor(
     fun loadStrategyDetails() {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
-            strategyRepository.getStrategyById(strategyId).collect { strategy ->
-                if (strategy != null) {
-                    _state.update { it.copy(strategy = strategy, isLoading = false) }
-                } else {
-                    _state.update { it.copy(isLoading = false, error = "Diretriz não encontrada.") }
-                }
+            try {
+                strategyRepository.getStrategyById(strategyId)
+                    .catch { e ->
+                        if (e is CancellationException) throw e
+                        _state.update { it.copy(isLoading = false, error = e.toUserMessage()) }
+                    }
+                    .collect { strategy ->
+                        if (strategy != null) {
+                            _state.update { it.copy(strategy = strategy, isLoading = false, error = null) }
+                        } else {
+                            _state.update { it.copy(isLoading = false, error = LOAD_FAILED_MESSAGE) }
+                        }
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoading = false, error = e.toUserMessage()) }
             }
         }
     }
 
     fun onShowHistoryDialog() {
-        _state.update { it.copy(showHistoryDialog = true, isLoadingHistory = true) }
+        _state.update { it.copy(showHistoryDialog = true, isLoadingHistory = true, error = null) }
         viewModelScope.launch {
-            strategyRepository.consultarHistorico(strategyId).collect { history ->
-                _state.update { it.copy(historyItems = history, isLoadingHistory = false) }
+            try {
+                strategyRepository.consultarHistorico(strategyId)
+                    .catch { e ->
+                        if (e is CancellationException) throw e
+                        _state.update { it.copy(isLoadingHistory = false, error = e.toUserMessage()) }
+                    }
+                    .collect { history ->
+                        _state.update { it.copy(historyItems = history, isLoadingHistory = false) }
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isLoadingHistory = false, error = e.toUserMessage()) }
             }
         }
     }

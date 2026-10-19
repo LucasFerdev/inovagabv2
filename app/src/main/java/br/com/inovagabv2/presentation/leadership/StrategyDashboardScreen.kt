@@ -27,11 +27,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.designsystem.financialAppearance
+import br.com.inovagabv2.core.util.formatCurrencyCompact
+import br.com.inovagabv2.core.util.formatDate
+import br.com.inovagabv2.core.util.formatPercent
+import java.math.BigDecimal
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.Role
+import br.com.inovagabv2.presentation.components.OnResumeEffect
 
 @Composable
 fun StrategyDashboardScreen(
@@ -41,10 +47,13 @@ fun StrategyDashboardScreen(
     onNavigateToProjects: () -> Unit,
     onNavigateToIdeas: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onEditStrategy: () -> Unit,
     viewModel: StrategyDashboardViewModel = hiltViewModel()
 ) {
     val user by viewModel.user.collectAsState()
     val state by viewModel.state.collectAsState()
+
+    OnResumeEffect(onResume = viewModel::loadData)
 
     val currentRole = user?.role ?: Role.LIDERANCA
 
@@ -79,7 +88,10 @@ fun StrategyDashboardScreen(
             }
         } else if (state.strategy == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                AguiaEmptyState(message = state.error ?: "Estratégia não encontrada.")
+                AguiaErrorState(
+                    message = state.error ?: "Não foi possível carregar",
+                    onRetry = viewModel::loadData
+                )
             }
         } else {
             val currentStrategy = state.strategy!!
@@ -94,6 +106,15 @@ fun StrategyDashboardScreen(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                if (state.error != null) {
+                    item {
+                        Text(
+                            text = state.error ?: "",
+                            color = AguiaColors.ErrorRed,
+                            fontSize = 14.sp
+                        )
+                    }
+                }
                 // Strategy Header Title & Status
                 item {
                     Column {
@@ -178,7 +199,7 @@ fun StrategyDashboardScreen(
                                             Row(verticalAlignment = Alignment.CenterVertically) {
                                                 Icon(Icons.Outlined.CalendarToday, contentDescription = null, tint = AguiaColors.TextSecondary, modifier = Modifier.size(12.dp))
                                                 Spacer(modifier = Modifier.width(4.dp))
-                                                Text(text = "Início: $date", fontSize = 11.sp, color = AguiaColors.TextSecondary)
+                                                Text(text = "Início: ${formatDate(date)}", fontSize = 11.sp, color = AguiaColors.TextSecondary)
                                             }
                                         }
                                     }
@@ -197,12 +218,30 @@ fun StrategyDashboardScreen(
                     }
                 }
 
+                if (canEditStrategy(user?.role)) {
+                    item {
+                        OutlinedButton(
+                            onClick = onEditStrategy,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Editar estratégia", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
                 // Card 2: Resultado consolidado (From Backend DTO)
                 item {
                     val totalInvest = dash?.investimento?.toDouble() ?: linkedProjects.sumOf { it.investment.toDouble() }
                     val totalReturn = dash?.retorno?.toDouble() ?: 0.0
-                    val profit = dash?.lucro?.toDouble() ?: (totalReturn - totalInvest).coerceAtLeast(0.0)
+                    val profit = dash?.lucro?.toDouble() ?: (totalReturn - totalInvest)
                     val roiVal = dash?.roiPercentual?.toDouble() ?: (if (totalInvest > 0) ((totalReturn - totalInvest) / totalInvest) * 100 else 0.0)
+                    val roiDecimal = dash?.roiPercentual ?: BigDecimal.valueOf(roiVal)
+                    val profitDecimal = dash?.lucro ?: BigDecimal.valueOf(profit)
+                    val roiTone = financialAppearance(roiDecimal)
+                    val profitTone = financialAppearance(profitDecimal)
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -225,15 +264,28 @@ fun StrategyDashboardScreen(
 
                                 Surface(
                                     shape = RoundedCornerShape(20.dp),
-                                    color = Color(0xFFDCFCE7)
+                                    color = roiTone.containerColor
                                 ) {
-                                    Text(
-                                        text = String.format(java.util.Locale.US, "ROI %.1f%%", roiVal).replace(".", ","),
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF16A34A),
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                    )
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        if (roiTone.icon != null) {
+                                            Icon(
+                                                imageVector = roiTone.icon,
+                                                contentDescription = null,
+                                                tint = roiTone.contentColor,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                        }
+                                        Text(
+                                            text = "ROI ${formatPercent(roiDecimal)}",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = roiTone.contentColor
+                                        )
+                                    }
                                 }
                             }
 
@@ -243,9 +295,14 @@ fun StrategyDashboardScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                ConsolidatedMetricCol("Investimento", formatMonetaryVal(totalInvest), AguiaColors.PrimaryBlue)
-                                ConsolidatedMetricCol("Retorno", formatMonetaryVal(totalReturn), Color(0xFF0284C7))
-                                ConsolidatedMetricCol("Lucro", formatMonetaryVal(profit), Color(0xFF16A34A))
+                                ConsolidatedMetricCol("Investimento", formatCurrencyCompact(BigDecimal.valueOf(totalInvest)), AguiaColors.PrimaryBlue)
+                                ConsolidatedMetricCol("Retorno", formatCurrencyCompact(BigDecimal.valueOf(totalReturn)), Color(0xFF0284C7))
+                                ConsolidatedMetricCol(
+                                    label = "Lucro",
+                                    value = formatCurrencyCompact(profitDecimal),
+                                    valueColor = profitTone.contentColor,
+                                    icon = profitTone.icon
+                                )
                             }
                         }
                     }
@@ -382,7 +439,8 @@ fun StrategyDashboardScreen(
 private fun ConsolidatedMetricCol(
     label: String,
     value: String,
-    valueColor: Color
+    valueColor: Color,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null
 ) {
     Column {
         Text(
@@ -391,12 +449,23 @@ private fun ConsolidatedMetricCol(
             color = AguiaColors.TextSecondary
         )
         Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = value,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            color = valueColor
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = valueColor,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+            }
+            Text(
+                text = value,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = valueColor
+            )
+        }
     }
 }
 
@@ -477,7 +546,7 @@ private fun LinkedIdeaCardItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Enviada por ${idea.authorName}",
+                    text = if (idea.authorName.isNotBlank()) "Enviada por ${idea.authorName}" else "",
                     fontSize = 12.sp,
                     color = AguiaColors.TextSecondary
                 )
@@ -501,13 +570,5 @@ private fun LinkedIdeaCardItem(
                 }
             }
         }
-    }
-}
-
-private fun formatMonetaryVal(value: Double): String {
-    return when {
-        value >= 1_000_000 -> String.format(java.util.Locale.US, "R$ %.2f mi", value / 1_000_000).replace(".", ",")
-        value >= 1_000 -> String.format(java.util.Locale.US, "R$ %.0f mil", value / 1_000)
-        else -> String.format(java.util.Locale.US, "R$ %.2f", value).replace(".", ",")
     }
 }

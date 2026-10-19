@@ -7,6 +7,8 @@ import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.Pagina
 import br.com.inovagabv2.domain.repository.AiRepository
 import br.com.inovagabv2.domain.repository.IdeaRepository
+import br.com.inovagabv2.core.util.SERVER_STARTING_MESSAGE
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -21,8 +23,10 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.net.SocketTimeoutException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ManagerIdeaDetailsViewModelAiTest {
@@ -90,6 +94,45 @@ class ManagerIdeaDetailsViewModelAiTest {
     }
 
     @Test
+    fun `patch em analise seguido de falha da ia mantem status e o botao de analisar`() = runTest {
+        fakeAiRepository.analyzeError = SocketTimeoutException("timeout")
+
+        viewModel.onAnalyzeAi()
+
+        val state = viewModel.state.value
+
+        assertEquals(1, fakeIdeaRepository.analisarCalls)
+        assertEquals(1, fakeAiRepository.analyzeCalls)
+        assertEquals(IdeaStatus.EM_ANALISE, state.idea?.status)
+        assertNull(state.aiAnalysis)
+        assertFalse(state.isSubmittingAi)
+        assertEquals(SERVER_STARTING_MESSAGE, state.errorMessage)
+        assertTrue(showAnalyzeWithAi(state.idea!!.status, hasAnalysis = false))
+        assertFalse(showRecalculateAi(state.idea!!.status, hasAnalysis = false))
+    }
+
+    @Test
+    fun `toques repetidos em analisar com ia sao ignorados enquanto a requisicao esta em andamento`() = runTest {
+        fakeAiRepository.analyzeGate = CompletableDeferred()
+
+        viewModel.onAnalyzeAi()
+        viewModel.onAnalyzeAi()
+
+        assertEquals(1, fakeIdeaRepository.analisarCalls)
+        assertEquals(1, fakeAiRepository.analyzeCalls)
+        assertTrue(viewModel.state.value.isSubmittingAi)
+
+        fakeAiRepository.analyzeGate?.complete(
+            Result.failure(SocketTimeoutException("timeout"))
+        )
+
+        val state = viewModel.state.value
+        assertFalse(state.isSubmittingAi)
+        assertEquals(IdeaStatus.EM_ANALISE, state.idea?.status)
+        assertNull(state.aiAnalysis)
+    }
+
+    @Test
     fun `failed recalculation preserves previous valid aiAnalysis`() = runTest {
         viewModel.onAnalyzeAi()
         val previousAnalysis = viewModel.state.value.aiAnalysis
@@ -105,6 +148,7 @@ class ManagerIdeaDetailsViewModelAiTest {
     }
 
     private class FakeIdeaRepository : IdeaRepository {
+        var analisarCalls = 0
         private val idea = Idea("i100", "Title", "Prob", "Sol", "Ben", "Operação", "s1")
 
         override fun getIdeas(): Flow<List<Idea>> = flowOf(listOf(idea))
@@ -117,7 +161,10 @@ class ManagerIdeaDetailsViewModelAiTest {
         override suspend fun createIdea(titulo: String, problema: String, solucaoProposta: String, beneficiosEsperados: String, categoria: String, estrategiaId: String): Result<Idea> = Result.success(idea)
         override suspend fun createIdea(idea: Idea): Result<Unit> = Result.success(Unit)
         override suspend fun updateIdeaStatus(id: String, status: IdeaStatus, priority: Int?, justificativa: String?): Result<Unit> = Result.success(Unit)
-        override suspend fun analisar(id: String): Result<Idea> = Result.success(idea)
+        override suspend fun analisar(id: String): Result<Idea> {
+            analisarCalls++
+            return Result.success(idea.copy(status = IdeaStatus.EM_ANALISE))
+        }
         override suspend fun priorizar(id: String, prioridade: Int, justificativa: String?): Result<Idea> = Result.success(idea)
         override suspend fun aprovar(id: String): Result<Idea> = Result.success(idea)
         override suspend fun rejeitar(id: String, justificativa: String): Result<Idea> = Result.success(idea)
@@ -127,10 +174,18 @@ class ManagerIdeaDetailsViewModelAiTest {
     private class FakeAiRepository : AiRepository {
         var savedAnalysis: AiAnalysis? = null
         var shouldFailRecalculate = false
+        var analyzeError: Throwable? = null
+        var analyzeCalls = 0
+        var analyzeGate: CompletableDeferred<Result<AiAnalysis>>? = null
 
         override suspend fun analyzeIdea(ideaId: String, recalculate: Boolean): Result<AiAnalysis> {
+            analyzeCalls++
+            analyzeGate?.let { return it.await() }
             if (recalculate && shouldFailRecalculate) {
                 return Result.failure(Exception("O serviço de IA está indisponível no momento."))
+            }
+            if (!recalculate && analyzeError != null) {
+                return Result.failure(analyzeError!!)
             }
             val analysis = AiAnalysis(
                 ideaId = ideaId,

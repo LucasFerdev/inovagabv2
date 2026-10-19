@@ -5,9 +5,11 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -17,9 +19,15 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
+import br.com.inovagabv2.core.designsystem.financialAppearance
+import br.com.inovagabv2.presentation.session.rememberLoggedUserName
+import br.com.inovagabv2.core.util.formatCurrency
+import br.com.inovagabv2.core.util.formatDate
+import br.com.inovagabv2.core.util.formatDecimalBr
+import br.com.inovagabv2.core.util.formatPercent
+import br.com.inovagabv2.core.util.parseDecimalBr
 import br.com.inovagabv2.domain.model.ProjectStage
 import br.com.inovagabv2.domain.model.ProjectStatus
-import java.math.BigDecimal
 
 @Composable
 fun ManagerProjectDetailsScreen(
@@ -61,7 +69,10 @@ fun ManagerProjectDetailsScreen(
             onDismissRequest = viewModel::onDismissProgressDialog,
             title = { Text("Atualizar Progresso", fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     Text("Etapa do Projeto:", fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     Row(
                         modifier = Modifier
@@ -106,7 +117,9 @@ fun ManagerProjectDetailsScreen(
                             onValueChange = { justification = it },
                             placeholder = { Text("Justificativa da redução de progresso...") },
                             modifier = Modifier.fillMaxWidth(),
-                            minLines = 2
+                            singleLine = false,
+                            minLines = 3,
+                            maxLines = 6
                         )
                     }
                 }
@@ -131,44 +144,76 @@ fun ManagerProjectDetailsScreen(
 
     // Results Dialog
     if (state.showResultsDialog) {
-        var returnValStr by remember { mutableStateOf("") }
-        var productivityStr by remember { mutableStateOf("") }
+        var returnValStr by remember {
+            mutableStateOf(state.project?.retornoFinanceiro?.let(::formatDecimalBr).orEmpty())
+        }
+        var productivityStr by remember {
+            mutableStateOf(state.project?.ganhoProdutividadePercentual?.let(::formatDecimalBr).orEmpty())
+        }
         var resultText by remember { mutableStateOf("") }
+
+        val parsedReturn = parseDecimalBr(returnValStr)
+        val parsedProductivity = parseDecimalBr(productivityStr)
+        val returnError = if (returnValStr.isNotBlank() && parsedReturn == null) {
+            "Informe um valor numérico válido."
+        } else {
+            null
+        }
+        val productivityError = if (productivityStr.isNotBlank() && parsedProductivity == null) {
+            "Informe um valor numérico válido."
+        } else {
+            null
+        }
 
         AlertDialog(
             onDismissRequest = viewModel::onDismissResultsDialog,
             title = { Text("Registrar Resultados", fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
                     OutlinedTextField(
                         value = returnValStr,
                         onValueChange = { returnValStr = it },
                         label = { Text("Retorno Financeiro (R$)") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        isError = returnError != null,
+                        supportingText = returnError?.let { msg -> { Text(msg) } }
                     )
                     OutlinedTextField(
                         value = productivityStr,
                         onValueChange = { productivityStr = it },
                         label = { Text("Ganho de Produtividade (%)") },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        isError = productivityError != null,
+                        supportingText = productivityError?.let { msg -> { Text(msg) } }
                     )
                     OutlinedTextField(
                         value = resultText,
                         onValueChange = { resultText = it },
                         label = { Text("Resumo do Resultado") },
                         modifier = Modifier.fillMaxWidth(),
-                        minLines = 2
+                        singleLine = false,
+                        minLines = 3,
+                        maxLines = 6
                     )
                 }
             },
             confirmButton = {
                 Button(
                     onClick = {
-                        val retVal = BigDecimal(returnValStr.replace(",", ".").toDoubleOrNull() ?: 0.0)
-                        val prodVal = BigDecimal(productivityStr.replace(",", ".").toDoubleOrNull() ?: 0.0)
+                        val retVal = parsedReturn ?: return@Button
+                        val prodVal = parsedProductivity ?: return@Button
                         viewModel.onRegisterResults(retVal, prodVal, resultText)
                     },
-                    enabled = resultText.isNotBlank(),
+                    enabled = parsedReturn != null &&
+                        parsedProductivity != null &&
+                        resultText.trim().length >= 3,
                     colors = ButtonDefaults.buttonColors(containerColor = AguiaColors.SuccessGreen)
                 ) {
                     Text("Salvar Resultados", fontWeight = FontWeight.Bold)
@@ -231,10 +276,9 @@ fun ManagerProjectDetailsScreen(
     Scaffold(
         topBar = {
             AguiaTopBar(
+                userName = rememberLoggedUserName(),
                 title = "Detalhes do Projeto",
-                onBackClick = onBackClick,
-                backgroundColor = AguiaColors.ManagerPurple,
-                contentColor = AguiaColors.CardWhite
+                onBackClick = onBackClick
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -250,6 +294,7 @@ fun ManagerProjectDetailsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
+                    .imePadding()
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -352,13 +397,13 @@ fun ManagerProjectDetailsScreen(
                 ) {
                     AguiaMetricCard(
                         label = "Prazo",
-                        value = project.deadline,
+                        value = formatDate(project.deadline),
                         color = AguiaColors.TextPrimary,
                         modifier = Modifier.weight(1f)
                     )
                     AguiaMetricCard(
                         label = "Investimento",
-                        value = formatMonetaryVal(project.investment.toDouble()),
+                        value = formatCurrency(project.investment),
                         color = AguiaColors.TextPrimary,
                         modifier = Modifier.weight(1f)
                     )
@@ -380,10 +425,22 @@ fun ManagerProjectDetailsScreen(
                             )
                             Spacer(modifier = Modifier.height(8.dp))
                             project.retornoFinanceiro?.let { ret ->
-                                Text("Retorno Financeiro: ${formatMonetaryVal(ret.toDouble())}", fontSize = 13.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
+                                val tone = financialAppearance(ret)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (tone.icon != null) {
+                                        Icon(tone.icon, contentDescription = null, tint = tone.contentColor, modifier = Modifier.size(16.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                    }
+                                    Text(
+                                        "Retorno Financeiro: ${formatCurrency(ret)}",
+                                        fontSize = 13.sp,
+                                        color = tone.contentColor,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                }
                             }
                             project.ganhoProdutividadePercentual?.let { prod ->
-                                Text("Ganho de Produtividade: ${prod.toDouble()}%", fontSize = 13.sp, color = AguiaColors.PrimaryBlue)
+                                Text("Ganho de Produtividade: ${formatPercent(prod)}", fontSize = 13.sp, color = AguiaColors.PrimaryBlue)
                             }
                             project.resultado?.let { res ->
                                 Spacer(modifier = Modifier.height(4.dp))
@@ -425,14 +482,13 @@ fun ManagerProjectDetailsScreen(
                     }
                 }
             }
+        } else {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                AguiaErrorState(
+                    message = state.loadError ?: "Não foi possível carregar",
+                    onRetry = viewModel::loadProject
+                )
+            }
         }
-    }
-}
-
-private fun formatMonetaryVal(value: Double): String {
-    return when {
-        value >= 1_000_000 -> String.format(java.util.Locale.US, "R$ %.2f mi", value / 1_000_000).replace(".", ",")
-        value >= 1_000 -> String.format(java.util.Locale.US, "R$ %.0f mil", value / 1_000)
-        else -> String.format(java.util.Locale.US, "R$ %.2f", value).replace(".", ",")
     }
 }

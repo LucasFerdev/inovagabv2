@@ -13,6 +13,7 @@ data class IdeiaResponseDto(
     @SerialName("categoria") val categoria: String,
     @SerialName("estrategiaId") val estrategiaId: String,
     @SerialName("autorId") val autorId: String,
+    @SerialName("autorNome") val autorNome: String? = null,
     @SerialName("status") val status: RemoteStatusIdeia,
     @SerialName("prioridade") val prioridade: Int? = null,
     @SerialName("justificativaAvaliacao") val justificativaAvaliacao: String? = null,

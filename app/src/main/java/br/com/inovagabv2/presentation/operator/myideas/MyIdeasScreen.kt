@@ -20,11 +20,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.Role
+import br.com.inovagabv2.presentation.components.OnResumeEffect
 
 @Composable
 fun MyIdeasScreen(
@@ -40,6 +42,7 @@ fun MyIdeasScreen(
     val ideas by viewModel.ideas.collectAsState()
     val strategiesMap by viewModel.strategiesMap.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
     var selectedStatus by remember { mutableStateOf<IdeaStatus?>(null) }
 
     val currentRole = user?.role ?: Role.OPERADOR
@@ -49,9 +52,7 @@ fun MyIdeasScreen(
         else ideas.filter { it.status == selectedStatus }
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.loadData()
-    }
+    OnResumeEffect(onResume = viewModel::refresh)
 
     Scaffold(
         topBar = {
@@ -81,7 +82,7 @@ fun MyIdeasScreen(
                 containerColor = AguiaColors.PrimaryBlue,
                 contentColor = Color.White,
                 shape = RoundedCornerShape(16.dp),
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                icon = { Icon(Icons.Default.Add, contentDescription = "Criar ideia") },
                 text = { Text("Nova ideia", fontWeight = FontWeight.Bold) }
             )
         }
@@ -119,7 +120,8 @@ fun MyIdeasScreen(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
+                            .horizontalScroll(rememberScrollState())
+                            .padding(end = 16.dp),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -147,9 +149,16 @@ fun MyIdeasScreen(
                 }
 
                 // List Items
-                if (isLoading) {
+                if (isLoading && ideas.isEmpty()) {
                     item {
                         AguiaLoadingState(message = "Carregando suas ideias...")
+                    }
+                } else if (error != null) {
+                    item {
+                        AguiaErrorState(
+                            message = error ?: "Não foi possível carregar suas ideias. Tente novamente.",
+                            onRetry = viewModel::refresh
+                        )
                     }
                 } else if (filteredIdeas.isEmpty()) {
                     item {
@@ -264,7 +273,7 @@ private fun MyIdeaCardItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (!idea.createdAt.isNullOrBlank()) "Enviada em ${idea.createdAt}" else "",
+                    text = if (!idea.createdAt.isNullOrBlank()) "Enviada em ${formatDate(idea.createdAt)}" else "",
                     fontSize = 12.sp,
                     color = AguiaColors.TextSecondary
                 )

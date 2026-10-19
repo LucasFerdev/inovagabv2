@@ -33,7 +33,7 @@ fun IdeiaResponseDto.toDomain(): Idea {
         category = categoria,
         strategyId = estrategiaId,
         authorId = autorId,
-        authorName = "Autor não informado",
+        authorName = autorNome?.trim().orEmpty(),
         status = status.toDomain(),
         priority = prioridade,
         evaluationJustification = justificativaAvaliacao,

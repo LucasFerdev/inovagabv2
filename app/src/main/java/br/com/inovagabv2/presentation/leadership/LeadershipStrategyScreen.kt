@@ -26,10 +26,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Role
 import br.com.inovagabv2.domain.model.Strategy
+import br.com.inovagabv2.presentation.components.OnResumeEffect
 
 @Composable
 fun LeadershipStrategyScreen(
@@ -47,6 +49,18 @@ fun LeadershipStrategyScreen(
     val activeCount by viewModel.activeCount.collectAsState()
     val draftCount by viewModel.draftCount.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val actionError by viewModel.actionError.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(actionError) {
+        actionError?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearActionError()
+        }
+    }
+
+    OnResumeEffect(onResume = viewModel::refresh)
 
     val filterTabs = listOf("Todas", "Ativas", "Rascunhos")
     var selectedFilterIndex by remember { mutableIntStateOf(0) }
@@ -55,6 +69,7 @@ fun LeadershipStrategyScreen(
     val currentRole = user?.role ?: Role.LIDERANCA
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             AguiaTopBar(
                 userName = user?.name,
@@ -64,7 +79,7 @@ fun LeadershipStrategyScreen(
         },
         bottomBar = {
             AguiaBottomBar(
-                currentRoute = Screen.LeadershipDashboard.route,
+                currentRoute = Screen.LeadershipStrategy.route,
                 role = currentRole,
                 onNavigate = { route ->
                     when (route) {
@@ -87,7 +102,7 @@ fun LeadershipStrategyScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Add,
-                    contentDescription = null,
+                    contentDescription = "Nova estratégia",
                     modifier = Modifier.size(20.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -218,9 +233,16 @@ fun LeadershipStrategyScreen(
                 }
 
                 // Loading / Empty / List State
-                if (isLoading) {
+                if (isLoading && strategies.isEmpty()) {
                     item {
                         AguiaLoadingState(message = "Carregando estratégias...")
+                    }
+                } else if (error != null && strategies.isEmpty()) {
+                    item {
+                        AguiaErrorState(
+                            message = error ?: "Não foi possível carregar as estratégias. Tente novamente.",
+                            onRetry = viewModel::refresh
+                        )
                     }
                 } else if (strategies.isEmpty()) {
                     item {
@@ -353,7 +375,7 @@ private fun LeadershipStrategyCardItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = strategy.publishedDate ?: strategy.createdAt,
+                    text = formatDate(strategy.publishedDate ?: strategy.createdAt),
                     fontSize = 12.sp,
                     color = AguiaColors.TextSecondary
                 )

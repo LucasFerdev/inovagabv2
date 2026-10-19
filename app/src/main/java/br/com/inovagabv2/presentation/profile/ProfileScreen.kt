@@ -40,20 +40,57 @@ import br.com.inovagabv2.core.designsystem.components.AguiaBottomBar
 import br.com.inovagabv2.core.designsystem.components.AguiaTopBar
 import br.com.inovagabv2.core.designsystem.components.AguiaUserAvatar
 import br.com.inovagabv2.core.navigation.Screen
+import br.com.inovagabv2.core.navigation.tabHomeRoute
 import br.com.inovagabv2.core.util.UserUtils
+import br.com.inovagabv2.core.util.formatDate
 
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel,
     onLogout: () -> Unit,
-    onBottomNavigate: (String) -> Unit = {},
+    onBottomNavigate: (targetRoute: String, startRoute: String) -> Unit = { _, _ -> },
     onNavigateToRanking: () -> Unit = {}
 ) {
     val user by viewModel.user.collectAsState()
     val scrollState = rememberScrollState()
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
+    val logoutError by viewModel.logoutError.collectAsState()
+    val isLoggingOut by viewModel.isLoggingOut.collectAsState()
+    var showLogoutDialog by remember { mutableStateOf(false) }
     val supportEmail = stringResource(R.string.support_email)
+
+    LaunchedEffect(logoutError) {
+        logoutError?.let { message ->
+            showLogoutDialog = false
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearLogoutError()
+        }
+    }
+
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { if (!isLoggingOut) showLogoutDialog = false },
+            title = { Text("Sair da conta?", fontWeight = FontWeight.Bold) },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.logout(onLogout) },
+                    enabled = !isLoggingOut,
+                    colors = ButtonDefaults.buttonColors(containerColor = AguiaColors.ErrorRed)
+                ) {
+                    Text("Sair", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showLogoutDialog = false },
+                    enabled = !isLoggingOut
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
+    }
 
     fun openSupportEmail() {
         try {
@@ -96,7 +133,7 @@ fun ProfileScreen(
                     role = sessionUser.role,
                     onNavigate = { route ->
                         if (route != Screen.Profile.route) {
-                            onBottomNavigate(route)
+                            onBottomNavigate(route, tabHomeRoute(sessionUser.role))
                         }
                     }
                 )
@@ -253,7 +290,7 @@ fun ProfileScreen(
                     ProfileInfoRow(
                         icon = Icons.Outlined.CalendarToday,
                         label = "Membro desde",
-                        value = user?.createdAt ?: "10 set 2026"
+                        value = formatDate(user?.createdAt)
                     )
 
                     HorizontalDivider(
@@ -426,7 +463,7 @@ fun ProfileScreen(
 
             // Logout Button
             OutlinedButton(
-                onClick = { viewModel.logout(onLogout) },
+                onClick = { if (!isLoggingOut) showLogoutDialog = true },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),

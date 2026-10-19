@@ -12,15 +12,26 @@ class UserUtilsTest {
         assertEquals("LS", UserUtils.calculateInitials("Lucas Silva"))
         assertEquals("LS", UserUtils.calculateInitials("Lucas Fernando da Silva"))
         assertEquals("LU", UserUtils.calculateInitials("Lucas"))
-        assertEquals("??", UserUtils.calculateInitials(null))
-        assertEquals("??", UserUtils.calculateInitials(""))
+        assertEquals("ÉR", UserUtils.calculateInitials("Évelyn Rodrigues"))
+        assertEquals("ÉR", UserUtils.calculateInitials("  Évelyn   Rodrigues  "))
+        assertEquals("ÉV", UserUtils.calculateInitials("Évelyn"))
+        assertEquals("", UserUtils.calculateInitials(null))
+        assertEquals("", UserUtils.calculateInitials(""))
+        assertEquals("", UserUtils.calculateInitials("   "))
     }
 
     @Test
     fun `getFirstName extracts first name formatted correctly`() {
         assertEquals("Lucas", UserUtils.getFirstName("lucas fernando da silva"))
         assertEquals("Mariana", UserUtils.getFirstName("MARIANA COSTA"))
+        assertEquals("Maria", UserUtils.getFirstName("MARIA"))
+        assertEquals("Évelyn", UserUtils.getFirstName("Évelyn Rodrigues"))
+        assertEquals("Évelyn", UserUtils.getFirstName("évelyn rodrigues"))
+        assertEquals("Évelyn", UserUtils.getFirstName("ÉVELYN RODRIGUES"))
+        assertEquals("Évelyn", UserUtils.getFirstName("  Évelyn   Rodrigues  "))
         assertEquals("Usuário", UserUtils.getFirstName(null))
+        assertEquals("Usuário", UserUtils.getFirstName(""))
+        assertEquals("Usuário", UserUtils.getFirstName("   "))
     }
 
     @Test

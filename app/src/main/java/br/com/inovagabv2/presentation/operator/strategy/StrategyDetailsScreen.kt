@@ -4,8 +4,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -14,6 +16,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
+import br.com.inovagabv2.core.util.formatDate
+import br.com.inovagabv2.presentation.session.rememberLoggedUserName
 
 @Composable
 fun StrategyDetailsScreen(
@@ -21,6 +25,13 @@ fun StrategyDetailsScreen(
     viewModel: StrategyDetailsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(state.error, state.strategy) {
+        if (state.strategy != null) {
+            state.error?.let { snackbarHostState.showSnackbar(it) }
+        }
+    }
 
     if (state.showHistoryDialog) {
         AguiaHistoryDialog(
@@ -34,10 +45,12 @@ fun StrategyDetailsScreen(
     Scaffold(
         topBar = {
             AguiaTopBar(
+                userName = rememberLoggedUserName(),
                 title = "Detalhes da Diretriz",
                 onBackClick = onBackClick
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = AguiaColors.Background
     ) { padding ->
         if (state.isLoading) {
@@ -46,7 +59,10 @@ fun StrategyDetailsScreen(
             }
         } else if (state.strategy == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                AguiaEmptyState(message = state.error ?: "Diretriz não encontrada.")
+                AguiaErrorState(
+                    message = state.error ?: "Não foi possível carregar",
+                    onRetry = viewModel::loadStrategyDetails
+                )
             }
         } else {
             val strategy = state.strategy!!
@@ -101,10 +117,10 @@ fun StrategyDetailsScreen(
                                 Spacer(modifier = Modifier.height(4.dp))
                                 Text("Campanha: $camp", fontSize = 13.sp, color = AguiaColors.TextSecondary)
                             }
-                            val formattedDate = formatDatePtBr(strategy.publishedDate ?: strategy.date)
-                            if (formattedDate.isNotBlank()) {
+                            val rawDate = strategy.publishedDate ?: strategy.date
+                            if (rawDate.isNotBlank()) {
                                 Spacer(modifier = Modifier.height(4.dp))
-                                Text("Data: $formattedDate", fontSize = 13.sp, color = AguiaColors.TextSecondary)
+                                Text("Data: ${formatDate(rawDate)}", fontSize = 13.sp, color = AguiaColors.TextSecondary)
                             }
 
                             Spacer(modifier = Modifier.height(12.dp))
@@ -122,14 +138,3 @@ fun StrategyDetailsScreen(
     }
 }
 
-private fun formatDatePtBr(isoDate: String?): String {
-    if (isoDate.isNullOrBlank()) return ""
-    return try {
-        val parts = isoDate.split("-")
-        if (parts.size >= 3) {
-            "${parts[2].take(2)}/${parts[1]}/${parts[0]}"
-        } else isoDate
-    } catch (_: Exception) {
-        isoDate
-    }
-}

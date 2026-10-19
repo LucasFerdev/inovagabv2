@@ -9,8 +9,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.domain.model.Role
 
@@ -27,6 +30,9 @@ fun IdeaDetailsScreen(
     onBackClick: () -> Unit
 ) {
     val idea by viewModel.idea.collectAsState()
+    val isLoadingIdea by viewModel.isLoadingIdea.collectAsState()
+    val loadError by viewModel.loadError.collectAsState()
+    val historyError by viewModel.historyError.collectAsState()
     val user by viewModel.user.collectAsState()
     val aiAnalysis by viewModel.aiAnalysis.collectAsState()
     val isLoadingAi by viewModel.isLoadingAi.collectAsState()
@@ -37,6 +43,14 @@ fun IdeaDetailsScreen(
     val showHistoryDialog by viewModel.showHistoryDialog.collectAsState()
 
     val currentRole = user?.role ?: Role.OPERADOR
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(historyError) {
+        historyError?.let { message ->
+            snackbarHostState.showSnackbar(message)
+            viewModel.clearHistoryError()
+        }
+    }
 
     if (showHistoryDialog) {
         AguiaHistoryDialog(
@@ -55,6 +69,7 @@ fun IdeaDetailsScreen(
                 onBackClick = onBackClick
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         containerColor = AguiaColors.Background
     ) { padding ->
         idea?.let { item ->
@@ -91,7 +106,7 @@ fun IdeaDetailsScreen(
                     // Date & Folder Category Row
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            text = if (!item.createdAt.isNullOrBlank()) "Enviada em ${item.createdAt}" else "",
+                            text = if (!item.createdAt.isNullOrBlank()) "Enviada em ${formatDate(item.createdAt)}" else "",
                             fontSize = 12.sp,
                             color = AguiaColors.TextSecondary
                         )
@@ -245,8 +260,15 @@ fun IdeaDetailsScreen(
                 }
             }
         } ?: run {
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = AguiaColors.PrimaryBlue)
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                if (isLoadingIdea) {
+                    CircularProgressIndicator(color = AguiaColors.PrimaryBlue)
+                } else {
+                    AguiaErrorState(
+                        message = loadError ?: "Não foi possível carregar",
+                        onRetry = viewModel::loadIdea
+                    )
+                }
             }
         }
     }

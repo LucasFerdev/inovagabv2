@@ -8,8 +8,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -19,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
+import br.com.inovagabv2.presentation.session.rememberLoggedUserName
 
 @Composable
 fun ManagerCreateProjectScreen(
@@ -44,10 +47,9 @@ fun ManagerCreateProjectScreen(
     Scaffold(
         topBar = {
             AguiaTopBar(
+                userName = rememberLoggedUserName(),
                 title = "Novo Projeto",
-                onBackClick = onBackClick,
-                backgroundColor = AguiaColors.ManagerPurple,
-                contentColor = AguiaColors.CardWhite
+                onBackClick = onBackClick
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -56,9 +58,10 @@ fun ManagerCreateProjectScreen(
         Column(
             modifier = Modifier
                 .padding(padding)
-                .padding(20.dp)
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .imePadding()
+                .verticalScroll(rememberScrollState())
+                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
@@ -70,8 +73,10 @@ fun ManagerCreateProjectScreen(
 
             AguiaTextField(
                 value = state.name,
-                onValueChange = viewModel::onNameChange,
-                label = "Nome do projeto"
+                onValueChange = { viewModel.onNameChange(it.replace("\n", " ")) },
+                label = "Nome do projeto",
+                singleLine = false,
+                maxLines = 3
             )
 
             AguiaTextField(
@@ -79,6 +84,7 @@ fun ManagerCreateProjectScreen(
                 onValueChange = viewModel::onDescriptionChange,
                 label = "Descrição detalhada",
                 singleLine = false,
+                minLines = 3,
                 modifier = Modifier.heightIn(min = 90.dp)
             )
 
@@ -92,6 +98,11 @@ fun ManagerCreateProjectScreen(
 
             if (state.isLoadingStrategies) {
                 CircularProgressIndicator(modifier = Modifier.size(24.dp), color = AguiaColors.PrimaryBlue)
+            } else if (state.loadError != null && state.activeStrategies.isEmpty()) {
+                AguiaErrorState(
+                    message = state.loadError ?: "Algo deu errado. Tente novamente.",
+                    onRetry = viewModel::loadData
+                )
             } else if (state.activeStrategies.isEmpty()) {
                 Text(
                     text = "Nenhuma estratégia ativa encontrada.",
@@ -171,13 +182,15 @@ fun ManagerCreateProjectScreen(
             AguiaTextField(
                 value = state.investmentStr,
                 onValueChange = viewModel::onInvestmentChange,
-                label = "Investimento Estimado (R$)"
+                label = "Investimento Estimado (R$)",
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
 
-            AguiaTextField(
-                value = state.deadline,
-                onValueChange = viewModel::onDeadlineChange,
-                label = "Prazo Estimado (AAAA-MM-DD)"
+            AguiaDateField(
+                digits = state.deadline,
+                onDigitsChange = viewModel::onDeadlineChange,
+                label = "Prazo Estimado (DD/MM/AAAA)",
+                error = state.deadlineError
             )
 
             Spacer(modifier = Modifier.height(16.dp))

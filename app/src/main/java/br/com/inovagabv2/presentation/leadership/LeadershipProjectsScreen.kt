@@ -30,6 +30,7 @@ import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.ProjectStatus
 import br.com.inovagabv2.domain.model.Role
+import br.com.inovagabv2.presentation.components.OnResumeEffect
 
 @Composable
 fun LeadershipProjectsScreen(
@@ -46,6 +47,9 @@ fun LeadershipProjectsScreen(
     val delayedCount by viewModel.delayedCount.collectAsState()
     val averageProgress by viewModel.averageProgress.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+
+    OnResumeEffect(onResume = viewModel::refresh)
 
     val filterTabs = listOf("Todos", "Em andamento", "Planejados", "Concluídos")
     var selectedFilterIndex by remember { mutableIntStateOf(0) }
@@ -63,7 +67,7 @@ fun LeadershipProjectsScreen(
         },
         bottomBar = {
             AguiaBottomBar(
-                currentRoute = Screen.LeadershipDashboard.route,
+                currentRoute = Screen.LeadershipProjects.route,
                 role = currentRole,
                 onNavigate = { route ->
                     when (route) {
@@ -204,9 +208,16 @@ fun LeadershipProjectsScreen(
                 }
 
                 // Loading / Empty / List State
-                if (isLoading) {
+                if (isLoading && projects.isEmpty()) {
                     item {
                         AguiaLoadingState(message = "Carregando projetos...")
+                    }
+                } else if (error != null) {
+                    item {
+                        AguiaErrorState(
+                            message = error ?: "Algo deu errado. Tente novamente.",
+                            onRetry = viewModel::loadProjects
+                        )
                     }
                 } else if (projects.isEmpty()) {
                     item {

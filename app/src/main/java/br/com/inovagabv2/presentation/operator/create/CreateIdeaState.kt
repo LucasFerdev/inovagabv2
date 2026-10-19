@@ -12,6 +12,7 @@ data class CreateIdeaState(
     val proposedSolution: String = "",
     val expectedBenefits: String = "",
     val isLoadingStrategies: Boolean = true,
+    val strategiesError: String? = null,
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
     val error: String? = null

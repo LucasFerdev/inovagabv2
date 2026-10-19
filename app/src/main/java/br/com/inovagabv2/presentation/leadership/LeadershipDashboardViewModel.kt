@@ -2,11 +2,13 @@ package br.com.inovagabv2.presentation.leadership
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.DashboardData
 import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.DashboardRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
@@ -28,12 +30,13 @@ class LeadershipDashboardViewModel @Inject constructor(
 
     fun loadDashboardData() {
         repository.getDashboardData()
-            .onStart { _state.update { it.copy(isLoading = true) } }
+            .onStart { _state.update { it.copy(isLoading = true, error = null) } }
             .onEach { data ->
-                _state.update { it.copy(isLoading = false, data = data) }
+                _state.update { it.copy(isLoading = false, data = data, error = null) }
             }
             .catch { e ->
-                _state.update { it.copy(isLoading = false, error = e.message) }
+                if (e is CancellationException) throw e
+                _state.update { it.copy(isLoading = false, error = e.toUserMessage()) }
             }
             .launchIn(viewModelScope)
     }

@@ -2,11 +2,14 @@ package br.com.inovagabv2.presentation.operator.strategy
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.Strategy
 import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.StrategyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -28,6 +31,9 @@ class OperatorStrategyViewModel @Inject constructor(
 
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
 
     private val _strategies = MutableStateFlow<List<Strategy>>(emptyList())
 
@@ -53,18 +59,42 @@ class OperatorStrategyViewModel @Inject constructor(
         filtered
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
+    private var loadJob: Job? = null
+
     init {
-        loadStrategies()
+        refresh()
+    }
+
+    fun refresh() {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            if (_strategies.value.isEmpty()) {
+                _isLoading.value = true
+            }
+            _error.value = null
+            try {
+                strategyRepository.getActiveStrategies()
+                    .catch { e ->
+                        if (e is CancellationException) throw e
+                        _isLoading.value = false
+                        _error.value = e.toUserMessage()
+                    }
+                    .collect {
+                        _strategies.value = it
+                        _isLoading.value = false
+                        _error.value = null
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _isLoading.value = false
+                _error.value = e.toUserMessage()
+            }
+        }
     }
 
     fun loadStrategies() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            strategyRepository.getActiveStrategies().collect {
-                _strategies.value = it
-                _isLoading.value = false
-            }
-        }
+        refresh()
     }
 
     fun onSearchQueryChange(query: String) {

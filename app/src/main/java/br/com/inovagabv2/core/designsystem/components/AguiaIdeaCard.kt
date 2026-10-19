@@ -89,14 +89,16 @@ fun AguiaIdeaCard(
                     overflow = TextOverflow.Ellipsis
                 )
 
-                Spacer(modifier = Modifier.height(6.dp))
+                if (idea.authorName.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(6.dp))
 
-                Text(
-                    text = idea.authorName,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = AguiaColors.TextSecondary,
-                    fontWeight = FontWeight.Medium
-                )
+                    Text(
+                        text = idea.authorName,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = AguiaColors.TextSecondary,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(10.dp))
 

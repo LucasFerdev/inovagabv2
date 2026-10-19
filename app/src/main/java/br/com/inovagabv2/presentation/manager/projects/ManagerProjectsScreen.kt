@@ -18,6 +18,8 @@ import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Role
+import br.com.inovagabv2.presentation.components.OnResumeEffect
+import br.com.inovagabv2.presentation.session.rememberLoggedUserName
 
 @Composable
 fun ManagerProjectsScreen(
@@ -31,9 +33,12 @@ fun ManagerProjectsScreen(
 ) {
     val state by viewModel.state.collectAsState()
 
+    OnResumeEffect(onResume = viewModel::refresh)
+
     Scaffold(
         topBar = {
             AguiaTopBar(
+                userName = rememberLoggedUserName(),
                 role = Role.GESTOR,
                 showRoleBadge = true
             )
@@ -59,7 +64,7 @@ fun ManagerProjectsScreen(
                 containerColor = AguiaColors.ManagerPurple,
                 contentColor = Color.White,
                 shape = RoundedCornerShape(16.dp),
-                icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                icon = { Icon(Icons.Default.Add, contentDescription = "Novo projeto") },
                 text = { Text("Novo projeto", fontWeight = FontWeight.Bold) }
             )
         },
@@ -126,7 +131,7 @@ fun ManagerProjectsScreen(
                     }
                 }
 
-                if (state.isLoading) {
+                if (state.isLoading && state.projects.isEmpty()) {
                     item {
                         AguiaLoadingState(message = "Carregando projetos...")
                     }
@@ -134,7 +139,7 @@ fun ManagerProjectsScreen(
                     item {
                         AguiaErrorState(
                             message = state.error ?: "Erro ao carregar projetos.",
-                            onRetry = viewModel::loadProjects
+                            onRetry = viewModel::refresh
                         )
                     }
                 } else if (state.projects.isEmpty()) {

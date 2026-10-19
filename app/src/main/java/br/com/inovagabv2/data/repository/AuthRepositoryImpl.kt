@@ -1,7 +1,10 @@
 package br.com.inovagabv2.data.repository
 
 import android.util.Log
+import br.com.inovagabv2.BuildConfig
 import br.com.inovagabv2.core.session.SessionManager
+import br.com.inovagabv2.core.util.SERVER_STARTING_MESSAGE
+import br.com.inovagabv2.core.util.isServerStartingTimeout
 import br.com.inovagabv2.data.remote.api.InovaGabApi
 import br.com.inovagabv2.data.remote.dto.ApiErrorDto
 import br.com.inovagabv2.data.remote.dto.LoginRequestDto
@@ -9,14 +12,13 @@ import br.com.inovagabv2.data.remote.dto.RegisterRequestDto
 import br.com.inovagabv2.data.remote.dto.toDomain
 import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import retrofit2.Response
 import java.io.IOException
-import java.net.ConnectException
-import java.net.SocketTimeoutException
-import java.net.UnknownHostException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -80,18 +82,41 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun logout() {
-        sessionManager.clearSession()
+        sessionManager.markManualLogout()
+        try {
+            sessionManager.clearSession()
+        } catch (e: Exception) {
+            sessionManager.clearManualLogout()
+            throw e
+        }
     }
 
     override fun getCurrentUser(): Flow<User?> {
         return sessionManager.userSession
     }
 
+    override suspend fun refreshCurrentUser(): Result<Unit> {
+        if (sessionManager.getToken().isNullOrBlank()) return Result.success(Unit)
+        if (sessionManager.userSession.firstOrNull() == null) return Result.success(Unit)
+        return try {
+            val response = api.getMe()
+            if (response.isSuccessful) {
+                response.body()?.let { sessionManager.updateStoredUser(it.toDomain()) }
+            }
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            Result.success(Unit)
+        }
+    }
+
     private fun logError(tag: String, message: String, throwable: Throwable) {
+        if (!BuildConfig.DEBUG) return
         try {
             Log.e(tag, message, throwable)
         } catch (_: Throwable) {
-            println("$tag: $message - ${throwable.message}")
+            // android.util.Log não existe nos testes unitários da JVM.
         }
     }
 
@@ -117,17 +142,14 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     private fun parseExceptionMessage(e: Exception): String {
+        if (e.isServerStartingTimeout()) return SERVER_STARTING_MESSAGE
         return when (e) {
-            is ConnectException, is UnknownHostException ->
-                "Falha ao conectar com o servidor. Verifique se o backend está ligado e se a API_BASE_URL está correta."
-            is SocketTimeoutException ->
-                "O tempo de resposta do servidor expirou. Verifique se o backend está ligado e se a API_BASE_URL está correta."
             is SerializationException ->
-                "Erro ao processar a resposta do servidor: ${e.message}"
+                "Não foi possível processar a resposta do servidor. Tente novamente."
             is IOException ->
-                "Erro de rede ao se comunicar com o servidor: ${e.localizedMessage ?: e.message}"
+                "Não foi possível conectar ao servidor. Verifique sua internet e tente novamente."
             else ->
-                e.message ?: "Ocorreu um erro inesperado."
+                "Ocorreu um erro inesperado."
         }
     }
 }

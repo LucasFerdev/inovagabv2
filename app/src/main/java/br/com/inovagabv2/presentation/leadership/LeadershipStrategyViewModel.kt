@@ -2,11 +2,14 @@ package br.com.inovagabv2.presentation.leadership
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.Strategy
 import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.StrategyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -26,6 +29,12 @@ class LeadershipStrategyViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
+    private val _actionError = MutableStateFlow<String?>(null)
+    val actionError: StateFlow<String?> = _actionError.asStateFlow()
+
     val filteredStrategies: StateFlow<List<Strategy>> = combine(_strategies, _selectedStatusFilter, _searchQuery) { list, statusFilter, query ->
         list.filter { strat ->
             val matchesStatus = when (statusFilter) {
@@ -44,18 +53,35 @@ class LeadershipStrategyViewModel @Inject constructor(
     val draftCount: StateFlow<Int> = _strategies.map { list -> list.count { !it.isPublished } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
+    private var loadJob: Job? = null
+
     init {
-        loadStrategies()
+        refresh()
+    }
+
+    fun refresh() {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            if (_strategies.value.isEmpty()) {
+                _isLoading.value = true
+            }
+            _error.value = null
+            try {
+                repository.getStrategies().collect { list ->
+                    _strategies.value = list
+                    _isLoading.value = false
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _isLoading.value = false
+                _error.value = e.toUserMessage()
+            }
+        }
     }
 
     fun loadStrategies() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            repository.getStrategies().collect { list ->
-                _strategies.value = list
-                _isLoading.value = false
-            }
-        }
+        refresh()
     }
 
     fun onStatusFilterSelected(status: String?) {
@@ -68,7 +94,20 @@ class LeadershipStrategyViewModel @Inject constructor(
 
     fun deleteStrategy(id: String) {
         viewModelScope.launch {
-            repository.deleteStrategy(id)
+            try {
+                val result = repository.deleteStrategy(id)
+                if (result.isFailure) {
+                    _actionError.value = result.exceptionOrNull()?.toUserMessage()
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _actionError.value = e.toUserMessage()
+            }
         }
+    }
+
+    fun clearActionError() {
+        _actionError.value = null
     }
 }

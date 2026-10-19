@@ -34,6 +34,7 @@ import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.core.util.UserUtils
 import br.com.inovagabv2.domain.model.Role
+import br.com.inovagabv2.presentation.components.OnResumeEffect
 
 @Composable
 fun ManagerHomeScreen(
@@ -46,6 +47,8 @@ fun ManagerHomeScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val firstName = UserUtils.getFirstName(state.user?.name)
+
+    OnResumeEffect(onResume = viewModel::refresh)
 
     Scaffold(
         topBar = {
@@ -72,7 +75,7 @@ fun ManagerHomeScreen(
         },
         containerColor = Color.White
     ) { padding ->
-        if (state.isLoading) {
+        if (state.isLoading && state.ideas.isEmpty() && state.user == null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -80,6 +83,18 @@ fun ManagerHomeScreen(
                 contentAlignment = Alignment.Center
             ) {
                 AguiaLoadingState(message = "Carregando resumo...")
+            }
+        } else if (state.error != null) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                AguiaErrorState(
+                    message = state.error ?: "Não foi possível carregar os dados. Tente novamente.",
+                    onRetry = viewModel::refresh
+                )
             }
         } else {
             LazyColumn(

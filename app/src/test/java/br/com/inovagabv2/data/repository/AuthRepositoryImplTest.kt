@@ -1,6 +1,7 @@
 package br.com.inovagabv2.data.repository
 
 import br.com.inovagabv2.core.session.FakeSessionManager
+import br.com.inovagabv2.core.util.SERVER_STARTING_MESSAGE
 import br.com.inovagabv2.data.remote.api.InovaGabApi
 import br.com.inovagabv2.domain.model.Role
 import br.com.inovagabv2.domain.model.User
@@ -20,6 +21,9 @@ import org.junit.Before
 import org.junit.Test
 import retrofit2.Retrofit
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
+import java.io.IOException
+import java.io.InterruptedIOException
+import java.net.SocketTimeoutException
 
 class AuthRepositoryImplTest {
 
@@ -266,9 +270,93 @@ class AuthRepositoryImplTest {
 
         assertTrue(result.isFailure)
         val errorMessage = result.exceptionOrNull()?.message
-        assertTrue(
-            errorMessage?.contains("backend está ligado") == true ||
-            errorMessage?.contains("API_BASE_URL") == true
+        assertEquals(
+            "Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.",
+            errorMessage
         )
+        assertFalse(errorMessage!!.contains("backend"))
+        assertFalse(errorMessage.contains("API_BASE_URL"))
+    }
+
+    @Test
+    fun `IOException nao expoe a mensagem original`() = runBlocking {
+        val detalheOriginal = "segredo-interno-de-rede"
+        val failing = repositoryThatThrows(IOException(detalheOriginal))
+
+        val result = failing.login("joao@aguia.com", "senha1234")
+
+        assertTrue(result.isFailure)
+        val message = result.exceptionOrNull()?.message
+        assertEquals(
+            "Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.",
+            message
+        )
+        assertFalse(message!!.contains(detalheOriginal))
+        assertFalse(message.contains("backend"))
+        assertFalse(message.contains("API_BASE_URL"))
+    }
+
+    @Test
+    fun `timeout de servidor iniciando tem prioridade sobre o ramo de IOException`() = runBlocking {
+        val socketTimeout = repositoryThatThrows(SocketTimeoutException("read timed out segredo-socket"))
+        val socketMessage = socketTimeout.login("joao@aguia.com", "senha1234").exceptionOrNull()?.message
+        assertEquals(SERVER_STARTING_MESSAGE, socketMessage)
+        assertFalse(socketMessage!!.contains("segredo-socket"))
+
+        val interrupted = repositoryThatThrows(InterruptedIOException("connection timed out segredo-interrupted"))
+        val interruptedMessage = interrupted.login("joao@aguia.com", "senha1234").exceptionOrNull()?.message
+        assertEquals(SERVER_STARTING_MESSAGE, interruptedMessage)
+        assertFalse(interruptedMessage!!.contains("segredo-interrupted"))
+        assertFalse(interruptedMessage.contains("Verifique sua internet"))
+    }
+
+    @Test
+    fun `refreshCurrentUser updates session name and keeps token`() = runBlocking {
+        sessionManager.saveSession(
+            user = User("u1", "Gestor", "g@aguia.com", Role.GESTOR),
+            token = "tok"
+        )
+        mockWebServer.enqueue(
+            MockResponse().setResponseCode(200).setBody(
+                """
+                {
+                  "id": "u1",
+                  "nome": "Évelyn Rodrigues",
+                  "email": "g@aguia.com",
+                  "empresa": "Águia Branca",
+                  "role": "GESTOR",
+                  "ativo": true
+                }
+                """.trimIndent()
+            )
+        )
+
+        val result = repository.refreshCurrentUser()
+
+        assertTrue(result.isSuccess)
+        assertEquals("Évelyn Rodrigues", sessionManager.userSession.first()?.name)
+        assertEquals("tok", sessionManager.getToken())
+        assertEquals("/api/auth/me", mockWebServer.takeRequest().path)
+    }
+
+    @Test
+    fun `refreshCurrentUser does nothing without a session`() = runBlocking {
+        val result = repository.refreshCurrentUser()
+
+        assertTrue(result.isSuccess)
+        assertEquals(0, mockWebServer.requestCount)
+        assertNull(sessionManager.userSession.first())
+    }
+
+    private fun repositoryThatThrows(error: IOException): AuthRepositoryImpl {
+        val client = OkHttpClient.Builder()
+            .addInterceptor { throw error }
+            .build()
+        val retrofit = Retrofit.Builder()
+            .baseUrl(mockWebServer.url("/"))
+            .client(client)
+            .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
+            .build()
+        return AuthRepositoryImpl(retrofit.create(InovaGabApi::class.java), FakeSessionManager(), json)
     }
 }

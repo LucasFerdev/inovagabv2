@@ -21,11 +21,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.Role
+import br.com.inovagabv2.presentation.components.OnResumeEffect
 
 @Composable
 fun LeadershipIdeasScreen(
@@ -42,6 +44,9 @@ fun LeadershipIdeasScreen(
     val approvedCount by viewModel.approvedCount.collectAsState()
     val rejectedCount by viewModel.rejectedCount.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+
+    OnResumeEffect(onResume = viewModel::refresh)
 
     val filterTabs = listOf("Todas", "Em análise", "Aprovadas", "Rejeitadas")
     var selectedFilterIndex by remember { mutableIntStateOf(0) }
@@ -59,7 +64,7 @@ fun LeadershipIdeasScreen(
         },
         bottomBar = {
             AguiaBottomBar(
-                currentRoute = Screen.LeadershipDashboard.route,
+                currentRoute = Screen.LeadershipIdeas.route,
                 role = currentRole,
                 onNavigate = { route ->
                     when (route) {
@@ -200,9 +205,16 @@ fun LeadershipIdeasScreen(
                 }
 
                 // Loading / Empty / List State
-                if (isLoading) {
+                if (isLoading && ideas.isEmpty()) {
                     item {
                         AguiaLoadingState(message = "Carregando ideias...")
+                    }
+                } else if (error != null) {
+                    item {
+                        AguiaErrorState(
+                            message = error ?: "Algo deu errado. Tente novamente.",
+                            onRetry = viewModel::loadIdeas
+                        )
                     }
                 } else if (ideas.isEmpty()) {
                     item {
@@ -325,7 +337,7 @@ private fun LeadershipIdeaConsultCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = if (!idea.updatedAt.isNullOrBlank()) "Atualizada em ${idea.updatedAt}" else "Enviada em ${idea.createdAt}",
+                    text = if (!idea.updatedAt.isNullOrBlank()) "Atualizada em ${formatDate(idea.updatedAt)}" else "Enviada em ${formatDate(idea.createdAt)}",
                     fontSize = 12.sp,
                     color = AguiaColors.TextSecondary
                 )

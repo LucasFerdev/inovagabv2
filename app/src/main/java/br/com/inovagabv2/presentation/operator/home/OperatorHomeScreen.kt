@@ -4,6 +4,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -26,6 +27,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -35,8 +39,10 @@ import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.core.util.UserUtils
+import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.Role
+import br.com.inovagabv2.presentation.components.OnResumeEffect
 
 @Composable
 fun OperatorHomeScreen(
@@ -49,6 +55,8 @@ fun OperatorHomeScreen(
 ) {
     val state by viewModel.state.collectAsState()
     val user by viewModel.user.collectAsState()
+
+    OnResumeEffect(onResume = viewModel::refresh)
 
     val currentRole = user?.role ?: Role.OPERADOR
     val firstName = UserUtils.getFirstName(user?.name)
@@ -193,20 +201,22 @@ fun OperatorHomeScreen(
                         color = AguiaColors.NavyDark
                     )
 
-                    Text(
-                        text = "Ver minhas ideias",
-                        fontSize = 13.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AguiaColors.PrimaryBlue,
-                        modifier = Modifier.clickable { onNavigateToMyIdeas() }
-                    )
+                    MyIdeasLink(onClick = onNavigateToMyIdeas)
                 }
             }
 
             // Recent Ideas List or Empty State
-            if (state.isLoading) {
+            if (state.isLoading && state.recentIdeas.isEmpty()) {
                 item {
                     AguiaLoadingState(message = "Carregando suas ideias...")
+                }
+            } else if (state.error != null) {
+                item {
+                    AguiaErrorState(
+                        message = state.error
+                            ?: "Não foi possível carregar suas ideias. Tente novamente.",
+                        onRetry = { viewModel.refresh() }
+                    )
                 }
             } else if (state.recentIdeas.isEmpty()) {
                 item {
@@ -365,8 +375,8 @@ private fun HomeIdeaCardItem(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 val dateText = when {
-                    !idea.updatedAt.isNullOrBlank() -> "Atualizada em ${idea.updatedAt}"
-                    else -> "Enviada em ${idea.createdAt}"
+                    !idea.updatedAt.isNullOrBlank() -> "Atualizada em ${formatDate(idea.updatedAt)}"
+                    else -> "Enviada em ${formatDate(idea.createdAt)}"
                 }
                 Text(
                     text = dateText,
@@ -387,6 +397,47 @@ private fun HomeIdeaCardItem(
                 tint = AguiaColors.TextSecondary,
                 modifier = Modifier.size(18.dp)
             )
+        }
+    }
+}
+
+@Composable
+private fun MyIdeasLink(onClick: () -> Unit) {
+    val interactionSource = remember { MutableInteractionSource() }
+    Layout(
+        content = {
+            Box(
+                modifier = Modifier
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = onClick
+                    )
+                    .clearAndSetSemantics { }
+            )
+            Text(
+                text = "Ver minhas ideias",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.Bold,
+                color = AguiaColors.PrimaryBlue,
+                modifier = Modifier.clickable(onClick = onClick)
+            )
+        }
+    ) { measurables, constraints ->
+        val textPlaceable = measurables[1].measure(constraints)
+        val minTouch = 48.dp.roundToPx()
+        val targetPlaceable = measurables[0].measure(
+            Constraints.fixed(
+                width = maxOf(textPlaceable.width, minTouch),
+                height = maxOf(textPlaceable.height, minTouch)
+            )
+        )
+        layout(textPlaceable.width, textPlaceable.height) {
+            targetPlaceable.place(
+                x = (textPlaceable.width - targetPlaceable.width) / 2,
+                y = (textPlaceable.height - targetPlaceable.height) / 2
+            )
+            textPlaceable.place(0, 0)
         }
     }
 }

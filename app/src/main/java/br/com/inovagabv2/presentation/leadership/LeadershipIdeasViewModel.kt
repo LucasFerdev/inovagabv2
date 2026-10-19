@@ -2,12 +2,15 @@ package br.com.inovagabv2.presentation.leadership
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.IdeaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -27,6 +30,9 @@ class LeadershipIdeasViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
     val filteredIdeas: StateFlow<List<Idea>> = combine(_allIdeas, _searchQuery, _selectedStatus) { ideas, query, status ->
         ideas.filter { idea ->
             (query.isBlank() || idea.title.contains(query, ignoreCase = true) || idea.description.contains(query, ignoreCase = true)) &&
@@ -43,18 +49,42 @@ class LeadershipIdeasViewModel @Inject constructor(
     val rejectedCount: StateFlow<Int> = _allIdeas.map { list -> list.count { it.status == IdeaStatus.REJEITADA } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
+    private var loadJob: Job? = null
+
     init {
-        loadIdeas()
+        refresh()
+    }
+
+    fun refresh() {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            if (_allIdeas.value.isEmpty()) {
+                _isLoading.value = true
+            }
+            _error.value = null
+            try {
+                ideaRepository.getIdeas()
+                    .catch { e ->
+                        if (e is CancellationException) throw e
+                        _isLoading.value = false
+                        _error.value = e.toUserMessage()
+                    }
+                    .collect { ideas ->
+                        _allIdeas.value = ideas
+                        _isLoading.value = false
+                        _error.value = null
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _isLoading.value = false
+                _error.value = e.toUserMessage()
+            }
+        }
     }
 
     fun loadIdeas() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            ideaRepository.getIdeas().collect { ideas ->
-                _allIdeas.value = ideas
-                _isLoading.value = false
-            }
-        }
+        refresh()
     }
 
     fun onSearchQueryChange(query: String) {

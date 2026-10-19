@@ -7,13 +7,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.designsystem.FinancialSignal
 import br.com.inovagabv2.core.designsystem.components.*
+import br.com.inovagabv2.core.designsystem.financialAppearance
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Role
+import br.com.inovagabv2.presentation.session.rememberLoggedUserName
 
 @Composable
 fun LeadershipResultsScreen(
@@ -27,7 +31,10 @@ fun LeadershipResultsScreen(
 
     Scaffold(
         topBar = {
-            AguiaTopBar(showLeadershipTag = true)
+            AguiaTopBar(
+                userName = rememberLoggedUserName(),
+                showLeadershipTag = true
+            )
         },
         bottomBar = {
             AguiaBottomBar(
@@ -46,6 +53,21 @@ fun LeadershipResultsScreen(
         },
         containerColor = AguiaColors.Background
     ) { padding ->
+        if (state.isLoading) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                AguiaLoadingState(message = "Carregando resultados...")
+            }
+            return@Scaffold
+        }
+        if (state.error != null) {
+            Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                AguiaErrorState(
+                    message = state.error ?: "Algo deu errado. Tente novamente.",
+                    onRetry = viewModel::loadResults
+                )
+            }
+            return@Scaffold
+        }
         LazyColumn(
             modifier = Modifier
                 .padding(padding)
@@ -66,18 +88,26 @@ fun LeadershipResultsScreen(
             state.data?.let { data ->
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        val roiTone = financialAppearance(data.roiPercentual)
+                        val profitTone = financialAppearance(data.lucroObtido)
                         AguiaDashboardCard(
                             title = "ROI Global",
                             value = data.roi,
+                            icon = roiTone.icon,
+                            color = roiTone.contentColor,
+                            valueColor = roiTone.contentColor,
                             showSparkline = true,
-                            isPositiveSparkline = true,
+                            isPositiveSparkline = roiTone.signal != FinancialSignal.NEGATIVE,
                             modifier = Modifier.weight(1f)
                         )
                         AguiaDashboardCard(
                             title = "Lucro Total",
                             value = data.profit,
+                            icon = profitTone.icon,
+                            color = profitTone.contentColor,
+                            valueColor = profitTone.contentColor,
                             showSparkline = true,
-                            isPositiveSparkline = true,
+                            isPositiveSparkline = profitTone.signal != FinancialSignal.NEGATIVE,
                             modifier = Modifier.weight(1f)
                         )
                     }

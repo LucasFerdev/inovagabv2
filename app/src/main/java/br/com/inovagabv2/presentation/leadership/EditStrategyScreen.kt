@@ -17,6 +17,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.domain.model.StrategyStatus
+import br.com.inovagabv2.presentation.session.rememberLoggedUserName
 
 @Composable
 fun EditStrategyScreen(
@@ -26,23 +27,20 @@ fun EditStrategyScreen(
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(state.shouldNavigateBack) {
-        if (state.shouldNavigateBack) {
-            onBackClick()
-        }
-    }
-
     LaunchedEffect(state.feedbackMessage) {
-        state.feedbackMessage?.let { msg ->
-            snackbarHostState.showSnackbar(msg)
-            viewModel.clearFeedbackMessage()
-        }
+        val message = state.feedbackMessage ?: return@LaunchedEffect
+        val navigateBack = state.shouldNavigateBack
+        snackbarHostState.showSnackbar(message)
+        if (navigateBack) onBackClick()
+        viewModel.clearFeedbackMessage()
     }
 
-    LaunchedEffect(state.errorMessage) {
-        state.errorMessage?.let { msg ->
-            snackbarHostState.showSnackbar(msg)
-            viewModel.clearErrorMessage()
+    LaunchedEffect(state.errorMessage, state.strategy, state.isLoading) {
+        if (!state.isLoading && state.strategy != null) {
+            state.errorMessage?.let { msg ->
+                snackbarHostState.showSnackbar(msg)
+                viewModel.clearErrorMessage()
+            }
         }
     }
 
@@ -53,6 +51,27 @@ fun EditStrategyScreen(
             isLoading = state.isLoadingHistory,
             onDismiss = viewModel::onDismissHistoryDialog,
             title = "Histórico da Estratégia"
+        )
+    }
+
+    if (state.showDeactivateDialog) {
+        AlertDialog(
+            onDismissRequest = viewModel::onDismissDeactivateDialog,
+            title = { Text("Desativar Estratégia", fontWeight = FontWeight.Bold) },
+            text = { Text("Deseja desativar esta estratégia? Ela deixa de ser publicada para os operadores.") },
+            confirmButton = {
+                Button(
+                    onClick = viewModel::onDeactivateStrategy,
+                    colors = ButtonDefaults.buttonColors(containerColor = AguiaColors.PrimaryBlue)
+                ) {
+                    Text("Desativar", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::onDismissDeactivateDialog) {
+                    Text("Cancelar")
+                }
+            }
         )
     }
 
@@ -80,6 +99,7 @@ fun EditStrategyScreen(
     Scaffold(
         topBar = {
             AguiaTopBar(
+                userName = rememberLoggedUserName(),
                 title = "Editar Estratégia",
                 onBackClick = onBackClick
             )
@@ -93,15 +113,19 @@ fun EditStrategyScreen(
             }
         } else if (state.strategy == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                AguiaEmptyState(message = state.errorMessage ?: "Estratégia não encontrada.")
+                AguiaErrorState(
+                    message = state.errorMessage ?: "Não foi possível carregar",
+                    onRetry = viewModel::loadStrategy
+                )
             }
         } else {
             Column(
                 modifier = Modifier
                     .padding(padding)
-                    .padding(20.dp)
                     .fillMaxSize()
-                    .verticalScroll(rememberScrollState()),
+                    .imePadding()
+                    .verticalScroll(rememberScrollState())
+                    .padding(20.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 Row(
@@ -120,26 +144,33 @@ fun EditStrategyScreen(
 
                 AguiaTextField(
                     value = state.title,
-                    onValueChange = viewModel::onTitleChange,
-                    label = "Título da estratégia"
+                    onValueChange = { viewModel.onTitleChange(it.replace("\n", " ")) },
+                    label = "Título da estratégia",
+                    singleLine = false,
+                    maxLines = 3
                 )
 
                 AguiaTextField(
                     value = state.category,
-                    onValueChange = viewModel::onCategoryChange,
-                    label = "Categoria"
+                    onValueChange = { viewModel.onCategoryChange(it.replace("\n", " ")) },
+                    label = "Categoria",
+                    singleLine = false,
+                    maxLines = 3
                 )
 
                 AguiaTextField(
                     value = state.campaign,
-                    onValueChange = viewModel::onCampaignChange,
-                    label = "Campanha"
+                    onValueChange = { viewModel.onCampaignChange(it.replace("\n", " ")) },
+                    label = "Campanha",
+                    singleLine = false,
+                    maxLines = 3
                 )
 
-                AguiaTextField(
-                    value = state.date,
-                    onValueChange = viewModel::onDateChange,
-                    label = "Data (AAAA-MM-DD)"
+                AguiaDateField(
+                    digits = state.date,
+                    onDigitsChange = viewModel::onDateChange,
+                    label = "Data (DD/MM/AAAA)",
+                    error = state.dateError
                 )
 
                 AguiaTextField(
@@ -147,6 +178,7 @@ fun EditStrategyScreen(
                     onValueChange = viewModel::onDescriptionChange,
                     label = "Descrição detalhada",
                     singleLine = false,
+                    minLines = 3,
                     modifier = Modifier.heightIn(min = 100.dp)
                 )
 
@@ -175,7 +207,7 @@ fun EditStrategyScreen(
                     ) {
                         if (state.status == StrategyStatus.ATIVA) {
                             OutlinedButton(
-                                onClick = viewModel::onDeactivateStrategy,
+                                onClick = viewModel::onShowDeactivateDialog,
                                 modifier = Modifier.weight(1f).height(48.dp),
                                 shape = RoundedCornerShape(12.dp),
                                 enabled = !state.isSaving

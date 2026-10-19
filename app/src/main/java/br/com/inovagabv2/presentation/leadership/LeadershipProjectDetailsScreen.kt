@@ -14,6 +14,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.designsystem.financialAppearance
+import br.com.inovagabv2.presentation.session.rememberLoggedUserName
+import br.com.inovagabv2.core.util.formatCurrency
+import br.com.inovagabv2.core.util.formatDate
+import br.com.inovagabv2.core.util.formatPercent
 import br.com.inovagabv2.core.designsystem.components.*
 
 @Composable
@@ -35,6 +40,7 @@ fun LeadershipProjectDetailsScreen(
     Scaffold(
         topBar = {
             AguiaTopBar(
+                userName = rememberLoggedUserName(),
                 title = "Detalhes do Projeto",
                 onBackClick = onBackClick
             )
@@ -47,7 +53,10 @@ fun LeadershipProjectDetailsScreen(
             }
         } else if (state.project == null && state.dashboardDetails == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                AguiaEmptyState(message = state.error ?: "Projeto não encontrado.")
+                AguiaErrorState(
+                    message = state.error ?: "Não foi possível carregar",
+                    onRetry = viewModel::loadDetails
+                )
             }
         } else {
             val proj = state.project
@@ -68,6 +77,13 @@ fun LeadershipProjectDetailsScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
+                if (state.error != null) {
+                    Text(
+                        text = state.error ?: "",
+                        color = AguiaColors.ErrorRed,
+                        fontSize = 14.sp
+                    )
+                }
                 // Header Info Card
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -166,31 +182,37 @@ fun LeadershipProjectDetailsScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text("Indicadores Financeiros", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = AguiaColors.NavyDark)
-                        Text("Prazo: $deadline", fontSize = 13.sp, color = AguiaColors.TextSecondary)
+                        Text("Prazo: ${formatDate(deadline)}", fontSize = 13.sp, color = AguiaColors.TextSecondary)
 
                         dash?.investimento?.let { inv ->
-                            Text("Investimento: ${formatMonetaryVal(inv.toDouble())}", fontSize = 13.sp, color = AguiaColors.NavyDark, fontWeight = FontWeight.SemiBold)
+                            Text("Investimento: ${formatCurrency(inv)}", fontSize = 13.sp, color = AguiaColors.NavyDark, fontWeight = FontWeight.SemiBold)
                         }
                         dash?.retornoFinanceiro?.let { ret ->
-                            Text("Retorno Financeiro: ${formatMonetaryVal(ret.toDouble())}", fontSize = 13.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
+                            Text("Retorno Financeiro: ${formatCurrency(ret)}", fontSize = 13.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
                         }
                         dash?.lucro?.let { luc ->
-                            Text("Lucro: ${formatMonetaryVal(luc.toDouble())}", fontSize = 13.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
+                            val tone = financialAppearance(luc)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (tone.icon != null) {
+                                    Icon(tone.icon, contentDescription = null, tint = tone.contentColor, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                }
+                                Text("Lucro: ${formatCurrency(luc)}", fontSize = 13.sp, color = tone.contentColor, fontWeight = FontWeight.Bold)
+                            }
                         }
                         dash?.roiPercentual?.let { roi ->
-                            Text("ROI: ${String.format(java.util.Locale.US, "%.1f%%", roi.toDouble()).replace(".", ",")}", fontSize = 13.sp, color = AguiaColors.PrimaryBlue, fontWeight = FontWeight.Bold)
+                            val tone = financialAppearance(roi)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (tone.icon != null) {
+                                    Icon(tone.icon, contentDescription = null, tint = tone.contentColor, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                }
+                                Text("ROI: ${formatPercent(roi)}", fontSize = 13.sp, color = tone.contentColor, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }
             }
         }
-    }
-}
-
-private fun formatMonetaryVal(value: Double): String {
-    return when {
-        value >= 1_000_000 -> String.format(java.util.Locale.US, "R$ %.2f mi", value / 1_000_000).replace(".", ",")
-        value >= 1_000 -> String.format(java.util.Locale.US, "R$ %.0f mil", value / 1_000)
-        else -> String.format(java.util.Locale.US, "R$ %.2f", value).replace(".", ",")
     }
 }

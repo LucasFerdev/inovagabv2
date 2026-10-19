@@ -11,13 +11,13 @@ Plataforma corporativa móvel nativa Android para gestão de ideias, diretrizes 
 - [Pré-requisitos](#-pré-requisitos)
 - [Clonagem e Abertura do Projeto](#-clonagem-e-abertura-do-projeto)
 - [Configuração da API (Backend)](#-configuração-da-api-backend)
-- [Compilação e Execução](#-execução)
+- [Compilação e Execução](#-compilação-e-execução)
 - [Cadastro e Autenticação](#-cadastro-e-autenticação)
 - [Fluxo de Demonstração Recomendado](#-fluxo-de-demonstração-recomendado)
 - [Arquitetura](#-arquitetura)
 - [Estados das Telas](#-estados-das-telas)
 - [Inteligência Artificial (IA)](#-inteligência-artificial-ia)
-- [Testes Automatizados](#-testes)
+- [Testes Automatizados](#-testes-automatizados)
 - [Solução de Problemas](#-solução-de-problemas)
 - [Segurança](#-segurança)
 - [Estado do Projeto](#-estado-do-projeto)
@@ -78,7 +78,7 @@ As seguintes tecnologias estão integradas no projeto Android:
 | **Concorrência** | **Kotlin Coroutines** & **StateFlow / Flow** |
 | **Testes Automatizados** | **JUnit 4** & **MockWebServer** |
 
-*(Nota: O aplicativo não utiliza persitência estática offline local ou bibliotecas não declaradas no Gradle).*
+*(Nota: O aplicativo não utiliza persistência estática offline local ou bibliotecas não declaradas no Gradle).*
 
 ---
 
@@ -89,7 +89,7 @@ Para compilar e executar o aplicativo, certifique-se de possuir:
 2. **JDK:** Java 17 (exigido pelas configurações do Gradle).
 3. **Android SDK:** API Level 34 ou superior (compileSdk 37, minSdk 26).
 4. **Dispositivo/Emulador:** Aparelho físico com depuração USB ativada ou emulador Android Studio (API 26+).
-5. **InovaGAB API:** Servidor Spring Boot da aplicação em execução na rede local (porta `8080`).
+5. **InovaGAB API:** O aplicativo usa, por padrão, a API publicada em `https://inovagab-api-ys68.onrender.com/`. Não é necessário subir a API localmente. A propriedade `API_BASE_URL` em `local.properties` é opcional e serve apenas para desenvolvimento.
 6. **Git:** Ferramenta de controle de versão instalada.
 
 ---
@@ -98,11 +98,11 @@ Para compilar e executar o aplicativo, certifique-se de possuir:
 
 1. **Clone o repositório:**
    ```bash
-   git clone https://github.com/LucasFerdev/inovagab-android.git
+   git clone https://github.com/LucasFerdev/inovagabv2.git
    ```
 
 2. **Abra o projeto no Android Studio:**
-   - Selecione a pasta raiz `inovagabv2-main`.
+   - Selecione a pasta raiz `inovagabv2`.
    - Aguarde o término do **Gradle Sync**.
    - Verifique na barra superior se o módulo escolhido para execução é o `:app`.
 
@@ -110,10 +110,10 @@ Para compilar e executar o aplicativo, certifique-se de possuir:
 
 ## 🌐 Configuração da API (Backend)
 
-O aplicativo Android lê o endereço do servidor backend a partir do arquivo `local.properties` situado na raiz do projeto Android.
+Por padrão, o aplicativo usa a API publicada em `https://inovagab-api-ys68.onrender.com/`. Não é preciso subir a API local para compilar ou executar o app. A propriedade `API_BASE_URL` no arquivo `local.properties` é **opcional** e serve apenas para desenvolvimento, quando se deseja apontar para um backend local.
 
-### 1. Editar ou Criar o Arquivo `local.properties`
-Crie ou edite o arquivo `local.properties` na raiz do projeto Android e adicione a propriedade `API_BASE_URL`:
+### 1. Editar ou Criar o Arquivo `local.properties` (opcional)
+Crie ou edite o arquivo `local.properties` na raiz do projeto Android somente se quiser usar um backend local, e adicione a propriedade `API_BASE_URL`:
 
 - **Caso esteja utilizando o Emulador Android Studio:**
   ```properties
@@ -127,6 +127,7 @@ Crie ou edite o arquivo `local.properties` na raiz do projeto Android e adicione
   *(Substitua `192.168.X.X` pelo endereço IPv4 atual do computador onde o backend está rodando).*
 
 > [!NOTE]
+> - Se `API_BASE_URL` não for definida, o app usa `https://inovagab-api-ys68.onrender.com/`.
 > - O script `build.gradle.kts` ajusta automaticamente a barra `/` final caso seja omitida.
 > - O arquivo `local.properties` está no `.gitignore` e **nunca** deve ser commitado no repositório.
 
@@ -135,6 +136,8 @@ Crie ou edite o arquivo `local.properties` na raiz do projeto Android e adicione
 - **Linux/macOS:** Abra o Terminal e digite `ifconfig` ou `ip a`.
 
 ### 3. Validação de Conexão na Rede
+Esta validação vale apenas quando `API_BASE_URL` aponta para um backend local.
+
 1. Certifique-se de que o computador e o celular físico estão conectados na **mesma rede Wi-Fi**.
 2. Abra o navegador do celular e acesse:
    ```text
@@ -147,7 +150,7 @@ Crie ou edite o arquivo `local.properties` na raiz do projeto Android e adicione
 
 ## 🚀 Compilação e Execução
 
-1. **Inicie o Backend:** Garanta que a aplicação Spring Boot do InovaGAB esteja em execução.
+1. **API:** O app já aponta para `https://inovagab-api-ys68.onrender.com/`. Só inicie um backend local se tiver definido `API_BASE_URL` em `local.properties`.
 2. **Execute o Gradle Sync:** No Android Studio, clique no ícone do elefante (*Sync Project with Gradle Files*).
 3. **Execute o Módulo `:app`:** Selecione o emulador ou dispositivo conectado e clique no botão **Run** (`Shift + F10`).
 
@@ -169,7 +172,7 @@ Crie ou edite o arquivo `local.properties` na raiz do projeto Android e adicione
 ## 🔐 Cadastro e Autenticação
 
 1. **Cadastro Padrão:** Qualquer novo cadastro efetuado na tela de registro cria automaticamente um usuário com o papel **OPERADOR**.
-2. **Cadastro com Código de Acesso Especial:** Caso seja fornecido um código de acesso válido configurado no backend, a conta é criada como **GESTOR** ou **LIDERANÇA**. Os Codigos estão disponiveis no documento de apresentação InovaGAB pagina 27 Perfil de Gestor. Consta Codigo de gestor e liderança
+2. **Cadastro com Código de Acesso Especial:** Caso seja fornecido um código de acesso válido configurado no backend, a conta é criada como **GESTOR** ou **LIDERANÇA**. Os códigos estão disponíveis no documento de apresentação InovaGAB, página 27, Perfil de Gestor. Consta código de gestor e liderança.
 3. **Persistência do JWT:** O token JWT de autenticação retornado no login é armazenado com segurança no `DataStore Preferences` e injetado via `AuthInterceptor` no cabeçalho HTTP (`Authorization: Bearer <token>`).
 4. **Sessão Expirada (HTTP 401):** Quando a sessão expira, o aplicativo captura o erro 401, limpa o token mantendo o estado de onboarding concluído e orienta o usuário a refazer o login com segurança, sem fechamento do app.
 
@@ -280,8 +283,8 @@ gradlew.bat testDebugUnitTest
 | Problema | Causa Provável | Solução |
 | :--- | :--- | :--- |
 | **Botão Run desativado no Android Studio** | Módulo do projeto não selecionado ou Gradle Sync pendente. | Execute *Sync Project with Gradle Files* e selecione o módulo `:app` na barra superior. |
-| **Erro de conexão ao tentar logar ou carregar dados** | Backend Spring Boot desligado ou IP incorreto em `local.properties`. | Certifique-se de que o backend está rodando e valide o IP na URL `http://<IP>:8080/actuator/health`. |
-| **Dispositivo físico não conecta ao servidor** | Aparelho e computador em redes Wi-Fi diferentes ou porta bloqueada. | Conecte ambos na mesma rede e libere a porta `8080` no Firewall. |
+| **Erro de conexão ao tentar logar ou carregar dados** | Sem internet, API publicada indisponível ou, no desenvolvimento local, backend desligado ou IP incorreto em `local.properties`. | Confirme o acesso a `https://inovagab-api-ys68.onrender.com/`. Se estiver usando API local, valide o IP em `http://<IP>:8080/actuator/health`. |
+| **Dispositivo físico não conecta ao servidor** | No desenvolvimento local, aparelho e computador em redes Wi-Fi diferentes ou porta bloqueada. | Conecte ambos na mesma rede e libere a porta `8080` no Firewall. Com a API padrão, essa etapa não se aplica. |
 | **Sessão Expirada / Erro 401** | Token JWT expirou ou foi invalidado no servidor. | O app limpa o token automaticamente. Refaça o login na aplicação. |
 | **Corpo da requisição inválido na criação de projeto** | Data formatada incorretamente no formulário. | Informe uma data válida no formato `DD/MM/AAAA` (ex: `31/12/2026`). O app converterá para `AAAA-MM-DD`. |
 | **Falha na Análise da IA** | Chave da IA não configurada no backend ou indisponibilidade temporária. | Verifique se a variável de ambiente do Gemini está configurada no servidor Spring Boot. |

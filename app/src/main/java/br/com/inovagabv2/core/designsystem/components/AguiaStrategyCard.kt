@@ -18,6 +18,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.domain.model.Strategy
 
 @Composable
@@ -74,7 +75,8 @@ fun AguiaStrategyCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Published Tag Pill
-            val tagText = strategy.publishedDate ?: if (strategy.isPublished) "Publicada em ${strategy.createdAt}" else "Rascunho"
+            val tagText = strategy.publishedDate?.let { formatDate(it) }
+                ?: if (strategy.isPublished) "Publicada em ${formatDate(strategy.createdAt)}" else "Rascunho"
             Surface(
                 color = if (strategy.isPublished) AguiaColors.SuccessGreen.copy(alpha = 0.12f) else AguiaColors.TextSecondary.copy(alpha = 0.12f),
                 shape = RoundedCornerShape(12.dp)

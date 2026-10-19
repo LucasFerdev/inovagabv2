@@ -50,13 +50,19 @@ object NetworkModule {
         return Interceptor { chain ->
             val request = chain.request()
             val path = request.url.encodedPath
-            if (path.contains("/api/ia/")) {
-                chain.withConnectTimeout(60, TimeUnit.SECONDS)
-                    .withReadTimeout(60, TimeUnit.SECONDS)
-                    .withWriteTimeout(60, TimeUnit.SECONDS)
-                    .proceed(request)
-            } else {
+            val timeoutSeconds = when {
+                path.endsWith("/api/auth/login") || path.endsWith("/api/auth/cadastro") -> 90
+                path.contains("/api/ia/") -> 60
+                request.method == "POST" && path.endsWith("/api/ideias") -> 60
+                else -> null
+            }
+            if (timeoutSeconds == null) {
                 chain.proceed(request)
+            } else {
+                chain.withConnectTimeout(timeoutSeconds, TimeUnit.SECONDS)
+                    .withReadTimeout(timeoutSeconds, TimeUnit.SECONDS)
+                    .withWriteTimeout(timeoutSeconds, TimeUnit.SECONDS)
+                    .proceed(request)
             }
         }
     }

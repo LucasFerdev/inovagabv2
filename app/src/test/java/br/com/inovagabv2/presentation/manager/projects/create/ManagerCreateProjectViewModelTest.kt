@@ -64,7 +64,7 @@ class ManagerCreateProjectViewModelTest {
         viewModel.onNameChange("Sistema de Frota")
         viewModel.onDescriptionChange("Descrição do projeto")
         viewModel.onInvestmentChange("250000,50")
-        viewModel.onDeadlineChange("2026-12-31")
+        viewModel.onDeadlineChange("31/12/2026")
 
         assertTrue(viewModel.state.value.isValid)
 
@@ -77,6 +77,7 @@ class ManagerCreateProjectViewModelTest {
         assertEquals("p100", state.createdProject?.id)
         assertEquals("Sistema de Frota", state.createdProject?.name)
         assertEquals(BigDecimal("250000.50"), state.createdProject?.investment)
+        assertEquals("2026-12-31", state.createdProject?.deadline)
         assertFalse(state.isSaving)
     }
 

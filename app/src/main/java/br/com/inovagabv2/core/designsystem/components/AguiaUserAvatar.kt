@@ -25,7 +25,7 @@ fun AguiaUserAvatar(
     backgroundColor: Color = AguiaColors.PrimaryBlue.copy(alpha = 0.15f),
     textColor: Color = AguiaColors.NavyDark
 ) {
-    val initials = UserUtils.calculateInitials(name)
+    val initials = name?.takeIf { it.isNotBlank() }?.let(UserUtils::calculateInitials).orEmpty()
     val fontSize = (size.value * 0.38f).sp
 
     Box(
@@ -35,11 +35,13 @@ fun AguiaUserAvatar(
             .background(backgroundColor),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = initials,
-            color = textColor,
-            fontWeight = FontWeight.Bold,
-            fontSize = fontSize
-        )
+        if (initials.isNotEmpty()) {
+            Text(
+                text = initials,
+                color = textColor,
+                fontWeight = FontWeight.Bold,
+                fontSize = fontSize
+            )
+        }
     }
 }

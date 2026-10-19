@@ -12,7 +12,6 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.outlined.Schedule
-import androidx.compose.material.icons.outlined.TrendingUp
 import androidx.compose.material.icons.outlined.Warning
 import androidx.compose.material.icons.outlined.Work
 import androidx.compose.material3.*
@@ -29,8 +28,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
+import br.com.inovagabv2.core.designsystem.financialAppearance
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.core.util.UserUtils
+import br.com.inovagabv2.core.util.formatCurrencyCompact
 import br.com.inovagabv2.domain.model.DashboardData
 import br.com.inovagabv2.domain.model.ProjectStatus
 import br.com.inovagabv2.domain.model.Role
@@ -89,7 +90,7 @@ fun LeadershipDashboardScreen(
             val data = state.data
             if (data == null) {
                 AguiaEmptyState(
-                    message = "Ainda não há dados suficientes para o Dashboard.",
+                    message = "Ainda não há dados suficientes para o Painel.",
                     modifier = Modifier.padding(padding)
                 )
             } else {
@@ -152,27 +153,29 @@ fun LeadershipDashboardScreen(
                                             color = Color.White
                                         )
 
-                                        // Green ROI pill
+                                        val roiTone = financialAppearance(data.roiPercentual, onDark = true)
                                         Surface(
                                             shape = RoundedCornerShape(20.dp),
-                                            color = Color(0xFF064E3B)
+                                            color = roiTone.containerColor
                                         ) {
                                             Row(
                                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                                 verticalAlignment = Alignment.CenterVertically
                                             ) {
-                                                Icon(
-                                                    imageVector = Icons.Outlined.TrendingUp,
-                                                    contentDescription = null,
-                                                    tint = Color(0xFF34D399),
-                                                    modifier = Modifier.size(16.dp)
-                                                )
-                                                Spacer(modifier = Modifier.width(4.dp))
+                                                if (roiTone.icon != null) {
+                                                    Icon(
+                                                        imageVector = roiTone.icon,
+                                                        contentDescription = null,
+                                                        tint = roiTone.contentColor,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                    Spacer(modifier = Modifier.width(4.dp))
+                                                }
                                                 Text(
                                                     text = "ROI ${data.roi}",
                                                     fontSize = 13.sp,
                                                     fontWeight = FontWeight.Bold,
-                                                    color = Color(0xFF34D399)
+                                                    color = roiTone.contentColor
                                                 )
                                             }
                                         }
@@ -186,12 +189,24 @@ fun LeadershipDashboardScreen(
                                         color = Color.White.copy(alpha = 0.8f)
                                     )
                                     Spacer(modifier = Modifier.height(2.dp))
-                                    Text(
-                                        text = data.profit,
-                                        fontSize = 28.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
+                                    val profitTone = financialAppearance(data.lucroObtido, onDark = true)
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        if (profitTone.icon != null) {
+                                            Icon(
+                                                imageVector = profitTone.icon,
+                                                contentDescription = null,
+                                                tint = profitTone.contentColor,
+                                                modifier = Modifier.size(22.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(6.dp))
+                                        }
+                                        Text(
+                                            text = data.profit,
+                                            fontSize = 28.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = profitTone.contentColor
+                                        )
+                                    }
 
                                     Spacer(modifier = Modifier.height(16.dp))
                                     HorizontalDivider(color = Color.White.copy(alpha = 0.15f))
@@ -208,7 +223,7 @@ fun LeadershipDashboardScreen(
                                                 color = Color.White.copy(alpha = 0.7f)
                                             )
                                             Text(
-                                                text = formatMonetary(data.investment),
+                                                text = formatCurrencyCompact(data.investimentoTotal),
                                                 fontSize = 14.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color.White
@@ -222,7 +237,7 @@ fun LeadershipDashboardScreen(
                                                 color = Color.White.copy(alpha = 0.7f)
                                             )
                                             Text(
-                                                text = formatMonetary(data.financialReturn),
+                                                text = formatCurrencyCompact(data.retornoFinanceiroTotal),
                                                 fontSize = 14.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 color = Color.White
@@ -252,7 +267,7 @@ fun LeadershipDashboardScreen(
                         ) {
                             ExecutiveMetricCard(
                                 value = data.activeProjectsCount.toString(),
-                                label = "Projetos",
+                                label = activeProjectsLabel(data.activeProjectsCount),
                                 icon = Icons.Outlined.Work,
                                 iconColor = AguiaColors.PrimaryBlue,
                                 modifier = Modifier.weight(1f),
@@ -552,10 +567,6 @@ private fun PortfolioBarRow(
     }
 }
 
-private fun formatMonetary(value: Double): String {
-    return when {
-        value >= 1_000_000 -> String.format(java.util.Locale.US, "R$ %.2f mi", value / 1_000_000).replace(".", ",")
-        value >= 1_000 -> String.format(java.util.Locale.US, "R$ %.0f mil", value / 1_000)
-        else -> String.format(java.util.Locale.US, "R$ %.2f", value).replace(".", ",")
-    }
+private fun activeProjectsLabel(count: Int): String {
+    return if (count == 1) "Projeto ativo" else "Projetos ativos"
 }

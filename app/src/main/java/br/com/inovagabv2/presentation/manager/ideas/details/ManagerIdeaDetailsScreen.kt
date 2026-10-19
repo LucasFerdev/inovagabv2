@@ -17,6 +17,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.domain.model.IdeaStatus
+import br.com.inovagabv2.presentation.session.rememberLoggedUserName
 
 @Composable
 fun ManagerIdeaDetailsScreen(
@@ -84,14 +85,19 @@ fun ManagerIdeaDetailsScreen(
             onDismissRequest = viewModel::onDismissRejectionDialog,
             title = { Text("Confirmar Rejeição", fontWeight = FontWeight.Bold) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     Text("Por favor, informe a justificativa da rejeição:")
                     OutlinedTextField(
                         value = state.rejectionReason,
                         onValueChange = viewModel::onRejectionReasonChange,
                         placeholder = { Text("Motivo da rejeição...") },
                         modifier = Modifier.fillMaxWidth(),
-                        minLines = 3
+                        singleLine = false,
+                        minLines = 3,
+                        maxLines = 6
                     )
                 }
             },
@@ -121,9 +127,13 @@ fun ManagerIdeaDetailsScreen(
             confirmButton = {
                 Button(
                     onClick = viewModel::onConfirmRecalculateAi,
+                    enabled = !state.isSubmittingAi,
                     colors = ButtonDefaults.buttonColors(containerColor = AguiaColors.PrimaryBlue)
                 ) {
-                    Text("Confirmar e Recalcular", fontWeight = FontWeight.Bold)
+                    Text(
+                        text = if (state.isSubmittingAi) "Carregando..." else "Confirmar e Recalcular",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             },
             dismissButton = {
@@ -137,10 +147,9 @@ fun ManagerIdeaDetailsScreen(
     Scaffold(
         topBar = {
             AguiaTopBar(
+                userName = rememberLoggedUserName(),
                 title = "Detalhes da Ideia",
-                onBackClick = onBackClick,
-                backgroundColor = AguiaColors.ManagerPurple,
-                contentColor = AguiaColors.CardWhite
+                onBackClick = onBackClick
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -156,6 +165,7 @@ fun ManagerIdeaDetailsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
+                    .imePadding()
                     .verticalScroll(rememberScrollState())
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -231,19 +241,21 @@ fun ManagerIdeaDetailsScreen(
                             color = AguiaColors.TextSecondary
                         )
                         
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        Text(
-                            text = "Autor",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = AguiaColors.TextPrimary
-                        )
-                        Text(
-                            text = idea.authorName,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = AguiaColors.TextSecondary
-                        )
+                        if (idea.authorName.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "Autor",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = AguiaColors.TextPrimary
+                            )
+                            Text(
+                                text = idea.authorName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = AguiaColors.TextSecondary
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(12.dp))
                         TextButton(
@@ -349,18 +361,16 @@ fun ManagerIdeaDetailsScreen(
                                 ai.recommendations.forEach { Text(text = "• $it", fontSize = 12.sp, color = AguiaColors.TextSecondary) }
                             }
 
-                            Spacer(modifier = Modifier.height(14.dp))
-
-                            OutlinedButton(
-                                onClick = viewModel::onShowRecalculateDialog,
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = !state.isSubmittingAi
-                            ) {
-                                if (state.isSubmittingAi) {
-                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                                } else {
-                                    Text("Recalcular Análise da IA", fontWeight = FontWeight.Bold)
-                                }
+                            if (showRecalculateAi(idea.status, hasAnalysis = true)) {
+                                Spacer(modifier = Modifier.height(14.dp))
+                                AguiaButton(
+                                    text = "Recalcular Análise da IA",
+                                    onClick = viewModel::onShowRecalculateDialog,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    outline = true,
+                                    isLoading = state.isSubmittingAi,
+                                    enabled = !state.isSubmittingAi
+                                )
                             }
                         } else {
                             Text(
@@ -368,14 +378,16 @@ fun ManagerIdeaDetailsScreen(
                                 fontSize = 13.sp,
                                 color = AguiaColors.TextSecondary
                             )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            AguiaButton(
-                                text = "Analisar com IA",
-                                onClick = viewModel::onAnalyzeAi,
-                                modifier = Modifier.fillMaxWidth(),
-                                isLoading = state.isSubmittingAi,
-                                enabled = !state.isSubmittingAi
-                            )
+                            if (showAnalyzeWithAi(idea.status, hasAnalysis = false)) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                AguiaButton(
+                                    text = "Analisar com IA",
+                                    onClick = viewModel::onAnalyzeAi,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    isLoading = state.isSubmittingAi,
+                                    enabled = !state.isSubmittingAi
+                                )
+                            }
                         }
                     }
                 }
@@ -439,6 +451,13 @@ fun ManagerIdeaDetailsScreen(
                         }
                     }
                 }
+            }
+        } else {
+            Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                AguiaErrorState(
+                    message = state.loadError ?: "Não foi possível carregar",
+                    onRetry = viewModel::loadIdea
+                )
             }
         }
     }

@@ -2,12 +2,15 @@ package br.com.inovagabv2.presentation.leadership
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.Project
 import br.com.inovagabv2.domain.model.ProjectStatus
 import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.ProjectRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -27,6 +30,9 @@ class LeadershipProjectsViewModel @Inject constructor(
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
+    private val _error = MutableStateFlow<String?>(null)
+    val error: StateFlow<String?> = _error.asStateFlow()
+
     val projects: StateFlow<List<Project>> = combine(_allProjects, _selectedStatus, _searchQuery) { list, status, query ->
         list.filter { proj ->
             (status == null || proj.status == status) &&
@@ -45,18 +51,42 @@ class LeadershipProjectsViewModel @Inject constructor(
         else kotlin.math.round(list.sumOf { it.percentualProgresso }.toDouble() / list.size).toInt()
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
+    private var loadJob: Job? = null
+
     init {
-        loadProjects()
+        refresh()
+    }
+
+    fun refresh() {
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            if (_allProjects.value.isEmpty()) {
+                _isLoading.value = true
+            }
+            _error.value = null
+            try {
+                repository.getProjects()
+                    .catch { e ->
+                        if (e is CancellationException) throw e
+                        _isLoading.value = false
+                        _error.value = e.toUserMessage()
+                    }
+                    .collect { list ->
+                        _allProjects.value = list
+                        _isLoading.value = false
+                        _error.value = null
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _isLoading.value = false
+                _error.value = e.toUserMessage()
+            }
+        }
     }
 
     fun loadProjects() {
-        viewModelScope.launch {
-            _isLoading.value = true
-            repository.getProjects().collect { list ->
-                _allProjects.value = list
-                _isLoading.value = false
-            }
-        }
+        refresh()
     }
 
     fun onStatusFilterChange(status: ProjectStatus?) {

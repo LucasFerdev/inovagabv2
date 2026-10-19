@@ -2,8 +2,12 @@ package br.com.inovagabv2.presentation.leadership
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import br.com.inovagabv2.core.util.dateFieldError
+import br.com.inovagabv2.core.util.parseDateBr
+import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.repository.StrategyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -21,7 +25,13 @@ data class CreateStrategyState(
     val feedbackMessage: String? = null,
     val error: String? = null
 ) {
-    val isValid: Boolean get() = title.isNotBlank() && description.isNotBlank() && category.isNotBlank() && campaign.isNotBlank() && date.isNotBlank()
+    val dateError: String? get() = dateFieldError(date)
+    val isValid: Boolean
+        get() = title.isNotBlank() &&
+            description.isNotBlank() &&
+            category.isNotBlank() &&
+            campaign.isNotBlank() &&
+            parseDateBr(date) != null
 }
 
 @HiltViewModel
@@ -34,50 +44,56 @@ class CreateStrategyViewModel @Inject constructor(
 
     fun onTitleChange(title: String) = _state.update { it.copy(title = title) }
     fun onDescriptionChange(desc: String) = _state.update { it.copy(description = desc) }
-    fun onDateChange(date: String) = _state.update { it.copy(date = date) }
+    fun onDateChange(date: String) = _state.update { it.copy(date = date.filter(Char::isDigit).take(8)) }
     fun onCategoryChange(cat: String) = _state.update { it.copy(category = cat) }
     fun onCampaignChange(camp: String) = _state.update { it.copy(campaign = camp) }
 
     fun saveStrategy(activateNow: Boolean = false) {
         val current = _state.value
+        val isoDate = parseDateBr(current.date)?.toString() ?: return
         if (!current.isValid || current.isSaving) return
 
         viewModelScope.launch {
             _state.update { it.copy(isSaving = true, error = null) }
+            try {
+                val result = repository.createStrategy(
+                    titulo = current.title,
+                    descricao = current.description,
+                    data = isoDate,
+                    categoria = current.category,
+                    campanha = current.campaign
+                )
 
-            val result = repository.createStrategy(
-                titulo = current.title,
-                descricao = current.description,
-                data = current.date,
-                categoria = current.category,
-                campanha = current.campaign
-            )
-
-            if (result.isSuccess) {
-                val created = result.getOrNull()
-                if (activateNow && created != null) {
-                    val activateRes = repository.activateStrategy(created.id)
-                    if (activateRes.isSuccess) {
-                        _state.update { it.copy(isSaving = false, isSuccess = true, feedbackMessage = "Estratégia criada e ativada com sucesso.") }
-                    } else {
-                        _state.update {
-                            it.copy(
-                                isSaving = false,
-                                isSuccess = true,
-                                feedbackMessage = "Estratégia criada como rascunho. Não foi possível ativar automaticamente."
-                            )
+                if (result.isSuccess) {
+                    val created = result.getOrNull()
+                    if (activateNow && created != null) {
+                        val activateRes = repository.activateStrategy(created.id)
+                        if (activateRes.isSuccess) {
+                            _state.update { it.copy(isSaving = false, isSuccess = true, feedbackMessage = "Estratégia criada e ativada") }
+                        } else {
+                            _state.update {
+                                it.copy(
+                                    isSaving = false,
+                                    isSuccess = true,
+                                    feedbackMessage = "Estratégia criada como rascunho. Não foi possível ativar automaticamente."
+                                )
+                            }
                         }
+                    } else {
+                        _state.update { it.copy(isSaving = false, isSuccess = true, feedbackMessage = "Rascunho salvo") }
                     }
                 } else {
-                    _state.update { it.copy(isSaving = false, isSuccess = true, feedbackMessage = "Estratégia salva como rascunho.") }
+                    _state.update {
+                        it.copy(
+                            isSaving = false,
+                            error = result.exceptionOrNull()?.toUserMessage()
+                        )
+                    }
                 }
-            } else {
-                _state.update {
-                    it.copy(
-                        isSaving = false,
-                        error = result.exceptionOrNull()?.message ?: "Erro ao criar estratégia"
-                    )
-                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.update { it.copy(isSaving = false, error = e.toUserMessage()) }
             }
         }
     }

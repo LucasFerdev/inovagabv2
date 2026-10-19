@@ -18,6 +18,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
+import br.com.inovagabv2.core.designsystem.financialAppearance
+import br.com.inovagabv2.core.util.formatCurrencyCompact
+import br.com.inovagabv2.core.util.formatPercent
+import java.math.BigDecimal
 
 @Composable
 fun LeadershipProjectDashboardScreen(
@@ -25,11 +29,13 @@ fun LeadershipProjectDashboardScreen(
     viewModel: LeadershipProjectDashboardViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val user by viewModel.user.collectAsState()
 
     Scaffold(
         topBar = {
             AguiaTopBar(
-                title = "Dashboard do Projeto",
+                userName = user?.name,
+                title = "Painel do Projeto",
                 onBackClick = onBackClick
             )
         },
@@ -41,7 +47,10 @@ fun LeadershipProjectDashboardScreen(
             }
         } else if (state.projectDetails == null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                AguiaEmptyState(message = state.error ?: "Indicadores não encontrados.")
+                AguiaErrorState(
+                    message = state.error ?: "Não foi possível carregar",
+                    onRetry = viewModel::loadData
+                )
             }
         } else {
             val dash = state.projectDetails!!
@@ -95,15 +104,22 @@ fun LeadershipProjectDashboardScreen(
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Column {
                                 Text("Investimento", fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
-                                Text(formatMonetaryVal(dash.investimento.toDouble()), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                                Text(formatCurrencyCompact(dash.investimento), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color.White)
                             }
                             Column {
                                 Text("Retorno", fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
-                                Text(formatMonetaryVal(dash.retornoFinanceiro?.toDouble() ?: 0.0), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF34D399))
+                                Text(formatCurrencyCompact(dash.retornoFinanceiro), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF34D399))
                             }
-                            Column {
+                            Column(horizontalAlignment = Alignment.End) {
                                 Text("ROI", fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
-                                Text("${String.format(java.util.Locale.US, "%.1f%%", dash.roiPercentual?.toDouble() ?: 0.0).replace(".", ",")}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF38BDF8))
+                                val roiTone = financialAppearance(dash.roiPercentual ?: BigDecimal.ZERO, onDark = true)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (roiTone.icon != null) {
+                                        Icon(roiTone.icon, contentDescription = null, tint = roiTone.contentColor, modifier = Modifier.size(14.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                    }
+                                    Text(formatPercent(dash.roiPercentual), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = roiTone.contentColor)
+                                }
                             }
                         }
                     }
@@ -127,13 +143,5 @@ fun LeadershipProjectDashboardScreen(
                 }
             }
         }
-    }
-}
-
-private fun formatMonetaryVal(value: Double): String {
-    return when {
-        value >= 1_000_000 -> String.format(java.util.Locale.US, "R$ %.2f mi", value / 1_000_000).replace(".", ",")
-        value >= 1_000 -> String.format(java.util.Locale.US, "R$ %.0f mil", value / 1_000)
-        else -> String.format(java.util.Locale.US, "R$ %.2f", value).replace(".", ",")
     }
 }

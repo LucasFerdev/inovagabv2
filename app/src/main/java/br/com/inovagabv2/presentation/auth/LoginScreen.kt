@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -16,12 +17,17 @@ import androidx.compose.material.icons.outlined.Mail
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -38,12 +44,16 @@ fun LoginScreen(
     viewModel: LoginViewModel,
     onLoginSuccess: (Role) -> Unit,
     onBackClick: (() -> Unit)? = null,
-    onNavigateToRegister: () -> Unit = {}
+    onNavigateToRegister: () -> Unit = {},
+    sessionExpiredMessage: String? = null,
+    onSessionExpiredMessageShown: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    var email by remember { mutableStateOf("") }
+    var email by rememberSaveable { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
+    val focusManager = LocalFocusManager.current
 
     LaunchedEffect(uiState.successUser) {
         uiState.successUser?.let {
@@ -51,23 +61,66 @@ fun LoginScreen(
         }
     }
 
+    LaunchedEffect(sessionExpiredMessage) {
+        val message = sessionExpiredMessage ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(message)
+        onSessionExpiredMessageShown()
+    }
+
     Scaffold(
-        containerColor = Color.White
+        containerColor = Color.White,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { padding ->
-        Column(
+        BoxWithConstraints(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .imePadding()
         ) {
-            // Header: Back Arrow (left) & Logo + INOVAGAB (center)
-            Box(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 8.dp, bottom = 24.dp)
+                    .verticalScroll(rememberScrollState())
+                    .heightIn(min = maxHeight)
+                    .padding(horizontal = 24.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
+            // Header: Back Arrow (left) & Logo + INOVAGAB (center)
+            Box(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.aguia_logo),
+                        contentDescription = "Viação Águia Branca",
+                        modifier = Modifier
+                            .fillMaxWidth(0.75f)
+                            .widthIn(max = 280.dp)
+                            .layout { measurable, constraints ->
+                                val width = constraints.maxWidth.coerceAtMost(280.dp.roundToPx())
+                                val placeable = measurable.measure(
+                                    constraints.copy(minWidth = width, maxWidth = width)
+                                )
+                                layout(placeable.width, placeable.height) {
+                                    placeable.placeRelative(0, 0)
+                                }
+                            },
+                        contentScale = ContentScale.Fit
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "INOVAGAB",
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = AguiaColors.PrimaryBlue,
+                        letterSpacing = 0.5.sp
+                    )
+                }
+
                 if (onBackClick != null) {
                     IconButton(
                         onClick = onBackClick,
@@ -80,29 +133,9 @@ fun LoginScreen(
                         )
                     }
                 }
-
-                Column(
-                    modifier = Modifier.align(Alignment.Center),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.aguia_logo),
-                        contentDescription = "Viação Águia Branca",
-                        modifier = Modifier.height(32.dp),
-                        contentScale = ContentScale.Fit
-                    )
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Text(
-                        text = "INOVAGAB",
-                        fontSize = 11.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = AguiaColors.PrimaryBlue,
-                        letterSpacing = 0.5.sp
-                    )
-                }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Title Section
             Text(
@@ -122,7 +155,7 @@ fun LoginScreen(
                 textAlign = TextAlign.Center
             )
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
             // E-mail corporativo field
             OutlinedTextField(
@@ -145,7 +178,13 @@ fun LoginScreen(
                     unfocusedBorderColor = AguiaColors.TextSecondary.copy(alpha = 0.25f)
                 ),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
+                keyboardActions = KeyboardActions(
+                    onNext = { focusManager.moveFocus(FocusDirection.Next) }
+                )
             )
 
             Spacer(modifier = Modifier.height(16.dp))
@@ -181,7 +220,15 @@ fun LoginScreen(
                     unfocusedBorderColor = AguiaColors.TextSecondary.copy(alpha = 0.25f)
                 ),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password)
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        if (!uiState.isLoading) viewModel.login(email, password)
+                    }
+                )
             )
 
             if (uiState.error != null) {
@@ -194,25 +241,7 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // Esqueci minha senha (Indisponível no backend atual)
-            Box(modifier = Modifier.fillMaxWidth()) {
-                TextButton(
-                    onClick = { /* Indisponível */ },
-                    enabled = false,
-                    modifier = Modifier.align(Alignment.CenterEnd)
-                ) {
-                    Text(
-                        text = "Esqueci minha senha",
-                        color = AguiaColors.TextSecondary.copy(alpha = 0.5f),
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 14.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             // Primary Button: Acessar
             Button(
@@ -238,7 +267,17 @@ fun LoginScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            if (uiState.showConnectingHint) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "Conectando ao servidor… isso pode levar até 1 minuto no primeiro acesso.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = AguiaColors.TextSecondary,
+                    textAlign = TextAlign.Center
+                )
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
 
             // Sign Up link: Ainda não possui uma conta? Criar conta
             Row(
@@ -260,7 +299,7 @@ fun LoginScreen(
                 )
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             // Security Badge: Seus dados estão protegidos
             Row(
@@ -279,6 +318,7 @@ fun LoginScreen(
                     fontSize = 12.sp,
                     color = AguiaColors.TextSecondary
                 )
+            }
             }
         }
     }
