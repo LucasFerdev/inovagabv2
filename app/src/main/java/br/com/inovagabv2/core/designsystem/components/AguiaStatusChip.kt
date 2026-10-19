@@ -65,6 +65,7 @@ fun AguiaStatusChip(
 private fun getStatusColors(statusText: String): Pair<Color, Color> {
     val s = statusText.uppercase().trim()
     return when {
+        s.contains("INATIVA") || s.contains("ARQUIVADA") -> Color(0xFFF1F5F9) to Color(0xFF475569)
         s.contains("ANALISE") || s.contains("ANÁLISE") -> Color(0xFFFEF3C7) to Color(0xFFD97706)
         s.contains("APROVADA") || s.contains("ATIVA") || s.contains("CONCLUÍDA") -> Color(0xFFD1FAE5) to Color(0xFF059669)
         s.contains("ENVIADA") -> Color(0xFFE0F2FE) to Color(0xFF0284C7)

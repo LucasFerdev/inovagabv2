@@ -346,7 +346,7 @@ private fun LeadershipStrategyCardItem(
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                AguiaStatusChip(statusText = if (strategy.isPublished) "ATIVA" else "RASCUNHO")
+                AguiaStatusChip(statusText = strategy.status.displayName.uppercase())
             }
 
             Spacer(modifier = Modifier.height(4.dp))
