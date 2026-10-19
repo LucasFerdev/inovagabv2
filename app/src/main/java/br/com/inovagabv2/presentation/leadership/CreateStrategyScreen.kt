@@ -15,6 +15,7 @@ import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.AguiaButton
 import br.com.inovagabv2.core.designsystem.components.AguiaTextField
 import br.com.inovagabv2.core.designsystem.components.AguiaTopBar
+import br.com.inovagabv2.presentation.session.rememberLoggedUserName
 
 @Composable
 fun CreateStrategyScreen(
@@ -31,6 +32,7 @@ fun CreateStrategyScreen(
     Scaffold(
         topBar = {
             AguiaTopBar(
+                userName = rememberLoggedUserName(),
                 title = "Nova Estratégia",
                 onBackClick = onBackClick
             )

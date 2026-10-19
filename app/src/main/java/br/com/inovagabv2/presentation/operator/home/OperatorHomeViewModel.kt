@@ -45,7 +45,8 @@ class OperatorHomeViewModel @Inject constructor(
     fun refresh() {
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
+            val hasData = _state.value.recentIdeas.isNotEmpty() || _state.value.strategies.isNotEmpty()
+            _state.update { it.copy(isLoading = !hasData, error = null) }
             try {
                 val currentUser = authRepository.getCurrentUser().first()
                 val userId = currentUser?.id?.trim().orEmpty()

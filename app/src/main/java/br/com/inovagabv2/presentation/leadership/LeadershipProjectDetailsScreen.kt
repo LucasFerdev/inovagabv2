@@ -14,6 +14,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.designsystem.financialAppearance
+import br.com.inovagabv2.presentation.session.rememberLoggedUserName
 import br.com.inovagabv2.core.util.formatCurrency
 import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.core.util.formatPercent
@@ -38,6 +40,7 @@ fun LeadershipProjectDetailsScreen(
     Scaffold(
         topBar = {
             AguiaTopBar(
+                userName = rememberLoggedUserName(),
                 title = "Detalhes do Projeto",
                 onBackClick = onBackClick
             )
@@ -188,10 +191,24 @@ fun LeadershipProjectDetailsScreen(
                             Text("Retorno Financeiro: ${formatCurrency(ret)}", fontSize = 13.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
                         }
                         dash?.lucro?.let { luc ->
-                            Text("Lucro: ${formatCurrency(luc)}", fontSize = 13.sp, color = Color(0xFF16A34A), fontWeight = FontWeight.Bold)
+                            val tone = financialAppearance(luc)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (tone.icon != null) {
+                                    Icon(tone.icon, contentDescription = null, tint = tone.contentColor, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                }
+                                Text("Lucro: ${formatCurrency(luc)}", fontSize = 13.sp, color = tone.contentColor, fontWeight = FontWeight.Bold)
+                            }
                         }
                         dash?.roiPercentual?.let { roi ->
-                            Text("ROI: ${formatPercent(roi)}", fontSize = 13.sp, color = AguiaColors.PrimaryBlue, fontWeight = FontWeight.Bold)
+                            val tone = financialAppearance(roi)
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                if (tone.icon != null) {
+                                    Icon(tone.icon, contentDescription = null, tint = tone.contentColor, modifier = Modifier.size(16.dp))
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                }
+                                Text("ROI: ${formatPercent(roi)}", fontSize = 13.sp, color = tone.contentColor, fontWeight = FontWeight.Bold)
+                            }
                         }
                     }
                 }

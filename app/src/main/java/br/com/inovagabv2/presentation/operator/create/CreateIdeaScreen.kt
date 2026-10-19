@@ -29,6 +29,7 @@ import br.com.inovagabv2.core.designsystem.components.AguiaErrorState
 import br.com.inovagabv2.core.designsystem.components.AguiaTextField
 import br.com.inovagabv2.core.designsystem.components.AguiaTopBar
 import br.com.inovagabv2.domain.model.Strategy
+import br.com.inovagabv2.presentation.session.rememberLoggedUserName
 
 @Composable
 fun CreateIdeaScreen(
@@ -47,6 +48,7 @@ fun CreateIdeaScreen(
     Scaffold(
         topBar = {
             AguiaTopBar(
+                userName = rememberLoggedUserName(),
                 roleTag = "OPERADOR",
                 onBackClick = {
                     if (state.currentStep > 1) viewModel.previousStep()

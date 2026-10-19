@@ -75,7 +75,7 @@ fun ManagerHomeScreen(
         },
         containerColor = Color.White
     ) { padding ->
-        if (state.isLoading) {
+        if (state.isLoading && state.ideas.isEmpty() && state.user == null) {
             Box(
                 modifier = Modifier
                     .fillMaxSize()

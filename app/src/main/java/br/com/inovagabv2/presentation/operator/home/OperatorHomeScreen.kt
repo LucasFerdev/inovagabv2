@@ -206,7 +206,7 @@ fun OperatorHomeScreen(
             }
 
             // Recent Ideas List or Empty State
-            if (state.isLoading) {
+            if (state.isLoading && state.recentIdeas.isEmpty()) {
                 item {
                     AguiaLoadingState(message = "Carregando suas ideias...")
                 }

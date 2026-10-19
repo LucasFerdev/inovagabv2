@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
+import br.com.inovagabv2.presentation.session.rememberLoggedUserName
 
 @Composable
 fun ManagerCreateProjectScreen(
@@ -46,10 +47,9 @@ fun ManagerCreateProjectScreen(
     Scaffold(
         topBar = {
             AguiaTopBar(
+                userName = rememberLoggedUserName(),
                 title = "Novo Projeto",
-                onBackClick = onBackClick,
-                backgroundColor = AguiaColors.ManagerPurple,
-                contentColor = AguiaColors.CardWhite
+                onBackClick = onBackClick
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },

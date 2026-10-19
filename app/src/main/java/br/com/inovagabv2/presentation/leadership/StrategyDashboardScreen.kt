@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.designsystem.financialAppearance
 import br.com.inovagabv2.core.util.formatCurrencyCompact
 import br.com.inovagabv2.core.util.formatDate
 import br.com.inovagabv2.core.util.formatPercent
@@ -217,8 +218,12 @@ fun StrategyDashboardScreen(
                 item {
                     val totalInvest = dash?.investimento?.toDouble() ?: linkedProjects.sumOf { it.investment.toDouble() }
                     val totalReturn = dash?.retorno?.toDouble() ?: 0.0
-                    val profit = dash?.lucro?.toDouble() ?: (totalReturn - totalInvest).coerceAtLeast(0.0)
+                    val profit = dash?.lucro?.toDouble() ?: (totalReturn - totalInvest)
                     val roiVal = dash?.roiPercentual?.toDouble() ?: (if (totalInvest > 0) ((totalReturn - totalInvest) / totalInvest) * 100 else 0.0)
+                    val roiDecimal = dash?.roiPercentual ?: BigDecimal.valueOf(roiVal)
+                    val profitDecimal = dash?.lucro ?: BigDecimal.valueOf(profit)
+                    val roiTone = financialAppearance(roiDecimal)
+                    val profitTone = financialAppearance(profitDecimal)
 
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -241,15 +246,28 @@ fun StrategyDashboardScreen(
 
                                 Surface(
                                     shape = RoundedCornerShape(20.dp),
-                                    color = Color(0xFFDCFCE7)
+                                    color = roiTone.containerColor
                                 ) {
-                                    Text(
-                                        text = "ROI ${formatPercent(BigDecimal.valueOf(roiVal))}",
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color(0xFF16A34A),
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                                    )
+                                    Row(
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        if (roiTone.icon != null) {
+                                            Icon(
+                                                imageVector = roiTone.icon,
+                                                contentDescription = null,
+                                                tint = roiTone.contentColor,
+                                                modifier = Modifier.size(14.dp)
+                                            )
+                                            Spacer(modifier = Modifier.width(4.dp))
+                                        }
+                                        Text(
+                                            text = "ROI ${formatPercent(roiDecimal)}",
+                                            fontSize = 12.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = roiTone.contentColor
+                                        )
+                                    }
                                 }
                             }
 
@@ -261,7 +279,12 @@ fun StrategyDashboardScreen(
                             ) {
                                 ConsolidatedMetricCol("Investimento", formatCurrencyCompact(BigDecimal.valueOf(totalInvest)), AguiaColors.PrimaryBlue)
                                 ConsolidatedMetricCol("Retorno", formatCurrencyCompact(BigDecimal.valueOf(totalReturn)), Color(0xFF0284C7))
-                                ConsolidatedMetricCol("Lucro", formatCurrencyCompact(BigDecimal.valueOf(profit)), Color(0xFF16A34A))
+                                ConsolidatedMetricCol(
+                                    label = "Lucro",
+                                    value = formatCurrencyCompact(profitDecimal),
+                                    valueColor = profitTone.contentColor,
+                                    icon = profitTone.icon
+                                )
                             }
                         }
                     }
@@ -398,7 +421,8 @@ fun StrategyDashboardScreen(
 private fun ConsolidatedMetricCol(
     label: String,
     value: String,
-    valueColor: Color
+    valueColor: Color,
+    icon: androidx.compose.ui.graphics.vector.ImageVector? = null
 ) {
     Column {
         Text(
@@ -407,12 +431,23 @@ private fun ConsolidatedMetricCol(
             color = AguiaColors.TextSecondary
         )
         Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = value,
-            fontSize = 15.sp,
-            fontWeight = FontWeight.Bold,
-            color = valueColor
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = valueColor,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+            }
+            Text(
+                text = value,
+                fontSize = 15.sp,
+                fontWeight = FontWeight.Bold,
+                color = valueColor
+            )
+        }
     }
 }
 

@@ -208,7 +208,7 @@ fun LeadershipProjectsScreen(
                 }
 
                 // Loading / Empty / List State
-                if (isLoading) {
+                if (isLoading && projects.isEmpty()) {
                     item {
                         AguiaLoadingState(message = "Carregando projetos...")
                     }

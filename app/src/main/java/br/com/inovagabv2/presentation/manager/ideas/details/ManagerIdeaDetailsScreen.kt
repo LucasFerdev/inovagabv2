@@ -17,6 +17,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.domain.model.IdeaStatus
+import br.com.inovagabv2.presentation.session.rememberLoggedUserName
 
 @Composable
 fun ManagerIdeaDetailsScreen(
@@ -121,9 +122,13 @@ fun ManagerIdeaDetailsScreen(
             confirmButton = {
                 Button(
                     onClick = viewModel::onConfirmRecalculateAi,
+                    enabled = !state.isSubmittingAi,
                     colors = ButtonDefaults.buttonColors(containerColor = AguiaColors.PrimaryBlue)
                 ) {
-                    Text("Confirmar e Recalcular", fontWeight = FontWeight.Bold)
+                    Text(
+                        text = if (state.isSubmittingAi) "Carregando..." else "Confirmar e Recalcular",
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             },
             dismissButton = {
@@ -137,10 +142,9 @@ fun ManagerIdeaDetailsScreen(
     Scaffold(
         topBar = {
             AguiaTopBar(
+                userName = rememberLoggedUserName(),
                 title = "Detalhes da Ideia",
-                onBackClick = onBackClick,
-                backgroundColor = AguiaColors.ManagerPurple,
-                contentColor = AguiaColors.CardWhite
+                onBackClick = onBackClick
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -349,18 +353,16 @@ fun ManagerIdeaDetailsScreen(
                                 ai.recommendations.forEach { Text(text = "• $it", fontSize = 12.sp, color = AguiaColors.TextSecondary) }
                             }
 
-                            Spacer(modifier = Modifier.height(14.dp))
-
-                            OutlinedButton(
-                                onClick = viewModel::onShowRecalculateDialog,
-                                modifier = Modifier.fillMaxWidth(),
-                                enabled = !state.isSubmittingAi
-                            ) {
-                                if (state.isSubmittingAi) {
-                                    CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
-                                } else {
-                                    Text("Recalcular Análise da IA", fontWeight = FontWeight.Bold)
-                                }
+                            if (showRecalculateAi(idea.status, hasAnalysis = true)) {
+                                Spacer(modifier = Modifier.height(14.dp))
+                                AguiaButton(
+                                    text = "Recalcular Análise da IA",
+                                    onClick = viewModel::onShowRecalculateDialog,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    outline = true,
+                                    isLoading = state.isSubmittingAi,
+                                    enabled = !state.isSubmittingAi
+                                )
                             }
                         } else {
                             Text(
@@ -368,14 +370,16 @@ fun ManagerIdeaDetailsScreen(
                                 fontSize = 13.sp,
                                 color = AguiaColors.TextSecondary
                             )
-                            Spacer(modifier = Modifier.height(12.dp))
-                            AguiaButton(
-                                text = "Analisar com IA",
-                                onClick = viewModel::onAnalyzeAi,
-                                modifier = Modifier.fillMaxWidth(),
-                                isLoading = state.isSubmittingAi,
-                                enabled = !state.isSubmittingAi
-                            )
+                            if (showAnalyzeWithAi(idea.status, hasAnalysis = false)) {
+                                Spacer(modifier = Modifier.height(12.dp))
+                                AguiaButton(
+                                    text = "Analisar com IA",
+                                    onClick = viewModel::onAnalyzeAi,
+                                    modifier = Modifier.fillMaxWidth(),
+                                    isLoading = state.isSubmittingAi,
+                                    enabled = !state.isSubmittingAi
+                                )
+                            }
                         }
                     }
                 }

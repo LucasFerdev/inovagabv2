@@ -8,6 +8,7 @@ import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.AiAnalysis
 import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Idea
+import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.repository.AiRepository
 import br.com.inovagabv2.domain.repository.IdeaRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -141,10 +142,32 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
 
     fun onAnalyzeAi() {
         if (_state.value.isSubmittingAi) return
+        val status = _state.value.idea?.status ?: return
+        if (!showAnalyzeWithAi(status, _state.value.aiAnalysis != null)) return
 
+        _state.update { it.copy(isSubmittingAi = true, errorMessage = null) }
         viewModelScope.launch {
-            _state.update { it.copy(isSubmittingAi = true, errorMessage = null) }
             try {
+                if (_state.value.idea?.status == IdeaStatus.ENVIADA) {
+                    val transition = ideaRepository.analisar(ideaId)
+                    if (transition.isFailure) {
+                        _state.update {
+                            it.copy(
+                                isSubmittingAi = false,
+                                errorMessage = transition.exceptionOrNull()?.toUserMessage()
+                            )
+                        }
+                        return@launch
+                    }
+                    val transitioned = transition.getOrNull()
+                    val ideaInAnalysis = when {
+                        transitioned == null -> _state.value.idea?.copy(status = IdeaStatus.EM_ANALISE)
+                        transitioned.status == IdeaStatus.EM_ANALISE -> transitioned
+                        else -> transitioned.copy(status = IdeaStatus.EM_ANALISE)
+                    }
+                    _state.update { it.copy(idea = ideaInAnalysis ?: it.idea) }
+                }
+
                 val result = aiRepository.analyzeIdea(ideaId, recalculate = false)
                 if (result.isSuccess) {
                     _state.update {
@@ -172,6 +195,8 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
 
     fun onShowRecalculateDialog() {
         if (_state.value.isSubmittingAi) return
+        val status = _state.value.idea?.status ?: return
+        if (!showRecalculateAi(status, _state.value.aiAnalysis != null)) return
         _state.update { it.copy(showRecalculateDialog = true) }
     }
 
@@ -181,9 +206,11 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
 
     fun onConfirmRecalculateAi() {
         if (_state.value.isSubmittingAi) return
+        val status = _state.value.idea?.status ?: return
+        if (!showRecalculateAi(status, _state.value.aiAnalysis != null)) return
 
+        _state.update { it.copy(isSubmittingAi = true, showRecalculateDialog = false, errorMessage = null) }
         viewModelScope.launch {
-            _state.update { it.copy(isSubmittingAi = true, showRecalculateDialog = false, errorMessage = null) }
             try {
                 val result = aiRepository.analyzeIdea(ideaId, recalculate = true)
                 if (result.isSuccess) {
@@ -372,4 +399,12 @@ class ManagerIdeaDetailsViewModel @Inject constructor(
     fun clearErrorMessage() {
         _state.update { it.copy(errorMessage = null) }
     }
+}
+
+internal fun showAnalyzeWithAi(status: IdeaStatus, hasAnalysis: Boolean): Boolean {
+    return !hasAnalysis && (status == IdeaStatus.ENVIADA || status == IdeaStatus.EM_ANALISE)
+}
+
+internal fun showRecalculateAi(status: IdeaStatus, hasAnalysis: Boolean): Boolean {
+    return hasAnalysis && status == IdeaStatus.EM_ANALISE
 }

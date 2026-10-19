@@ -202,7 +202,7 @@ fun OperatorStrategyScreen(
                 }
 
                 // Loading / Empty / Success List
-                if (isLoading) {
+                if (isLoading && strategies.isEmpty()) {
                     item {
                         AguiaLoadingState(message = "Carregando estratégias...")
                     }

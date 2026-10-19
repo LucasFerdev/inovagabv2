@@ -13,7 +13,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.vector.ImageVector
 import br.com.inovagabv2.core.designsystem.AguiaColors
+import br.com.inovagabv2.core.designsystem.financialAppearanceOfDisplay
 import br.com.inovagabv2.domain.model.ProjectResult
 
 @Composable
@@ -61,10 +63,12 @@ fun AguiaProjectResultCard(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
+                val roiTone = financialAppearanceOfDisplay(projectResult.roi)
                 MetricColumn(
                     label = "ROI",
                     value = projectResult.roi,
-                    valueColor = AguiaColors.SuccessGreen
+                    valueColor = roiTone.contentColor,
+                    icon = roiTone.icon
                 )
                 MetricColumn(
                     label = "Retorno",
@@ -82,7 +86,12 @@ fun AguiaProjectResultCard(
 }
 
 @Composable
-private fun MetricColumn(label: String, value: String, valueColor: Color) {
+private fun MetricColumn(
+    label: String,
+    value: String,
+    valueColor: Color,
+    icon: ImageVector? = null
+) {
     Column {
         Text(
             text = label,
@@ -90,11 +99,22 @@ private fun MetricColumn(label: String, value: String, valueColor: Color) {
             color = AguiaColors.TextSecondary
         )
         Spacer(modifier = Modifier.height(2.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodyMedium,
-            fontWeight = FontWeight.Bold,
-            color = valueColor
-        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (icon != null) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = valueColor,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+            }
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold,
+                color = valueColor
+            )
+        }
     }
 }

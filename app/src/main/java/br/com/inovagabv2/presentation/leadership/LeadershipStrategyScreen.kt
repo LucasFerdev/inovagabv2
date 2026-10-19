@@ -233,7 +233,7 @@ fun LeadershipStrategyScreen(
                 }
 
                 // Loading / Empty / List State
-                if (isLoading) {
+                if (isLoading && strategies.isEmpty()) {
                     item {
                         AguiaLoadingState(message = "Carregando estratégias...")
                     }

@@ -148,7 +148,7 @@ fun MyIdeasScreen(
                 }
 
                 // List Items
-                if (isLoading) {
+                if (isLoading && ideas.isEmpty()) {
                     item {
                         AguiaLoadingState(message = "Carregando suas ideias...")
                     }

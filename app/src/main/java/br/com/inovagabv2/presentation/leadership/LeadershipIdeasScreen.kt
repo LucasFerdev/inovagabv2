@@ -205,7 +205,7 @@ fun LeadershipIdeasScreen(
                 }
 
                 // Loading / Empty / List State
-                if (isLoading) {
+                if (isLoading && ideas.isEmpty()) {
                     item {
                         AguiaLoadingState(message = "Carregando ideias...")
                     }

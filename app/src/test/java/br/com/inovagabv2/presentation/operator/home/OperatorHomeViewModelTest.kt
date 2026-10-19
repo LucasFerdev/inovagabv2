@@ -11,6 +11,7 @@ import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.IdeaRepository
 import br.com.inovagabv2.domain.repository.StrategyRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +25,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -146,6 +148,30 @@ class OperatorHomeViewModelTest {
         assertEquals(0, fakeIdeaRepository.byAuthorCalls)
     }
 
+    @Test
+    fun `refresh com ideias na tela nao volta para carregamento`() = runTest {
+        fakeAuthRepository.setUser(User("u1", "Maria", "maria@aguia.com", Role.OPERADOR))
+        fakeIdeaRepository.setIdeas(listOf(idea("i1", "Ideia", IdeaStatus.ENVIADA)))
+        val viewModel = OperatorHomeViewModel(
+            fakeIdeaRepository,
+            fakeStrategyRepository,
+            fakeAuthRepository
+        )
+        viewModel.state.first { !it.isLoading && it.recentIdeas.isNotEmpty() }
+
+        val gate = CompletableDeferred<Unit>()
+        fakeIdeaRepository.nextAuthorGate = gate
+        viewModel.refresh()
+
+        assertFalse(viewModel.state.value.isLoading)
+        assertEquals(listOf("i1"), viewModel.state.value.recentIdeas.map { it.id })
+
+        gate.complete(Unit)
+        val refreshed = viewModel.state.first { !it.isLoading && it.recentIdeas.isNotEmpty() }
+        assertFalse(refreshed.isLoading)
+        assertEquals(listOf("i1"), refreshed.recentIdeas.map { it.id })
+    }
+
     private fun idea(
         id: String,
         title: String,
@@ -168,6 +194,7 @@ class OperatorHomeViewModelTest {
         var getIdeasCalls: Int = 0
         var byAuthorCalls: Int = 0
         var lastAuthorId: String? = null
+        var nextAuthorGate: CompletableDeferred<Unit>? = null
 
         fun setIdeas(list: List<Idea>) {
             ideas.value = list
@@ -184,6 +211,14 @@ class OperatorHomeViewModelTest {
             val error = ideasError
             if (error != null) {
                 return flow { throw error }
+            }
+            val gate = nextAuthorGate
+            if (gate != null) {
+                nextAuthorGate = null
+                return flow {
+                    gate.await()
+                    emit(ideas.value)
+                }
             }
             return ideas
         }

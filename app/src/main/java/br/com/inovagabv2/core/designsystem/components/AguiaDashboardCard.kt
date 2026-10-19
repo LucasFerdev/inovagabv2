@@ -53,6 +53,7 @@ fun AguiaDashboardCard(
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     color: Color = AguiaColors.PrimaryBlue,
+    valueColor: Color = AguiaColors.NavyDark,
     showSparkline: Boolean = true,
     isPositiveSparkline: Boolean = true,
     trend: String? = null
@@ -95,7 +96,7 @@ fun AguiaDashboardCard(
                 text = value,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                color = AguiaColors.NavyDark
+                color = valueColor
             )
             
             if (showSparkline) {

@@ -19,6 +19,7 @@ import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Role
 import br.com.inovagabv2.presentation.components.OnResumeEffect
+import br.com.inovagabv2.presentation.session.rememberLoggedUserName
 
 @Composable
 fun ManagerProjectsScreen(
@@ -37,6 +38,7 @@ fun ManagerProjectsScreen(
     Scaffold(
         topBar = {
             AguiaTopBar(
+                userName = rememberLoggedUserName(),
                 role = Role.GESTOR,
                 showRoleBadge = true
             )
@@ -129,7 +131,7 @@ fun ManagerProjectsScreen(
                     }
                 }
 
-                if (state.isLoading) {
+                if (state.isLoading && state.projects.isEmpty()) {
                     item {
                         AguiaLoadingState(message = "Carregando projetos...")
                     }

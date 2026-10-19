@@ -17,6 +17,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.core.util.formatDate
+import br.com.inovagabv2.presentation.session.rememberLoggedUserName
 
 @Composable
 fun StrategyDetailsScreen(
@@ -44,6 +45,7 @@ fun StrategyDetailsScreen(
     Scaffold(
         topBar = {
             AguiaTopBar(
+                userName = rememberLoggedUserName(),
                 title = "Detalhes da Diretriz",
                 onBackClick = onBackClick
             )

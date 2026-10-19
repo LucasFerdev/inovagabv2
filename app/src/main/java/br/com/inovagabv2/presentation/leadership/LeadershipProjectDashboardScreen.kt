@@ -18,8 +18,10 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
+import br.com.inovagabv2.core.designsystem.financialAppearance
 import br.com.inovagabv2.core.util.formatCurrencyCompact
 import br.com.inovagabv2.core.util.formatPercent
+import java.math.BigDecimal
 
 @Composable
 fun LeadershipProjectDashboardScreen(
@@ -27,10 +29,12 @@ fun LeadershipProjectDashboardScreen(
     viewModel: LeadershipProjectDashboardViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    val user by viewModel.user.collectAsState()
 
     Scaffold(
         topBar = {
             AguiaTopBar(
+                userName = user?.name,
                 title = "Painel do Projeto",
                 onBackClick = onBackClick
             )
@@ -106,9 +110,16 @@ fun LeadershipProjectDashboardScreen(
                                 Text("Retorno", fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
                                 Text(formatCurrencyCompact(dash.retornoFinanceiro), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF34D399))
                             }
-                            Column {
+                            Column(horizontalAlignment = Alignment.End) {
                                 Text("ROI", fontSize = 11.sp, color = Color.White.copy(alpha = 0.7f))
-                                Text(formatPercent(dash.roiPercentual), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = Color(0xFF38BDF8))
+                                val roiTone = financialAppearance(dash.roiPercentual ?: BigDecimal.ZERO, onDark = true)
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (roiTone.icon != null) {
+                                        Icon(roiTone.icon, contentDescription = null, tint = roiTone.contentColor, modifier = Modifier.size(14.dp))
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                    }
+                                    Text(formatPercent(dash.roiPercentual), fontSize = 15.sp, fontWeight = FontWeight.Bold, color = roiTone.contentColor)
+                                }
                             }
                         }
                     }

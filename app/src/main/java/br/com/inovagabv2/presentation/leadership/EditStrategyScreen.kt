@@ -19,6 +19,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.*
 import br.com.inovagabv2.domain.model.StrategyStatus
+import br.com.inovagabv2.presentation.session.rememberLoggedUserName
 
 @Composable
 fun EditStrategyScreen(
@@ -84,6 +85,7 @@ fun EditStrategyScreen(
     Scaffold(
         topBar = {
             AguiaTopBar(
+                userName = rememberLoggedUserName(),
                 title = "Editar Estratégia",
                 onBackClick = onBackClick
             )
