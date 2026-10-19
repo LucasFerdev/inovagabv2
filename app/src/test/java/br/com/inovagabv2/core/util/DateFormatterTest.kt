@@ -67,14 +67,34 @@ class DateFormatterTest {
     }
 
     @Test
-    fun `maskDateInput inserts slashes and keeps at most eight digits`() {
-        assertEquals("1", maskDateInput("1"))
-        assertEquals("18", maskDateInput("18"))
-        assertEquals("18/1", maskDateInput("181"))
-        assertEquals("18/10", maskDateInput("1810"))
-        assertEquals("18/10/2026", maskDateInput("18102026"))
-        assertEquals("18/10/2026", maskDateInput("18/10/2026"))
-        assertEquals("18/10/2026", maskDateInput("18a10b2026"))
-        assertEquals("", maskDateInput("abc"))
+    fun `parseDateBr accepts eight digits and rejects invalid calendar dates`() {
+        assertEquals(LocalDate.of(2026, 10, 20), parseDateBr("20102026"))
+        assertEquals(LocalDate.of(2026, 10, 20), parseDateBr("20/10/2026"))
+        assertEquals("2026-10-20", parseDateBr("20102026").toString())
+        assertNull(parseDateBr("31022026"))
+        assertNull(parseDateBr("31/02/2026"))
+        assertNull(parseDateBr("2026-02-31"))
+        assertNull(dateFieldError("20102026"))
+        assertEquals(DATE_INPUT_ERROR, dateFieldError("31022026"))
+        assertNull(dateFieldError("2010"))
+    }
+
+    @Test
+    fun `typing 20102026 keeps digits and parses iso date`() {
+        var digits = ""
+        for (char in "20102026") {
+            digits = (digits + char).filter(Char::isDigit).take(8)
+        }
+        assertEquals("20102026", digits)
+        assertEquals(LocalDate.of(2026, 10, 20), parseDateBr(digits))
+        assertEquals("2026-10-20", parseDateBr(digits).toString())
+        assertEquals("20102026", "20/10/2026".filter(Char::isDigit).take(8))
+    }
+
+    @Test
+    fun `dateToDigits formats day month year without separators`() {
+        assertEquals("20102026", dateToDigits(LocalDate.of(2026, 10, 20)))
+        assertEquals("15092026", dateToDigits(LocalDate.of(2026, 9, 15)))
+        assertEquals("", dateToDigits(null))
     }
 }

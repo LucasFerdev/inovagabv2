@@ -1,5 +1,6 @@
 package br.com.inovagabv2.core.util
 
+import java.time.DateTimeException
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -21,26 +22,30 @@ fun parseDateBr(input: String): LocalDate? {
     val value = input.trim()
     if (value.isEmpty()) return null
     return try {
-        if ('/' in value) {
-            LocalDate.parse(value, DATE_INPUT_BR)
-        } else {
-            LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE)
+        when {
+            '/' in value -> LocalDate.parse(value, DATE_INPUT_BR)
+            value.length == 8 && value.all { it.isDigit() } -> {
+                LocalDate.of(
+                    value.substring(4, 8).toInt(),
+                    value.substring(2, 4).toInt(),
+                    value.substring(0, 2).toInt()
+                )
+            }
+            else -> LocalDate.parse(value, DateTimeFormatter.ISO_LOCAL_DATE)
         }
-    } catch (_: DateTimeParseException) {
+    } catch (_: DateTimeException) {
         null
     }
 }
 
 fun formatDateInput(date: LocalDate?): String = date?.format(DATE_FORMAT).orEmpty()
 
-fun maskDateInput(input: String): String {
-    val digits = input.filter { it.isDigit() }.take(8)
-    return buildString {
-        for (index in digits.indices) {
-            if (index == 2 || index == 4) append('/')
-            append(digits[index])
-        }
-    }
+fun dateToDigits(date: LocalDate?): String {
+    if (date == null) return ""
+    val day = date.dayOfMonth.toString().padStart(2, '0')
+    val month = date.monthValue.toString().padStart(2, '0')
+    val year = date.year.toString().padStart(4, '0')
+    return day + month + year
 }
 
 fun dateFieldError(input: String): String? {

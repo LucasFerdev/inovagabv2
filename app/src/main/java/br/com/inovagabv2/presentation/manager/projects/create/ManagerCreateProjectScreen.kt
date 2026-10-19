@@ -186,11 +186,10 @@ fun ManagerCreateProjectScreen(
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
 
-            AguiaTextField(
-                value = state.deadline,
-                onValueChange = viewModel::onDeadlineChange,
+            AguiaDateField(
+                digits = state.deadline,
+                onDigitsChange = viewModel::onDeadlineChange,
                 label = "Prazo Estimado (DD/MM/AAAA)",
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 error = state.deadlineError
             )
 

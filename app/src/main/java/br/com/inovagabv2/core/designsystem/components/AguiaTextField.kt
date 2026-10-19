@@ -26,7 +26,8 @@ fun AguiaTextField(
     singleLine: Boolean = true,
     minLines: Int = 1,
     maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
-    keyboardOptions: KeyboardOptions = KeyboardOptions.Default
+    keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+    visualTransformation: VisualTransformation = VisualTransformation.None
 ) {
     OutlinedTextField(
         value = value,
@@ -35,7 +36,7 @@ fun AguiaTextField(
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
         keyboardOptions = keyboardOptions,
-        visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+        visualTransformation = if (isPassword) PasswordVisualTransformation() else visualTransformation,
         isError = error != null,
         supportingText = error?.let { { Text(it) } },
         leadingIcon = leadingIcon,

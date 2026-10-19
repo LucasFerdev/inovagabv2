@@ -12,7 +12,7 @@ data class Idea(
     val category: String,
     val strategyId: String = "",
     val authorId: String = "",
-    val authorName: String = "Autor não informado",
+    val authorName: String = "",
     val status: IdeaStatus = IdeaStatus.ENVIADA,
     val priority: Int? = null,
     val evaluationJustification: String? = null,

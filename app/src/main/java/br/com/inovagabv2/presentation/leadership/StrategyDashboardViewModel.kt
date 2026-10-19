@@ -8,6 +8,7 @@ import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.DashboardStrategyDetails
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.Project
+import br.com.inovagabv2.domain.model.Role
 import br.com.inovagabv2.domain.model.Strategy
 import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
@@ -17,6 +18,7 @@ import br.com.inovagabv2.domain.repository.ProjectRepository
 import br.com.inovagabv2.domain.repository.StrategyRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -49,13 +51,22 @@ class StrategyDashboardViewModel @Inject constructor(
     private val _state = MutableStateFlow(StrategyDashboardState())
     val state: StateFlow<StrategyDashboardState> = _state.asStateFlow()
 
+    private var loadJob: Job? = null
+
     init {
         loadData()
     }
 
     fun loadData() {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true, error = null) }
+        loadJob?.cancel()
+        loadJob = viewModelScope.launch {
+            val showSpinner = _state.value.strategy == null
+            _state.update {
+                it.copy(
+                    isLoading = showSpinner,
+                    error = if (showSpinner) null else it.error
+                )
+            }
             var failure: String? = null
             supervisorScope {
                 val jobs = listOf(
@@ -66,7 +77,11 @@ class StrategyDashboardViewModel @Inject constructor(
                                     if (e is CancellationException) throw e
                                     failure = e.toUserMessage()
                                 }
-                                .collect { strat -> _state.update { it.copy(strategy = strat) } }
+                                .collect { strat ->
+                                    if (strat != null) {
+                                        _state.update { it.copy(strategy = strat) }
+                                    }
+                                }
                         } catch (e: CancellationException) {
                             throw e
                         } catch (e: Exception) {
@@ -131,3 +146,5 @@ class StrategyDashboardViewModel @Inject constructor(
         }
     }
 }
+
+fun canEditStrategy(role: Role?): Boolean = role == Role.LIDERANCA

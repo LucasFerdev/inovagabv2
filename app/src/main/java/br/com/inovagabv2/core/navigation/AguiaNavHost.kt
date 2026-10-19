@@ -452,11 +452,13 @@ fun AguiaNavHost(
             arguments = listOf(
                 androidx.navigation.navArgument("strategyId") { type = androidx.navigation.NavType.StringType }
             )
-        ) {
+        ) { backStackEntry ->
             val viewModel: StrategyDashboardViewModel = hiltViewModel()
+            val strategyId = backStackEntry.arguments?.getString("strategyId").orEmpty()
             StrategyDashboardScreen(
                 viewModel = viewModel,
                 onBackClick = { navController.popBackStack() },
+                onEditStrategy = { navController.navigate(Screen.EditStrategy.createRoute(strategyId)) },
                 onIdeaClick = { ideaId -> navController.navigate(Screen.IdeaDetails.createRoute(ideaId)) },
                 onNavigateToHome = {
                     navController.navigateToTab(Screen.LeadershipDashboard.route, Screen.LeadershipDashboard.route)

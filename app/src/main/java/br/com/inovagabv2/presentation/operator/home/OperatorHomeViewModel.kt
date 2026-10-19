@@ -67,7 +67,7 @@ class OperatorHomeViewModel @Inject constructor(
                     val sortedIdeas = ideas.sortedByDescending { it.updatedAt ?: it.createdAt }
                     OperatorHomeState(
                         isLoading = false,
-                        userName = currentUser?.name?.takeIf { it.isNotBlank() } ?: "Operador",
+                        userName = currentUser?.name.orEmpty(),
                         sentCount = ideas.count { it.status == IdeaStatus.ENVIADA },
                         inAnalysisCount = ideas.count { it.status == IdeaStatus.EM_ANALISE },
                         approvedCount = ideas.count { it.status == IdeaStatus.APROVADA },

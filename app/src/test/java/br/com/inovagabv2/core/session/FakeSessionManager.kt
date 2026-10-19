@@ -43,6 +43,11 @@ class FakeSessionManager : SessionManager(DummyContext()) {
         _isOnboardingCompleted.value = true
     }
 
+    override suspend fun updateStoredUser(user: User) {
+        if (_jwtToken.value.isNullOrBlank()) return
+        _userSession.value = user
+    }
+
     override suspend fun setOnboardingCompleted(completed: Boolean) {
         _isOnboardingCompleted.value = completed
     }

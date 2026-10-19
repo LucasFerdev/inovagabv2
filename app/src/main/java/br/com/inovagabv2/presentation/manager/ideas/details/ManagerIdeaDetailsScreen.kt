@@ -241,19 +241,21 @@ fun ManagerIdeaDetailsScreen(
                             color = AguiaColors.TextSecondary
                         )
                         
-                        Spacer(modifier = Modifier.height(16.dp))
-                        
-                        Text(
-                            text = "Autor",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = AguiaColors.TextPrimary
-                        )
-                        Text(
-                            text = idea.authorName,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = AguiaColors.TextSecondary
-                        )
+                        if (idea.authorName.isNotBlank()) {
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Text(
+                                text = "Autor",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = AguiaColors.TextPrimary
+                            )
+                            Text(
+                                text = idea.authorName,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = AguiaColors.TextSecondary
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(12.dp))
                         TextButton(

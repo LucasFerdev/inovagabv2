@@ -1,6 +1,7 @@
 package br.com.inovagabv2.presentation.leadership
 
 import androidx.lifecycle.SavedStateHandle
+import br.com.inovagabv2.core.util.parseDateBr
 import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Pagina
 import br.com.inovagabv2.domain.model.Strategy
@@ -48,7 +49,16 @@ class EditStrategyViewModelTest {
 
         assertEquals("est100", state.strategy?.id)
         assertEquals("Estratégia Teste", state.title)
+        assertEquals("15092026", state.date)
         assertEquals(StrategyStatus.RASCUNHO, state.status)
+    }
+
+    @Test
+    fun `onDateChange keeps only digits`() = runTest {
+        viewModel.onDateChange("20/10/2026")
+
+        assertEquals("20102026", viewModel.state.value.date)
+        assertEquals("2026-10-20", parseDateBr(viewModel.state.value.date)?.toString())
     }
 
     @Test
@@ -60,6 +70,8 @@ class EditStrategyViewModelTest {
 
         assertEquals("Título Atualizado", state.title)
         assertEquals("Estratégia atualizada com sucesso.", state.feedbackMessage)
+        assertEquals("2026-09-15", state.strategy?.date)
+        assertTrue(state.shouldNavigateBack)
         assertFalse(state.isSaving)
     }
 
@@ -71,6 +83,7 @@ class EditStrategyViewModelTest {
 
         assertEquals(StrategyStatus.ATIVA, state.status)
         assertEquals("Estratégia ativada com sucesso.", state.feedbackMessage)
+        assertTrue(state.shouldNavigateBack)
         assertFalse(state.isSaving)
     }
 

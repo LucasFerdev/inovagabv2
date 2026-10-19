@@ -37,6 +37,7 @@ import br.com.inovagabv2.core.navigation.Screen
 import br.com.inovagabv2.domain.model.Idea
 import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.Role
+import br.com.inovagabv2.presentation.components.OnResumeEffect
 
 @Composable
 fun StrategyDashboardScreen(
@@ -46,10 +47,13 @@ fun StrategyDashboardScreen(
     onNavigateToProjects: () -> Unit,
     onNavigateToIdeas: () -> Unit,
     onNavigateToProfile: () -> Unit,
+    onEditStrategy: () -> Unit,
     viewModel: StrategyDashboardViewModel = hiltViewModel()
 ) {
     val user by viewModel.user.collectAsState()
     val state by viewModel.state.collectAsState()
+
+    OnResumeEffect(onResume = viewModel::loadData)
 
     val currentRole = user?.role ?: Role.LIDERANCA
 
@@ -210,6 +214,20 @@ fun StrategyDashboardScreen(
                                 color = AguiaColors.TextSecondary,
                                 lineHeight = 18.sp
                             )
+                        }
+                    }
+                }
+
+                if (canEditStrategy(user?.role)) {
+                    item {
+                        OutlinedButton(
+                            onClick = onEditStrategy,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(48.dp),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("Editar estratégia", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
@@ -528,7 +546,7 @@ private fun LinkedIdeaCardItem(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Enviada por ${idea.authorName}",
+                    text = if (idea.authorName.isNotBlank()) "Enviada por ${idea.authorName}" else "",
                     fontSize = 12.sp,
                     color = AguiaColors.TextSecondary
                 )

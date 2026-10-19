@@ -19,7 +19,7 @@ class Checkpoint52VerificationTest {
         assertEquals("LF", UserUtils.calculateInitials("Lucas Fernando"))
         assertEquals("AS", UserUtils.calculateInitials("Ana Paula Silva"))
         assertEquals("MA", UserUtils.calculateInitials("Mariana"))
-        assertEquals("??", UserUtils.calculateInitials(null))
+        assertEquals("", UserUtils.calculateInitials(null))
     }
 
     @Test

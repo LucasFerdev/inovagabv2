@@ -71,7 +71,7 @@ class RegisterViewModel @Inject constructor(
             try {
                 authRepository.register(
                     nome = fullName,
-                    email = email,
+                    email = email.trim(),
                     senha = password,
                     empresa = empresa,
                     codigoAcesso = normalizedCode

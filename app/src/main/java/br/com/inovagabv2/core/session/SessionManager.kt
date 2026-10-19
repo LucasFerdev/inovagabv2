@@ -115,6 +115,13 @@ open class SessionManager @Inject constructor(
         }
     }
 
+    open suspend fun updateStoredUser(user: User) {
+        dataStore.edit { preferences ->
+            if (preferences[TOKEN_KEY].isNullOrBlank()) return@edit
+            preferences[USER_KEY] = Json.encodeToString(User.serializer(), user)
+        }
+    }
+
     open suspend fun setOnboardingCompleted(completed: Boolean = true) {
         dataStore.edit { preferences ->
             preferences[ONBOARDING_COMPLETED_KEY] = completed

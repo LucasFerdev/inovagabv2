@@ -4,17 +4,16 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import br.com.inovagabv2.core.designsystem.AguiaColors
 import br.com.inovagabv2.core.designsystem.components.AguiaButton
+import br.com.inovagabv2.core.designsystem.components.AguiaDateField
 import br.com.inovagabv2.core.designsystem.components.AguiaTextField
 import br.com.inovagabv2.core.designsystem.components.AguiaTopBar
 import br.com.inovagabv2.presentation.session.rememberLoggedUserName
@@ -26,12 +25,16 @@ fun CreateStrategyScreen(
     onSuccess: () -> Unit
 ) {
     val state by viewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(state.isSuccess) {
+    LaunchedEffect(state.feedbackMessage) {
+        val message = state.feedbackMessage ?: return@LaunchedEffect
+        snackbarHostState.showSnackbar(message)
         if (state.isSuccess) onSuccess()
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             AguiaTopBar(
                 userName = rememberLoggedUserName(),
@@ -84,11 +87,10 @@ fun CreateStrategyScreen(
                 maxLines = 3
             )
 
-            AguiaTextField(
-                value = state.date,
-                onValueChange = { viewModel.onDateChange(it) },
+            AguiaDateField(
+                digits = state.date,
+                onDigitsChange = viewModel::onDateChange,
                 label = "Data de Início (DD/MM/AAAA)",
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 error = state.dateError
             )
 
@@ -135,6 +137,12 @@ fun CreateStrategyScreen(
                     enabled = state.isValid && !state.isSaving
                 )
             }
+            Text(
+                text = "Criar e Ativar publica a estratégia para os operadores.",
+                fontSize = 12.sp,
+                color = AguiaColors.TextSecondary,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
     }
 }

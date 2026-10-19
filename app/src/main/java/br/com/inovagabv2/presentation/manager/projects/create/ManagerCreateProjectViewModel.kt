@@ -3,7 +3,6 @@ package br.com.inovagabv2.presentation.manager.projects.create
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.inovagabv2.core.util.dateFieldError
-import br.com.inovagabv2.core.util.maskDateInput
 import br.com.inovagabv2.core.util.parseDateBr
 import br.com.inovagabv2.core.util.parseDecimalBr
 import br.com.inovagabv2.core.util.toUserMessage
@@ -124,7 +123,7 @@ class ManagerCreateProjectViewModel @Inject constructor(
     }
     fun onIdeaSelected(idea: Idea?) = _state.update { it.copy(selectedIdea = idea) }
     fun onInvestmentChange(v: String) = _state.update { it.copy(investmentStr = v) }
-    fun onDeadlineChange(v: String) = _state.update { it.copy(deadline = maskDateInput(v)) }
+    fun onDeadlineChange(v: String) = _state.update { it.copy(deadline = v.filter(Char::isDigit).take(8)) }
 
     fun submitProject() {
         val cur = _state.value

@@ -36,7 +36,7 @@ class LoginViewModel @Inject constructor(
                 }
             }
             try {
-                authRepository.login(email, password)
+                authRepository.login(email.trim(), password)
                     .onSuccess { user ->
                         _uiState.update { it.copy(successUser = user, error = null) }
                     }

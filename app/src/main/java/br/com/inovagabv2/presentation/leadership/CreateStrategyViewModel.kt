@@ -3,7 +3,6 @@ package br.com.inovagabv2.presentation.leadership
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.inovagabv2.core.util.dateFieldError
-import br.com.inovagabv2.core.util.maskDateInput
 import br.com.inovagabv2.core.util.parseDateBr
 import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.repository.StrategyRepository
@@ -45,7 +44,7 @@ class CreateStrategyViewModel @Inject constructor(
 
     fun onTitleChange(title: String) = _state.update { it.copy(title = title) }
     fun onDescriptionChange(desc: String) = _state.update { it.copy(description = desc) }
-    fun onDateChange(date: String) = _state.update { it.copy(date = maskDateInput(date)) }
+    fun onDateChange(date: String) = _state.update { it.copy(date = date.filter(Char::isDigit).take(8)) }
     fun onCategoryChange(cat: String) = _state.update { it.copy(category = cat) }
     fun onCampaignChange(camp: String) = _state.update { it.copy(campaign = camp) }
 
@@ -70,7 +69,7 @@ class CreateStrategyViewModel @Inject constructor(
                     if (activateNow && created != null) {
                         val activateRes = repository.activateStrategy(created.id)
                         if (activateRes.isSuccess) {
-                            _state.update { it.copy(isSaving = false, isSuccess = true, feedbackMessage = "Estratégia criada e ativada com sucesso.") }
+                            _state.update { it.copy(isSaving = false, isSuccess = true, feedbackMessage = "Estratégia criada e ativada") }
                         } else {
                             _state.update {
                                 it.copy(
@@ -81,7 +80,7 @@ class CreateStrategyViewModel @Inject constructor(
                             }
                         }
                     } else {
-                        _state.update { it.copy(isSaving = false, isSuccess = true, feedbackMessage = "Estratégia salva como rascunho.") }
+                        _state.update { it.copy(isSaving = false, isSuccess = true, feedbackMessage = "Rascunho salvo") }
                     }
                 } else {
                     _state.update {

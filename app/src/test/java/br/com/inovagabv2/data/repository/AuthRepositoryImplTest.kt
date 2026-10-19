@@ -310,6 +310,44 @@ class AuthRepositoryImplTest {
         assertFalse(interruptedMessage.contains("Verifique sua internet"))
     }
 
+    @Test
+    fun `refreshCurrentUser updates session name and keeps token`() = runBlocking {
+        sessionManager.saveSession(
+            user = User("u1", "Gestor", "g@aguia.com", Role.GESTOR),
+            token = "tok"
+        )
+        mockWebServer.enqueue(
+            MockResponse().setResponseCode(200).setBody(
+                """
+                {
+                  "id": "u1",
+                  "nome": "Évelyn Rodrigues",
+                  "email": "g@aguia.com",
+                  "empresa": "Águia Branca",
+                  "role": "GESTOR",
+                  "ativo": true
+                }
+                """.trimIndent()
+            )
+        )
+
+        val result = repository.refreshCurrentUser()
+
+        assertTrue(result.isSuccess)
+        assertEquals("Évelyn Rodrigues", sessionManager.userSession.first()?.name)
+        assertEquals("tok", sessionManager.getToken())
+        assertEquals("/api/auth/me", mockWebServer.takeRequest().path)
+    }
+
+    @Test
+    fun `refreshCurrentUser does nothing without a session`() = runBlocking {
+        val result = repository.refreshCurrentUser()
+
+        assertTrue(result.isSuccess)
+        assertEquals(0, mockWebServer.requestCount)
+        assertNull(sessionManager.userSession.first())
+    }
+
     private fun repositoryThatThrows(error: IOException): AuthRepositoryImpl {
         val client = OkHttpClient.Builder()
             .addInterceptor { throw error }

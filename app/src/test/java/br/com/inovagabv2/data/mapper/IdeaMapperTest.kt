@@ -23,7 +23,7 @@ class IdeaMapperTest {
         val decoded = json.decodeFromString<IdeiaResponseDto>(ideiaJson(autorNome = null))
         val idea = decoded.toDomain()
 
-        assertEquals("Autor não informado", idea.authorName)
+        assertEquals("", idea.authorName)
     }
 
     @Test
@@ -31,7 +31,7 @@ class IdeaMapperTest {
         val decoded = json.decodeFromString<IdeiaResponseDto>(ideiaJson(autorNome = "null"))
         val idea = decoded.toDomain()
 
-        assertEquals("Autor não informado", idea.authorName)
+        assertEquals("", idea.authorName)
     }
 
     @Test
@@ -39,7 +39,7 @@ class IdeaMapperTest {
         val decoded = json.decodeFromString<IdeiaResponseDto>(ideiaJson(autorNome = "\"   \""))
         val idea = decoded.toDomain()
 
-        assertEquals("Autor não informado", idea.authorName)
+        assertEquals("", idea.authorName)
     }
 
     private fun ideiaJson(autorNome: String?): String {

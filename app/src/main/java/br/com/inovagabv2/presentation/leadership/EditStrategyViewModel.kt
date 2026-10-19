@@ -5,8 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.inovagabv2.core.util.LOAD_FAILED_MESSAGE
 import br.com.inovagabv2.core.util.dateFieldError
-import br.com.inovagabv2.core.util.formatDateInput
-import br.com.inovagabv2.core.util.maskDateInput
+import br.com.inovagabv2.core.util.dateToDigits
 import br.com.inovagabv2.core.util.parseDateBr
 import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.HistoryItem
@@ -32,6 +31,7 @@ data class EditStrategyState(
     val isLoadingHistory: Boolean = false,
     val isSaving: Boolean = false,
     val showArchiveDialog: Boolean = false,
+    val showDeactivateDialog: Boolean = false,
     val showHistoryDialog: Boolean = false,
     val feedbackMessage: String? = null,
     val errorMessage: String? = null,
@@ -77,7 +77,7 @@ class EditStrategyViewModel @Inject constructor(
                                     strategy = strategy,
                                     title = strategy.title,
                                     description = strategy.description,
-                                    date = formatDateInput(parseDateBr(strategy.date)).ifEmpty { strategy.date },
+                                    date = dateToDigits(parseDateBr(strategy.date)),
                                     category = strategy.category ?: "",
                                     campaign = strategy.campaign ?: "",
                                     status = strategy.status,
@@ -123,7 +123,7 @@ class EditStrategyViewModel @Inject constructor(
 
     fun onTitleChange(v: String) = _state.update { it.copy(title = v) }
     fun onDescriptionChange(v: String) = _state.update { it.copy(description = v) }
-    fun onDateChange(v: String) = _state.update { it.copy(date = maskDateInput(v)) }
+    fun onDateChange(v: String) = _state.update { it.copy(date = v.filter(Char::isDigit).take(8)) }
     fun onCategoryChange(v: String) = _state.update { it.copy(category = v) }
     fun onCampaignChange(v: String) = _state.update { it.copy(campaign = v) }
 
@@ -144,14 +144,11 @@ class EditStrategyViewModel @Inject constructor(
                     campanha = cur.campaign
                 )
                 if (res.isSuccess) {
-                    _state.update {
-                        it.copy(
-                            strategy = res.getOrNull(),
-                            status = res.getOrNull()?.status ?: cur.status,
-                            isSaving = false,
-                            feedbackMessage = "Estratégia atualizada com sucesso."
-                        )
-                    }
+                    finishAction(
+                        message = "Estratégia atualizada com sucesso.",
+                        strategy = res.getOrNull(),
+                        status = res.getOrNull()?.status ?: cur.status
+                    )
                 } else {
                     _state.update {
                         it.copy(
@@ -175,14 +172,11 @@ class EditStrategyViewModel @Inject constructor(
             try {
                 val res = repository.activateStrategy(strategyId)
                 if (res.isSuccess) {
-                    _state.update {
-                        it.copy(
-                            strategy = res.getOrNull(),
-                            status = StrategyStatus.ATIVA,
-                            isSaving = false,
-                            feedbackMessage = "Estratégia ativada com sucesso."
-                        )
-                    }
+                    finishAction(
+                        message = "Estratégia ativada com sucesso.",
+                        strategy = res.getOrNull(),
+                        status = StrategyStatus.ATIVA
+                    )
                 } else {
                     _state.update {
                         it.copy(
@@ -199,21 +193,21 @@ class EditStrategyViewModel @Inject constructor(
         }
     }
 
+    fun onShowDeactivateDialog() = _state.update { it.copy(showDeactivateDialog = true) }
+    fun onDismissDeactivateDialog() = _state.update { it.copy(showDeactivateDialog = false) }
+
     fun onDeactivateStrategy() {
         if (_state.value.isSaving) return
         viewModelScope.launch {
-            _state.update { it.copy(isSaving = true, errorMessage = null) }
+            _state.update { it.copy(isSaving = true, showDeactivateDialog = false, errorMessage = null) }
             try {
                 val res = repository.deactivateStrategy(strategyId)
                 if (res.isSuccess) {
-                    _state.update {
-                        it.copy(
-                            strategy = res.getOrNull(),
-                            status = StrategyStatus.INATIVA,
-                            isSaving = false,
-                            feedbackMessage = "Estratégia desativada com sucesso."
-                        )
-                    }
+                    finishAction(
+                        message = "Estratégia desativada com sucesso.",
+                        strategy = res.getOrNull(),
+                        status = StrategyStatus.INATIVA
+                    )
                 } else {
                     _state.update {
                         it.copy(
@@ -240,13 +234,7 @@ class EditStrategyViewModel @Inject constructor(
             try {
                 val res = repository.archiveStrategy(strategyId)
                 if (res.isSuccess) {
-                    _state.update {
-                        it.copy(
-                            isSaving = false,
-                            feedbackMessage = "Estratégia arquivada com sucesso.",
-                            shouldNavigateBack = true
-                        )
-                    }
+                    finishAction(message = "Estratégia arquivada com sucesso.")
                 } else {
                     _state.update {
                         it.copy(
@@ -265,4 +253,22 @@ class EditStrategyViewModel @Inject constructor(
 
     fun clearFeedbackMessage() = _state.update { it.copy(feedbackMessage = null) }
     fun clearErrorMessage() = _state.update { it.copy(errorMessage = null) }
+
+    private fun finishAction(
+        message: String,
+        strategy: Strategy? = _state.value.strategy,
+        status: StrategyStatus = strategy?.status ?: _state.value.status
+    ) {
+        _state.update {
+            it.copy(
+                strategy = strategy,
+                status = status,
+                isSaving = false,
+                feedbackMessage = message,
+                shouldNavigateBack = true,
+                showArchiveDialog = false,
+                showDeactivateDialog = false
+            )
+        }
+    }
 }

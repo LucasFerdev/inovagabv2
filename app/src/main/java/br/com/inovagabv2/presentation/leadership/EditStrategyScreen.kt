@@ -4,7 +4,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -12,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -29,17 +27,12 @@ fun EditStrategyScreen(
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(state.shouldNavigateBack) {
-        if (state.shouldNavigateBack) {
-            onBackClick()
-        }
-    }
-
     LaunchedEffect(state.feedbackMessage) {
-        state.feedbackMessage?.let { msg ->
-            snackbarHostState.showSnackbar(msg)
-            viewModel.clearFeedbackMessage()
-        }
+        val message = state.feedbackMessage ?: return@LaunchedEffect
+        val navigateBack = state.shouldNavigateBack
+        snackbarHostState.showSnackbar(message)
+        if (navigateBack) onBackClick()
+        viewModel.clearFeedbackMessage()
     }
 
     LaunchedEffect(state.errorMessage, state.strategy, state.isLoading) {
@@ -58,6 +51,27 @@ fun EditStrategyScreen(
             isLoading = state.isLoadingHistory,
             onDismiss = viewModel::onDismissHistoryDialog,
             title = "Histórico da Estratégia"
+        )
+    }
+
+    if (state.showDeactivateDialog) {
+        AlertDialog(
+            onDismissRequest = viewModel::onDismissDeactivateDialog,
+            title = { Text("Desativar Estratégia", fontWeight = FontWeight.Bold) },
+            text = { Text("Deseja desativar esta estratégia? Ela deixa de ser publicada para os operadores.") },
+            confirmButton = {
+                Button(
+                    onClick = viewModel::onDeactivateStrategy,
+                    colors = ButtonDefaults.buttonColors(containerColor = AguiaColors.PrimaryBlue)
+                ) {
+                    Text("Desativar", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::onDismissDeactivateDialog) {
+                    Text("Cancelar")
+                }
+            }
         )
     }
 
@@ -152,11 +166,10 @@ fun EditStrategyScreen(
                     maxLines = 3
                 )
 
-                AguiaTextField(
-                    value = state.date,
-                    onValueChange = viewModel::onDateChange,
+                AguiaDateField(
+                    digits = state.date,
+                    onDigitsChange = viewModel::onDateChange,
                     label = "Data (DD/MM/AAAA)",
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     error = state.dateError
                 )
 
@@ -194,7 +207,7 @@ fun EditStrategyScreen(
                     ) {
                         if (state.status == StrategyStatus.ATIVA) {
                             OutlinedButton(
-                                onClick = viewModel::onDeactivateStrategy,
+                                onClick = viewModel::onShowDeactivateDialog,
                                 modifier = Modifier.weight(1f).height(48.dp),
                                 shape = RoundedCornerShape(12.dp),
                                 enabled = !state.isSaving

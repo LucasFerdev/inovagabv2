@@ -12,7 +12,9 @@ import br.com.inovagabv2.data.remote.dto.RegisterRequestDto
 import br.com.inovagabv2.data.remote.dto.toDomain
 import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import retrofit2.Response
@@ -91,6 +93,22 @@ class AuthRepositoryImpl @Inject constructor(
 
     override fun getCurrentUser(): Flow<User?> {
         return sessionManager.userSession
+    }
+
+    override suspend fun refreshCurrentUser(): Result<Unit> {
+        if (sessionManager.getToken().isNullOrBlank()) return Result.success(Unit)
+        if (sessionManager.userSession.firstOrNull() == null) return Result.success(Unit)
+        return try {
+            val response = api.getMe()
+            if (response.isSuccessful) {
+                response.body()?.let { sessionManager.updateStoredUser(it.toDomain()) }
+            }
+            Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            Result.success(Unit)
+        }
     }
 
     private fun logError(tag: String, message: String, throwable: Throwable) {

@@ -237,7 +237,7 @@ fun LeadershipStrategyScreen(
                     item {
                         AguiaLoadingState(message = "Carregando estratégias...")
                     }
-                } else if (error != null) {
+                } else if (error != null && strategies.isEmpty()) {
                     item {
                         AguiaErrorState(
                             message = error ?: "Não foi possível carregar as estratégias. Tente novamente.",
