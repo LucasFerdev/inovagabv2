@@ -8,6 +8,7 @@ import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.AiAnalysis
 import br.com.inovagabv2.domain.model.HistoryItem
 import br.com.inovagabv2.domain.model.Idea
+import br.com.inovagabv2.domain.model.IdeaStatus
 import br.com.inovagabv2.domain.model.Role
 import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AiRepository
@@ -61,6 +62,38 @@ class IdeaDetailsViewModel @Inject constructor(
 
     private val _showHistoryDialog = MutableStateFlow(false)
     val showHistoryDialog: StateFlow<Boolean> = _showHistoryDialog.asStateFlow()
+
+    // Edição e arquivamento: só o operador autor, enquanto a ideia está ENVIADA (regra da API)
+    val canManage: StateFlow<Boolean> = combine(_idea, user) { idea, current ->
+        idea != null && current != null &&
+            current.role == Role.OPERADOR &&
+            idea.status == IdeaStatus.ENVIADA &&
+            (idea.authorId.isBlank() || idea.authorId == current.id)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
+
+    private val _isEditing = MutableStateFlow(false)
+    val isEditing: StateFlow<Boolean> = _isEditing.asStateFlow()
+
+    private val _editTitle = MutableStateFlow("")
+    val editTitle: StateFlow<String> = _editTitle.asStateFlow()
+    private val _editProblem = MutableStateFlow("")
+    val editProblem: StateFlow<String> = _editProblem.asStateFlow()
+    private val _editSolution = MutableStateFlow("")
+    val editSolution: StateFlow<String> = _editSolution.asStateFlow()
+    private val _editBenefits = MutableStateFlow("")
+    val editBenefits: StateFlow<String> = _editBenefits.asStateFlow()
+
+    private val _isSubmitting = MutableStateFlow(false)
+    val isSubmitting: StateFlow<Boolean> = _isSubmitting.asStateFlow()
+
+    private val _actionMessage = MutableStateFlow<String?>(null)
+    val actionMessage: StateFlow<String?> = _actionMessage.asStateFlow()
+
+    private val _showArchiveDialog = MutableStateFlow(false)
+    val showArchiveDialog: StateFlow<Boolean> = _showArchiveDialog.asStateFlow()
+
+    private val _archived = MutableStateFlow(false)
+    val archived: StateFlow<Boolean> = _archived.asStateFlow()
 
     init {
         loadIdea()
@@ -140,6 +173,110 @@ class IdeaDetailsViewModel @Inject constructor(
                 _historyError.value = e.toUserMessage()
             }
         }
+    }
+
+    fun onStartEdit() {
+        val current = _idea.value ?: return
+        _editTitle.value = current.title
+        _editProblem.value = current.problem
+        _editSolution.value = current.proposedSolution
+        _editBenefits.value = current.expectedBenefits
+        _isEditing.value = true
+    }
+
+    fun onCancelEdit() {
+        _isEditing.value = false
+    }
+
+    fun onEditTitleChange(v: String) { _editTitle.value = v.replace("\n", " ") }
+    fun onEditProblemChange(v: String) { _editProblem.value = v }
+    fun onEditSolutionChange(v: String) { _editSolution.value = v }
+    fun onEditBenefitsChange(v: String) { _editBenefits.value = v }
+
+    fun onSaveEdit() {
+        val current = _idea.value ?: return
+        if (_isSubmitting.value) return
+        val title = _editTitle.value.trim()
+        val problem = _editProblem.value.trim()
+        val solution = _editSolution.value.trim()
+        val benefits = _editBenefits.value.trim()
+        val error = when {
+            title.length < 3 -> "O título deve ter pelo menos 3 caracteres."
+            problem.length < 10 -> "Descreva o problema com pelo menos 10 caracteres."
+            solution.length < 10 -> "Descreva a solução com pelo menos 10 caracteres."
+            benefits.length < 10 -> "Descreva os benefícios com pelo menos 10 caracteres."
+            else -> null
+        }
+        if (error != null) {
+            _actionMessage.value = error
+            return
+        }
+        viewModelScope.launch {
+            _isSubmitting.value = true
+            try {
+                val result = ideaRepository.updateIdea(
+                    id = ideaId,
+                    titulo = title,
+                    problema = problem,
+                    solucaoProposta = solution,
+                    beneficiosEsperados = benefits,
+                    categoria = current.category,
+                    estrategiaId = current.strategyId
+                )
+                if (result.isSuccess) {
+                    _idea.value = result.getOrNull() ?: current.copy(
+                        title = title, problem = problem,
+                        proposedSolution = solution, expectedBenefits = benefits
+                    )
+                    _isEditing.value = false
+                    _actionMessage.value = "Ideia atualizada com sucesso."
+                } else {
+                    _actionMessage.value = result.exceptionOrNull()?.toUserMessage()
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _actionMessage.value = e.toUserMessage()
+            } finally {
+                _isSubmitting.value = false
+            }
+        }
+    }
+
+    fun onShowArchiveDialog() {
+        if (_isSubmitting.value) return
+        _showArchiveDialog.value = true
+    }
+
+    fun onDismissArchiveDialog() {
+        _showArchiveDialog.value = false
+    }
+
+    fun onConfirmArchive() {
+        if (_isSubmitting.value) return
+        _showArchiveDialog.value = false
+        viewModelScope.launch {
+            _isSubmitting.value = true
+            try {
+                val result = ideaRepository.arquivar(ideaId)
+                if (result.isSuccess) {
+                    _actionMessage.value = "Ideia arquivada."
+                    _archived.value = true
+                } else {
+                    _actionMessage.value = result.exceptionOrNull()?.toUserMessage()
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _actionMessage.value = e.toUserMessage()
+            } finally {
+                _isSubmitting.value = false
+            }
+        }
+    }
+
+    fun clearActionMessage() {
+        _actionMessage.value = null
     }
 
     fun clearHistoryError() {

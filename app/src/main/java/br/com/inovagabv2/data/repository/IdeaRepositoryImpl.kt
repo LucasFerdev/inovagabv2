@@ -200,6 +200,36 @@ class IdeaRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateIdea(
+        id: String,
+        titulo: String,
+        problema: String,
+        solucaoProposta: String,
+        beneficiosEsperados: String,
+        categoria: String,
+        estrategiaId: String
+    ): Result<Idea> {
+        return try {
+            val dto = AtualizarIdeiaRequestDto(
+                titulo = titulo.trim(),
+                problema = problema.trim(),
+                solucaoProposta = solucaoProposta.trim(),
+                beneficiosEsperados = beneficiosEsperados.trim(),
+                categoria = categoria,
+                estrategiaId = estrategiaId
+            )
+            val response = api.atualizarIdeia(id, dto)
+            val body = response.body()
+            if (response.isSuccessful && body != null) {
+                Result.success(body.toDomain())
+            } else {
+                Result.failure(Exception(parseErrorMessage(response)))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun arquivar(id: String): Result<Unit> {
         return try {
             val response = api.arquivarIdeia(id)

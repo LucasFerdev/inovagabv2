@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import br.com.inovagabv2.core.util.toUserMessage
 import br.com.inovagabv2.domain.model.Strategy
+import br.com.inovagabv2.domain.model.StrategyStatus
 import br.com.inovagabv2.domain.model.User
 import br.com.inovagabv2.domain.repository.AuthRepository
 import br.com.inovagabv2.domain.repository.StrategyRepository
@@ -39,7 +40,7 @@ class LeadershipStrategyViewModel @Inject constructor(
         list.filter { strat ->
             val matchesStatus = when (statusFilter) {
                 "ATIVA" -> strat.isPublished
-                "RASCUNHO" -> !strat.isPublished
+                "RASCUNHO" -> strat.status == StrategyStatus.RASCUNHO
                 else -> true
             }
             val matchesQuery = query.isBlank() || strat.title.contains(query, ignoreCase = true) || strat.description.contains(query, ignoreCase = true)
@@ -50,7 +51,7 @@ class LeadershipStrategyViewModel @Inject constructor(
     val activeCount: StateFlow<Int> = _strategies.map { list -> list.count { it.isPublished } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
-    val draftCount: StateFlow<Int> = _strategies.map { list -> list.count { !it.isPublished } }
+    val draftCount: StateFlow<Int> = _strategies.map { list -> list.count { it.status == StrategyStatus.RASCUNHO } }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
     private var loadJob: Job? = null
@@ -68,7 +69,7 @@ class LeadershipStrategyViewModel @Inject constructor(
             _error.value = null
             try {
                 repository.getStrategies().collect { list ->
-                    _strategies.value = list
+                    _strategies.value = list.filter { it.status != StrategyStatus.ARQUIVADA }
                     _isLoading.value = false
                 }
             } catch (e: CancellationException) {

@@ -144,13 +144,24 @@ fun ManagerProjectDetailsScreen(
 
     // Results Dialog
     if (state.showResultsDialog) {
+        // Sem resultado registrado a API devolve 0: os campos começam vazios em vez de "0".
         var returnValStr by remember {
-            mutableStateOf(state.project?.retornoFinanceiro?.let(::formatDecimalBr).orEmpty())
+            mutableStateOf(
+                state.project?.retornoFinanceiro
+                    ?.takeIf { it.signum() != 0 }
+                    ?.let(::formatDecimalBr)
+                    .orEmpty()
+            )
         }
         var productivityStr by remember {
-            mutableStateOf(state.project?.ganhoProdutividadePercentual?.let(::formatDecimalBr).orEmpty())
+            mutableStateOf(
+                state.project?.ganhoProdutividadePercentual
+                    ?.takeIf { it.signum() != 0 }
+                    ?.let(::formatDecimalBr)
+                    .orEmpty()
+            )
         }
-        var resultText by remember { mutableStateOf("") }
+        var resultText by remember { mutableStateOf(state.project?.resultado.orEmpty()) }
 
         val parsedReturn = parseDecimalBr(returnValStr)
         val parsedProductivity = parseDecimalBr(productivityStr)
